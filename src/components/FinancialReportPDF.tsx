@@ -2,7 +2,6 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font, pdf } from '@react-pdf/renderer';
 import { FinancialReport } from '../types';
 import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
 
 // Загрузка шрифта
 Font.register({
@@ -116,13 +115,13 @@ const formatPercent = (value: number) => {
     }).format(value);
 };
 
-export interface FinancialReportPDFProps {
+export interface FinancialReportContentProps {
     report: FinancialReport;
     dateRange: { start: string; end: string };
-    t: TFunction;
 }
 
-export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ report, dateRange, t }) => {
+export const FinancialReportContent: React.FC<FinancialReportContentProps> = ({ report, dateRange }) => {
+    const { t } = useTranslation();
     const { pnl, cashFlow, balanceSheet } = report;
 
     // Форматируем даты для заголовка
@@ -497,13 +496,16 @@ export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ repo
     );
 };
 
-const FinancialReportPDF: React.FC<FinancialReportPDFProps> = ({ report, dateRange }) => {
-    const { t } = useTranslation();
+export interface FinancialReportPDFProps {
+    report: FinancialReport;
+    dateRange: { start: string; end: string };
+}
 
+const FinancialReportPDF: React.FC<FinancialReportPDFProps> = ({ report, dateRange }) => {
     return (
         <div>
             <PDFViewer style={{ width: '100%', height: '80vh' }}>
-                <FinancialReportContent report={report} dateRange={dateRange} t={t} />
+                <FinancialReportContent report={report} dateRange={dateRange} />
             </PDFViewer>
         </div>
     );

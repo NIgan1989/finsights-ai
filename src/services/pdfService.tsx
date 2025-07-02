@@ -2,11 +2,9 @@ import React from 'react';
 import { pdf, Document } from '@react-pdf/renderer';
 import { FinancialReport } from '../types';
 import { FinancialReportContent } from '../components/FinancialReportPDF';
-import { TFunction } from 'i18next';
 
 export const generatePdf = async (
-  reportData: FinancialReport,
-  t: TFunction
+  reportData: FinancialReport
 ): Promise<void> => {
   try {
     const dateRange = {
@@ -16,7 +14,7 @@ export const generatePdf = async (
 
     const blob = await pdf(
       <Document>
-      <FinancialReportContent report={ reportData } dateRange = { dateRange } t = { t } />
+        <FinancialReportContent report={reportData} dateRange={dateRange} />
       </Document>
     ).toBlob();
 
