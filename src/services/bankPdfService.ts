@@ -75,7 +75,7 @@ const parseKaspiTransactions = (text: string): Omit<Transaction, 'category' | 't
     const amountMatch = cleanLine.match(/([\-\+]?\d[\d\s]*[\,\.]?\d{0,2})\s*₸?\s*$/);
     if (!amountMatch) continue;
     
-    const amountStr = amountMatch[1].replace(/\s+/g,'').replace(',', '.').replace(/[^\d\-\+\.]/g, '');
+    const amountStr = amountMatch[1].replace(/\s+/g,'').replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
     const amount = parseFloat(amountStr);
     if (isNaN(amount)) continue;
     
@@ -121,10 +121,10 @@ const parseHalykTransactions = (text: string): Omit<Transaction, 'category' | 't
     const isoDate = `${year}-${dateParts[1]}-${dateParts[0]}`;
     
     // Ищем сумму (может быть с запятой в качестве разделителя)
-    const amountMatch = cleanLine.match(/([\-\+]?\d+(?:[,\.]\d{2})?)\s*₸?\s*$/);
+    const amountMatch = cleanLine.match(/([\-\+]?\d[\d\s]*[,\.]?\d{0,2})\s*₸?\s*$/);
     if (!amountMatch) continue;
     
-    const amountStr = amountMatch[1].replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
+    const amountStr = amountMatch[1].replace(/\s+/g,'').replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
     const amount = parseFloat(amountStr);
     if (isNaN(amount)) continue;
     
@@ -176,11 +176,11 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
     }
     
     // Ищем сумму
-    const amountMatch = cleanLine.match(/([\-\+]?\d+(?:[,\.]\d{2})?)/g);
+    const amountMatch = cleanLine.match(/([\-\+]?\d[\d\s]*[,\.]?\d{0,2})/g);
     if (!amountMatch) continue;
     
     // Берем последнее число как сумму
-    const amountStr = amountMatch[amountMatch.length - 1].replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
+    const amountStr = amountMatch[amountMatch.length - 1].replace(/\s+/g,'').replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
     const amount = parseFloat(amountStr);
     if (isNaN(amount)) continue;
     
