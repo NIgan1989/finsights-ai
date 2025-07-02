@@ -129,13 +129,13 @@ function App() {
     const handleExportPdf = useCallback(async () => {
         if (financialReport) {
             try {
-                await generatePdf(financialReport);
+                await generatePdf(financialReport, t);
             } catch (err) {
                 console.error('Failed to generate PDF', err);
                 setError('Failed to generate PDF. Please try again.');
             }
         }
-    }, [financialReport]);
+    }, [financialReport, t]);
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
         setActiveTab(newValue);
