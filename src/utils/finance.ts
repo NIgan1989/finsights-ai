@@ -22,52 +22,52 @@ export const calculateSummary = (transactions: Transaction[]) => {
 export const getMonthlyCashFlow = (transactions: Transaction[]) => {
     const monthlyData: { [key: string]: number } = {};
     transactions.forEach(tx => {
-        const month = new Date(tx.date).toLocaleString('default', { month: 'short', year: '2-digit' });
-        if (!monthlyData[month]) {
-            monthlyData[month] = 0;
+        const d = new Date(tx.date);
+        if (isNaN(d.getTime())) return; // skip invalid
+        const monthKey = d.toISOString().slice(0,7); // YYYY-MM
+        if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = 0;
         }
-        monthlyData[month] += (tx.type === 'income' ? tx.amount : -tx.amount);
+        monthlyData[monthKey] += (tx.type === 'income' ? tx.amount : -tx.amount);
     });
 
-    // Sort months chronologically
-    const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
-        const dateA = new Date(`01 ${a}`);
-        const dateB = new Date(`01 ${b}`);
-        return dateA.getTime() - dateB.getTime();
-    });
+    const sortedKeys = Object.keys(monthlyData).sort();
 
-    return sortedMonths.map(month => ({
-        name: month,
-        cashFlow: monthlyData[month],
-    }));
+    return sortedKeys.map(key => {
+        const label = new Date(`${key}-01`).toLocaleDateString('default', { month: 'short', year: '2-digit' });
+        return {
+            name: label,
+            cashFlow: monthlyData[key],
+        };
+    });
 };
-
 
 export const getMonthlyIncomeExpense = (transactions: Transaction[]) => {
     const monthlyData: { [key: string]: { income: number, expense: number } } = {};
     transactions.forEach(tx => {
-        const month = new Date(tx.date).toLocaleString('default', { month: 'short', year: '2-digit' });
-        if (!monthlyData[month]) {
-            monthlyData[month] = { income: 0, expense: 0 };
+        const d = new Date(tx.date);
+        if (isNaN(d.getTime())) return; // skip invalid
+        const monthKey = d.toISOString().slice(0,7); // YYYY-MM
+        if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { income: 0, expense: 0 };
         }
         if (tx.type === 'income') {
-            monthlyData[month].income += tx.amount;
+            monthlyData[monthKey].income += tx.amount;
         } else {
-            monthlyData[month].expense += tx.amount;
+            monthlyData[monthKey].expense += tx.amount;
         }
     });
 
-    const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
-        const dateA = new Date(`01 ${a}`);
-        const dateB = new Date(`01 ${b}`);
-        return dateA.getTime() - dateB.getTime();
-    });
+    const sortedKeys = Object.keys(monthlyData).sort();
 
-    return sortedMonths.map(month => ({
-        name: month,
-        income: monthlyData[month].income,
-        expense: monthlyData[month].expense,
-    }));
+    return sortedKeys.map(key => {
+        const label = new Date(`${key}-01`).toLocaleDateString('default', { month: 'short', year: '2-digit' });
+        return {
+            name: label,
+            income: monthlyData[key].income,
+            expense: monthlyData[key].expense,
+        };
+    });
 };
 
 export const getExpenseByCategory = (transactions: Transaction[]) => {
