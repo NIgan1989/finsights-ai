@@ -1,7 +1,9 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font, pdf } from '@react-pdf/renderer';
 import { FinancialReport } from '../types';
-import { TFunction } from 'i18next';
+
+// Локальный тип для функции перевода
+type TFunction = (key: string, options?: any) => string;
 
 // Загрузка шрифта
 Font.register({
