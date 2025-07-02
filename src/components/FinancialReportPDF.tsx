@@ -123,7 +123,11 @@ export interface FinancialReportPDFProps {
     t: TFunction;
 }
 
-export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ report, dateRange, t }) => {
+export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ 
+    report, 
+    dateRange, 
+    t 
+}: FinancialReportPDFProps) => {
     const { pnl, cashFlow, balanceSheet } = report;
 
     // Форматируем даты для заголовка
@@ -222,7 +226,7 @@ export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ repo
 
                 {/* Расходы по категориям */}
                 <Text style={styles.subsection}>{t('financialReport.expensesByCategory')}</Text>
-                {pnl.expenseByCategory.slice(0, 5).map((expense, index) => (
+                {pnl.expenseByCategory.slice(0, 5).map((expense: any, index: number) => (
                     <View key={index} style={styles.row}>
                         <Text style={styles.indentedLabel}>{expense.name}</Text>
                         <Text style={styles.value}>{formatCurrency(expense.value)}</Text>
@@ -507,7 +511,11 @@ export interface FinancialReportPDFPreviewProps {
     t: TFunction;
 }
 
-const FinancialReportPDF: React.FC<FinancialReportPDFPreviewProps> = ({ report, dateRange, t }) => {
+const FinancialReportPDF: React.FC<FinancialReportPDFPreviewProps> = ({ 
+    report, 
+    dateRange, 
+    t 
+}: FinancialReportPDFPreviewProps) => {
     return (
         <div>
             <PDFViewer style={{ width: '100%', height: '80vh' }}>
