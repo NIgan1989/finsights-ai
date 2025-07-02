@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { Box, Typography, Button, Paper } from '@mui/material';
+import { Box, Typography, Button, Paper, Chip, Stack } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
-import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';
+import { CloudUpload as CloudUploadIcon, AccountBalance as BankIcon, Description as CsvIcon, Image as ImageIcon, Description } from '@mui/icons-material';
 
 interface DataUploadProps {
     onUpload: (file: File) => void;
@@ -22,6 +22,9 @@ const DataUpload: React.FC<DataUploadProps> = ({ onUpload }) => {
         onDrop,
         accept: {
             'text/csv': ['.csv'],
+            'application/pdf': ['.pdf'],
+            'image/png': ['.png'],
+            'image/jpeg': ['.jpg', '.jpeg'],
         },
         maxFiles: 1,
     });
@@ -39,8 +42,28 @@ const DataUpload: React.FC<DataUploadProps> = ({ onUpload }) => {
         return 'grey.500';
     };
 
+    const getFileIcon = (fileName: string) => {
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        switch (extension) {
+            case 'pdf':
+                return <BankIcon sx={{ mr: 1 }} />;
+            case 'csv':
+                return <CsvIcon sx={{ mr: 1 }} />;
+            case 'png':
+            case 'jpg':
+            case 'jpeg':
+                return <ImageIcon sx={{ mr: 1 }} />;
+            default:
+                return <Description sx={{ mr: 1 }} />;
+        }
+    };
+
     return (
-        <Box sx={{ p: 3, maxWidth: 500, margin: 'auto' }}>
+        <Box sx={{ p: 3, maxWidth: 600, margin: 'auto' }}>
+            <Typography variant="h5" align="center" gutterBottom sx={{ mb: 3 }}>
+                {t('data_upload.title')}
+            </Typography>
+            
             <Paper
                 {...getRootProps()}
                 sx={{
@@ -61,15 +84,49 @@ const DataUpload: React.FC<DataUploadProps> = ({ onUpload }) => {
                 <Typography variant="h6" gutterBottom>
                     {t('data_upload.drop_files_here')}
                 </Typography>
-                <Typography color="textSecondary">
+                <Typography color="textSecondary" sx={{ mb: 2 }}>
                     {t('data_upload.or_click_to_select')}
                 </Typography>
+                
+                <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 2 }}>
+                    <Chip 
+                        icon={<BankIcon />} 
+                        label="PDF выписки банков" 
+                        variant="outlined" 
+                        size="small"
+                        color="primary"
+                    />
+                    <Chip 
+                        icon={<CsvIcon />} 
+                        label="CSV файлы" 
+                        variant="outlined" 
+                        size="small"
+                    />
+                    <Chip 
+                        icon={<ImageIcon />} 
+                        label="Изображения" 
+                        variant="outlined" 
+                        size="small"
+                    />
+                </Stack>
+                
+                <Typography variant="body2" color="textSecondary">
+                    Поддерживаются банки: <strong>Каспи</strong>, <strong>Халык</strong> и другие
+                </Typography>
+                
                 {file && (
-                    <Typography sx={{ mt: 2 }} color="textPrimary">
-                        {t('data_upload.selected_file')}: {file.name}
-                    </Typography>
+                    <Box sx={{ mt: 3, p: 2, backgroundColor: 'rgba(0, 150, 136, 0.1)', borderRadius: 1 }}>
+                        <Typography sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} color="textPrimary">
+                            {getFileIcon(file.name)}
+                            <strong>{file.name}</strong>
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                            Размер: {(file.size / 1024 / 1024).toFixed(2)} МБ
+                        </Typography>
+                    </Box>
                 )}
             </Paper>
+            
             <Button
                 variant="contained"
                 color="primary"
@@ -80,6 +137,12 @@ const DataUpload: React.FC<DataUploadProps> = ({ onUpload }) => {
             >
                 {t('data_upload.upload_and_analyze')}
             </Button>
+            
+            <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" color="textSecondary" align="center">
+                    💡 <strong>Совет:</strong> Для лучших результатов используйте PDF выписки напрямую из интернет-банкинга
+                </Typography>
+            </Box>
         </Box>
     );
 };
