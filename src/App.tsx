@@ -6,7 +6,6 @@ import {
     Typography,
     IconButton,
     Box,
-    ThemeProvider,
     Menu,
     MenuItem,
     Container,
@@ -14,9 +13,17 @@ import {
     Tab,
     Tabs,
     Grid,
-    Paper
+    Paper,
+    Tooltip
 } from '@mui/material';
-import { Language as LanguageIcon, PictureAsPdf, Dashboard as DashboardIcon, Chat as ChatIcon } from '@mui/icons-material';
+import { 
+    Language as LanguageIcon, 
+    PictureAsPdf, 
+    Dashboard as DashboardIcon, 
+    Chat as ChatIcon,
+    LightMode,
+    DarkMode
+} from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
 import DataUpload from './components/DataUpload';
@@ -27,8 +34,8 @@ import DateRangeFilter from './components/DateRangeFilter';
 import { Transaction, FinancialReport } from './types';
 import { processAndCategorizeTransactions, generateFinancialReport } from './services/financeService';
 import { generatePdf } from './services/pdfService';
-import { darkTheme } from './theme';
 import { DateRangeProvider } from './contexts/DateRangeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 const LanguageSwitcher = () => {
     const { i18n } = useTranslation();
@@ -53,13 +60,15 @@ const LanguageSwitcher = () => {
 
     return (
         <div>
-            <IconButton
-                size="large"
-                onClick={handleMenu}
-                color="inherit"
-            >
-                <LanguageIcon />
-            </IconButton>
+            <Tooltip title="Выбрать язык">
+                <IconButton
+                    size="large"
+                    onClick={handleMenu}
+                    color="inherit"
+                >
+                    <LanguageIcon />
+                </IconButton>
+            </Tooltip>
             <Menu
                 anchorEl={anchorEl}
                 open={open}
@@ -75,7 +84,29 @@ const LanguageSwitcher = () => {
     );
 };
 
-function App() {
+const ThemeToggle = () => {
+    const { isDarkMode, toggleTheme } = useTheme();
+
+    return (
+        <Tooltip title={isDarkMode ? "Переключить на светлую тему" : "Переключить на темную тему"}>
+            <IconButton
+                size="large"
+                onClick={toggleTheme}
+                color="inherit"
+                sx={{ 
+                    transition: 'transform 0.2s ease-in-out',
+                    '&:hover': {
+                        transform: 'rotate(180deg)'
+                    }
+                }}
+            >
+                {isDarkMode ? <LightMode /> : <DarkMode />}
+            </IconButton>
+        </Tooltip>
+    );
+};
+
+function AppContent() {
     const { t } = useTranslation();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -173,6 +204,7 @@ function App() {
                                     startIcon={<PictureAsPdf />}
                                     onClick={handleExportPdf}
                                     fullWidth
+                                    size="large"
                                 >
                                     {t('export_pdf')}
                                 </Button>
@@ -181,7 +213,18 @@ function App() {
                     </Grid>
                 </Box>
 
-                <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
+                <Tabs 
+                    value={activeTab} 
+                    onChange={handleTabChange} 
+                    sx={{ 
+                        mb: 3,
+                        '& .MuiTab-root': {
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            textTransform: 'none',
+                        }
+                    }}
+                >
                     <Tab icon={<DashboardIcon />} label={t('dashboard.title')} value="dashboard" />
                     <Tab icon={<ChatIcon />} label={t('ai_assistant')} value="assistant" />
                 </Tabs>
@@ -200,22 +243,32 @@ function App() {
     };
 
     return (
-        <ThemeProvider theme={darkTheme}>
-            <DateRangeProvider>
-                <CssBaseline />
-                <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                    <AppBar position="sticky">
-                        <Toolbar>
-                            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                                Finsights AI
-                            </Typography>
+        <CssBaseline>
+            <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                <AppBar position="sticky" elevation={0}>
+                    <Toolbar>
+                        <Typography variant="h5" component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
+                            FinSights AI
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <ThemeToggle />
                             <LanguageSwitcher />
-                        </Toolbar>
-                    </AppBar>
-                    <Container component="main" sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
-                        {renderContent()}
-                    </Container>
-                </Box>
+                        </Box>
+                    </Toolbar>
+                </AppBar>
+                <Container component="main" sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
+                    {renderContent()}
+                </Container>
+            </Box>
+        </CssBaseline>
+    );
+}
+
+function App() {
+    return (
+        <ThemeProvider>
+            <DateRangeProvider>
+                <AppContent />
             </DateRangeProvider>
         </ThemeProvider>
     );
