@@ -58,24 +58,29 @@ const parseKaspiTransactions = (text: string): Omit<Transaction, 'category' | 't
     if (!cleanLine) continue;
     
     // Ищем строки с датой в формате ДД.ММ.ГГГГ
-    const dateMatch = cleanLine.match(/^(\d{2}\.\d{2}\.\d{4})/);
+    const dateMatch = cleanLine.match(/^(\d{2}\.\d{2}\.\d{2}(?:\d{2})?)/);
     if (!dateMatch) continue;
     
     // Извлекаем дату
     const dateStr = dateMatch[1];
     const dateParts = dateStr.split('.');
-    const isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+    let year = dateParts[2];
+    if (year.length === 2) {
+      // Предполагаем 2000-й век
+      year = `20${year}`;
+    }
+    const isoDate = `${year}-${dateParts[1]}-${dateParts[0]}`;
     
     // Ищем сумму в конце строки
-    const amountMatch = cleanLine.match(/([\-\+]?\d+(?:\.\d{2})?)\s*₸?\s*$/);
+    const amountMatch = cleanLine.match(/([\-\+]?\d[\d\s]*[\,\.]?\d{0,2})\s*₸?\s*$/);
     if (!amountMatch) continue;
     
-    const amountStr = amountMatch[1].replace(/[^\d\-\+\.]/g, '');
+    const amountStr = amountMatch[1].replace(/\s+/g,'').replace(',', '.').replace(/[^\d\-\+\.]/g, '');
     const amount = parseFloat(amountStr);
     if (isNaN(amount)) continue;
     
     // Извлекаем описание (все между датой и суммой)
-    const descriptionMatch = cleanLine.match(/^\d{2}\.\d{2}\.\d{4}\s*(.+?)\s*[\-\+]?\d+(?:\.\d{2})?\s*₸?\s*$/);
+    const descriptionMatch = cleanLine.match(/^\d{2}\.\d{2}\.\d{2}(?:\d{2})?\s*(.+?)\s*[\-\+]?\d[\d\s]*[\,\.]?\d{0,2}\s*₸?\s*$/);
     const description = descriptionMatch ? descriptionMatch[1].trim() : cleanLine;
     
     transactions.push({
@@ -108,7 +113,12 @@ const parseHalykTransactions = (text: string): Omit<Transaction, 'category' | 't
     // Извлекаем дату
     const dateStr = dateMatch[1];
     const dateParts = dateStr.split(/[\/\.]/);
-    const isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+    let year = dateParts[2];
+    if (year.length === 2) {
+      // Предполагаем 2000-й век
+      year = `20${year}`;
+    }
+    const isoDate = `${year}-${dateParts[1]}-${dateParts[0]}`;
     
     // Ищем сумму (может быть с запятой в качестве разделителя)
     const amountMatch = cleanLine.match(/([\-\+]?\d+(?:[,\.]\d{2})?)\s*₸?\s*$/);
@@ -152,12 +162,17 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
     // Извлекаем дату
     const dateStr = dateMatch[1];
     const dateParts = dateStr.split(/[\/\.\-]/);
+    let year = dateParts[2];
+    if (year.length === 2) {
+      // Предполагаем 2000-й век
+      year = `20${year}`;
+    }
     let isoDate: string;
     
     if (dateParts[2].length === 4) { // ДД/ММ/ГГГГ
-      isoDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+      isoDate = `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
     } else { // ГГГГ/ММ/ДД
-      isoDate = `${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`;
+      isoDate = `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
     }
     
     // Ищем сумму
