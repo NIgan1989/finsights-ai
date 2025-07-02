@@ -1,10 +1,8 @@
 import { Transaction } from '../types';
+import { getDocument, GlobalWorkerOptions, version as pdfjsVersion, PDFDocumentProxy } from 'pdfjs-dist';
 
 // Устанавливаем PDF.js worker
-const pdfjsLib = (window as any).pdfjsLib;
-if (pdfjsLib) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
+GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
 
 // Паттерны для извлечения данных из PDF выписок банков
 const KASPI_PATTERNS = {
@@ -248,23 +246,17 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
  */
 const extractTextFromPdf = async (file: File): Promise<string> => {
   try {
-    if (!pdfjsLib) {
-      throw new Error('PDF.js не загружен. Пожалуйста, убедитесь, что библиотека подключена.');
-    }
-
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    const pdf: PDFDocumentProxy = await getDocument({ data: arrayBuffer }).promise;
     let fullText = '';
-    
+
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ');
+      const pageText = textContent.items.map((item: any) => (item as any).str).join(' ');
       fullText += pageText + '\n';
     }
-    
+
     return fullText;
   } catch (error) {
     console.error('Ошибка извлечения текста из PDF:', error);
