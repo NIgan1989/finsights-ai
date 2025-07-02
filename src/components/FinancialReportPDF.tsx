@@ -1,7 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font, pdf } from '@react-pdf/renderer';
 import { FinancialReport } from '../types';
-import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
 
 // Загрузка шрифта
@@ -497,13 +496,22 @@ export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ repo
     );
 };
 
-const FinancialReportPDF: React.FC<FinancialReportPDFProps> = ({ report, dateRange }) => {
-    const { t } = useTranslation();
+// Note: This component is not currently used in the application
+// The main export is FinancialReportContent which is used for PDF generation
+// If you need a PDF preview component, you'll need to pass the t function as a prop
+export interface FinancialReportPDFPreviewProps {
+    report: FinancialReport;
+    dateRange: { start: string; end: string };
+    t: TFunction;
+}
 
+const FinancialReportPDF: React.FC<FinancialReportPDFPreviewProps> = ({ report, dateRange, t }) => {
     return (
         <div>
             <PDFViewer style={{ width: '100%', height: '80vh' }}>
-                <FinancialReportContent report={report} dateRange={dateRange} t={t} />
+                <Document>
+                    <FinancialReportContent report={report} dateRange={dateRange} t={t} />
+                </Document>
             </PDFViewer>
         </div>
     );
