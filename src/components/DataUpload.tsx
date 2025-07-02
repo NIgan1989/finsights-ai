@@ -22,6 +22,7 @@ const DataUpload: React.FC<DataUploadProps> = ({ onUpload }) => {
         onDrop,
         accept: {
             'text/csv': ['.csv'],
+            'application/pdf': ['.pdf'],
         },
         maxFiles: 1,
     });
@@ -37,6 +38,18 @@ const DataUpload: React.FC<DataUploadProps> = ({ onUpload }) => {
         if (isDragReject) return 'error.main';
         if (isDragActive) return 'primary.light';
         return 'grey.500';
+    };
+
+    const getFileTypeText = () => {
+        if (file) {
+            if (file.type === 'application/pdf') {
+                return 'PDF банковская выписка';
+            } else if (file.type === 'text/csv') {
+                return 'CSV файл';
+            }
+            return file.type;
+        }
+        return null;
     };
 
     return (
@@ -61,13 +74,21 @@ const DataUpload: React.FC<DataUploadProps> = ({ onUpload }) => {
                 <Typography variant="h6" gutterBottom>
                     {t('data_upload.drop_files_here')}
                 </Typography>
-                <Typography color="textSecondary">
+                <Typography color="textSecondary" sx={{ mb: 1 }}>
                     {t('data_upload.or_click_to_select')}
                 </Typography>
+                <Typography variant="body2" color="textSecondary">
+                    Поддерживаемые форматы: CSV файлы и PDF выписки банков Каспи, Халык
+                </Typography>
                 {file && (
-                    <Typography sx={{ mt: 2 }} color="textPrimary">
-                        {t('data_upload.selected_file')}: {file.name}
-                    </Typography>
+                    <Box sx={{ mt: 2 }}>
+                        <Typography color="textPrimary">
+                            {t('data_upload.selected_file')}: {file.name}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                            Тип: {getFileTypeText()}
+                        </Typography>
+                    </Box>
                 )}
             </Paper>
             <Button

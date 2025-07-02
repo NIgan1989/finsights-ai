@@ -53,12 +53,12 @@ const parseKaspiTransactions = (text: string): Omit<Transaction, 'category' | 't
   const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
-    const cleanLine = line.trim();
-    if (!cleanLine) continue;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
     
     // Ищем строки с датой в формате ДД.ММ.ГГГГ
-    const dateMatch = cleanLine.match(/^(\d{2}\.\d{2}\.\d{4})/);
+    const dateMatch = line.match(/^(\d{2}\.\d{2}\.\d{4})/);
     if (!dateMatch) continue;
     
     // Извлекаем дату
@@ -66,24 +66,50 @@ const parseKaspiTransactions = (text: string): Omit<Transaction, 'category' | 't
     const dateParts = dateStr.split('.');
     const isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
     
-    // Ищем сумму в конце строки
-    const amountMatch = cleanLine.match(/([\-\+]?\d+(?:\.\d{2})?)\s*₸?\s*$/);
-    if (!amountMatch) continue;
+    // Проверяем правильность даты
+    const dateObj = new Date(isoDate);
+    if (isNaN(dateObj.getTime())) continue;
     
-    const amountStr = amountMatch[1].replace(/[^\d\-\+\.]/g, '');
+    // Ищем сумму в конце строки (может быть со знаком + или -)
+    const amountMatches = line.match(/([\+\-]?)(\d+(?:[,\.\s]\d{2})?)\s*₸?\s*$/);
+    if (!amountMatches) continue;
+    
+    const sign = amountMatches[1] || '';
+    const amountStr = amountMatches[2].replace(/[\s,]/g, '.').replace(/[^\d\.]/g, '');
     const amount = parseFloat(amountStr);
-    if (isNaN(amount)) continue;
+    if (isNaN(amount) || amount === 0) continue;
+    
+    // Определяем тип транзакции по знаку или позиции в строке
+    let isIncome = false;
+    if (sign === '+') {
+      isIncome = true;
+    } else if (sign === '-') {
+      isIncome = false;
+    } else {
+      // Если знак не указан, пытаемся определить по контексту
+      const lineWithoutDateAndAmount = line.replace(/^\d{2}\.\d{2}\.\d{4}/, '').replace(/([\+\-]?)(\d+(?:[,\.\s]\d{2})?)\s*₸?\s*$/, '').trim();
+      // Ключевые слова для доходов
+      if (/поступлени|зачислени|перевод.*на.*счет|возврат|возмещение|доход/i.test(lineWithoutDateAndAmount)) {
+        isIncome = true;
+      }
+    }
     
     // Извлекаем описание (все между датой и суммой)
-    const descriptionMatch = cleanLine.match(/^\d{2}\.\d{2}\.\d{4}\s*(.+?)\s*[\-\+]?\d+(?:\.\d{2})?\s*₸?\s*$/);
-    const description = descriptionMatch ? descriptionMatch[1].trim() : cleanLine;
+    const descriptionMatch = line.match(/^\d{2}\.\d{2}\.\d{4}\s+(.+?)\s+([\+\-]?)(\d+(?:[,\.\s]\d{2})?)\s*₸?\s*$/);
+    let description = descriptionMatch ? descriptionMatch[1].trim() : line;
+    
+    // Очищаем описание от лишних символов
+    description = description.replace(/^\s*[\-\+]\s*/, '').trim();
+    if (!description) {
+      description = 'Транзакция Каспи банка';
+    }
     
     transactions.push({
-      id: `kaspi_${Date.now()}_${transactions.length}`,
+      id: `kaspi_${Date.now()}_${transactions.length}_${Math.random().toString(36).substr(2, 9)}`,
       date: isoDate,
-      description: description || 'Транзакция Каспи банка',
+      description: description,
       amount: Math.abs(amount),
-      type: amount >= 0 ? 'income' : 'expense',
+      type: isIncome ? 'income' : 'expense',
     });
   }
   
@@ -97,12 +123,12 @@ const parseHalykTransactions = (text: string): Omit<Transaction, 'category' | 't
   const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
-    const cleanLine = line.trim();
-    if (!cleanLine) continue;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
     
     // Ищем строки с датой в формате ДД/ММ/ГГГГ или ДД.ММ.ГГГГ
-    const dateMatch = cleanLine.match(/^(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
+    const dateMatch = line.match(/^(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
     if (!dateMatch) continue;
     
     // Извлекаем дату
@@ -110,24 +136,49 @@ const parseHalykTransactions = (text: string): Omit<Transaction, 'category' | 't
     const dateParts = dateStr.split(/[\/\.]/);
     const isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
     
-    // Ищем сумму (может быть с запятой в качестве разделителя)
-    const amountMatch = cleanLine.match(/([\-\+]?\d+(?:[,\.]\d{2})?)\s*₸?\s*$/);
-    if (!amountMatch) continue;
+    // Проверяем правильность даты
+    const dateObj = new Date(isoDate);
+    if (isNaN(dateObj.getTime())) continue;
     
-    const amountStr = amountMatch[1].replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
+    // Ищем сумму (может быть с запятой в качестве разделителя и со знаком)
+    const amountMatches = line.match(/([\+\-]?)(\d+(?:[,\.]\d{2})?)\s*₸?\s*$/);
+    if (!amountMatches) continue;
+    
+    const sign = amountMatches[1] || '';
+    const amountStr = amountMatches[2].replace(/,/g, '.').replace(/[^\d\.]/g, '');
     const amount = parseFloat(amountStr);
-    if (isNaN(amount)) continue;
+    if (isNaN(amount) || amount === 0) continue;
+    
+    // Определяем тип транзакции
+    let isIncome = false;
+    if (sign === '+') {
+      isIncome = true;
+    } else if (sign === '-') {
+      isIncome = false;
+    } else {
+      // Если знак не указан, пытаемся определить по контексту
+      const lineWithoutDateAndAmount = line.replace(/^\d{2}[\/\.]\d{2}[\/\.]\d{4}/, '').replace(/([\+\-]?)(\d+(?:[,\.]\d{2})?)\s*₸?\s*$/, '').trim();
+      if (/поступлени|зачислени|перевод.*на.*счет|возврат|возмещение|доход/i.test(lineWithoutDateAndAmount)) {
+        isIncome = true;
+      }
+    }
     
     // Извлекаем описание
-    const descriptionMatch = cleanLine.match(/^\d{2}[\/\.]\d{2}[\/\.]\d{4}\s*(.+?)\s*[\-\+]?\d+(?:[,\.]\d{2})?\s*₸?\s*$/);
-    const description = descriptionMatch ? descriptionMatch[1].trim() : cleanLine;
+    const descriptionMatch = line.match(/^\d{2}[\/\.]\d{2}[\/\.]\d{4}\s+(.+?)\s+([\+\-]?)(\d+(?:[,\.]\d{2})?)\s*₸?\s*$/);
+    let description = descriptionMatch ? descriptionMatch[1].trim() : line;
+    
+    // Очищаем описание от лишних символов
+    description = description.replace(/^\s*[\-\+]\s*/, '').trim();
+    if (!description) {
+      description = 'Транзакция Халык банка';
+    }
     
     transactions.push({
-      id: `halyk_${Date.now()}_${transactions.length}`,
+      id: `halyk_${Date.now()}_${transactions.length}_${Math.random().toString(36).substr(2, 9)}`,
       date: isoDate,
-      description: description || 'Транзакция Халык банка',
+      description: description,
       amount: Math.abs(amount),
-      type: amount >= 0 ? 'income' : 'expense',
+      type: isIncome ? 'income' : 'expense',
     });
   }
   
@@ -141,12 +192,12 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
   const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
-    const cleanLine = line.trim();
-    if (!cleanLine) continue;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
     
     // Ищем любую дату в различных форматах
-    const dateMatch = cleanLine.match(/(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{4})/);
+    const dateMatch = line.match(/(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{4})/);
     if (!dateMatch) continue;
     
     // Извлекаем дату
@@ -160,19 +211,24 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
       isoDate = `${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`;
     }
     
+    // Проверяем правильность даты
+    const dateObj = new Date(isoDate);
+    if (isNaN(dateObj.getTime())) continue;
+    
     // Ищем сумму
-    const amountMatch = cleanLine.match(/([\-\+]?\d+(?:[,\.]\d{2})?)/g);
-    if (!amountMatch) continue;
+    const amountMatches = line.match(/([\-\+]?\d+(?:[,\.]\d{2})?)/g);
+    if (!amountMatches || amountMatches.length === 0) continue;
     
     // Берем последнее число как сумму
-    const amountStr = amountMatch[amountMatch.length - 1].replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
+    const lastAmount = amountMatches[amountMatches.length - 1];
+    const amountStr = lastAmount.replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
     const amount = parseFloat(amountStr);
-    if (isNaN(amount)) continue;
+    if (isNaN(amount) || amount === 0) continue;
     
     transactions.push({
-      id: `generic_${Date.now()}_${transactions.length}`,
+      id: `generic_${Date.now()}_${transactions.length}_${Math.random().toString(36).substr(2, 9)}`,
       date: isoDate,
-      description: cleanLine,
+      description: line.trim() || 'Банковская транзакция',
       amount: Math.abs(amount),
       type: amount >= 0 ? 'income' : 'expense',
     });
@@ -263,7 +319,8 @@ export const validateBankStatement = (text: string): boolean => {
   const keywords = [
     'выписка', 'statement', 'transaction', 'транзакция',
     'баланс', 'balance', 'каспи', 'kaspi', 'халык', 'halyk',
-    'банк', 'bank', 'дата', 'date', 'сумма', 'amount'
+    'банк', 'bank', 'дата', 'date', 'сумма', 'amount',
+    'счет', 'account', 'операци', 'operation'
   ];
   
   const textLower = text.toLowerCase();
