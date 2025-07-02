@@ -7,6 +7,7 @@ import {
     IconButton,
     Box,
     ThemeProvider,
+    createTheme,
     Menu,
     MenuItem,
     Container,
@@ -27,7 +28,8 @@ import DateRangeFilter from './components/DateRangeFilter';
 import { Transaction, FinancialReport } from './types';
 import { processAndCategorizeTransactions, generateFinancialReport } from './services/financeService';
 import { generatePdf } from './services/pdfService';
-import { darkTheme } from './theme';
+import { createFinancialTheme } from './theme/designSystem';
+import { EnhancedDashboard } from './components/enhanced/EnhancedDashboard';
 import { DateRangeProvider } from './contexts/DateRangeContext';
 
 const LanguageSwitcher = () => {
@@ -129,7 +131,7 @@ function App() {
     const handleExportPdf = useCallback(async () => {
         if (financialReport) {
             try {
-                await generatePdf(financialReport, t);
+                await generatePdf(financialReport, t as any);
             } catch (err) {
                 console.error('Failed to generate PDF', err);
                 setError('Failed to generate PDF. Please try again.');
@@ -186,7 +188,13 @@ function App() {
                     <Tab icon={<ChatIcon />} label={t('ai_assistant')} value="assistant" />
                 </Tabs>
 
-                {activeTab === 'dashboard' && <Dashboard transactions={transactions} onUpdateTransaction={handleUpdateTransaction} />}
+                {activeTab === 'dashboard' && 
+                    <EnhancedDashboard 
+                        transactions={transactions} 
+                        onRefresh={() => window.location.reload()}
+                        dateRange={dateRange}
+                    />
+                }
                 {activeTab === 'assistant' && financialReport && (
                     <AiAssistant
                         transactions={transactions}
@@ -200,7 +208,7 @@ function App() {
     };
 
     return (
-        <ThemeProvider theme={darkTheme}>
+        <ThemeProvider theme={createTheme(createFinancialTheme('light'))}>
             <DateRangeProvider>
                 <CssBaseline />
                 <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

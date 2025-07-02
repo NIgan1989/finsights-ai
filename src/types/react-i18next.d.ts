@@ -4,4 +4,6 @@ declare module 'react-i18next' {
     t: (key: string, options?: any) => string;
     i18n: any;
   };
+  
+  export const initReactI18next: any;
 }
