@@ -125,49 +125,54 @@ const parseHalykTransactions = (text: string): Omit<Transaction, 'category' | 't
     const line = lines[i].trim();
     if (!line) continue;
     
-    // Ищем строки с датой в формате ДД/ММ/ГГГГ или ДД.ММ.ГГГГ
-    const dateMatch = line.match(/^(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
+    // Ищем строки с датой в формате ДД.ММ.ГГГГ (табличный формат Халык банка)
+    const dateMatch = line.match(/^(\d{2}\.\d{2}\.\d{4})/);
     if (!dateMatch) continue;
     
     // Извлекаем дату
     const dateStr = dateMatch[1];
-    const dateParts = dateStr.split(/[\/\.]/);
+    const dateParts = dateStr.split('.');
     const isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
     
     // Проверяем правильность даты
     const dateObj = new Date(isoDate);
     if (isNaN(dateObj.getTime())) continue;
     
-    // Ищем сумму (может быть с запятой в качестве разделителя и со знаком)
-    const amountMatches = line.match(/([\+\-]?)(\d+(?:[,\.]\d{2})?)\s*₸?\s*$/);
-    if (!amountMatches) continue;
+    // Для табличного формата Халык банка:
+    // Формат: ДАТА ДАТА ОПИСАНИЕ СУММА KZT ПРИХОД РАСХОД КОМИССИЯ НОМЕР
+    // Нужно найти столбец с отрицательной суммой в "Расход в валюте счета"
     
-    const sign = amountMatches[1] || '';
-    const amountStr = amountMatches[2].replace(/,/g, '.').replace(/[^\d\.]/g, '');
+    // Ищем паттерн: -СУММА,XX после описания и до конца строки
+    const amountMatches = line.match(/-(\d+(?:\s\d{3})*(?:,\d{2})?)/g);
+    if (!amountMatches || amountMatches.length === 0) continue;
+    
+    // Берем последнюю найденную отрицательную сумму (это должна быть сумма расхода)
+    const lastAmountMatch = amountMatches[amountMatches.length - 1];
+    const amountStr = lastAmountMatch.replace('-', '').replace(/\s/g, '').replace(',', '.');
     const amount = parseFloat(amountStr);
+    
     if (isNaN(amount) || amount === 0) continue;
     
-    // Определяем тип транзакции
-    let isIncome = false;
-    if (sign === '+') {
-      isIncome = true;
-    } else if (sign === '-') {
-      isIncome = false;
-    } else {
-      // Если знак не указан, пытаемся определить по контексту
-      const lineWithoutDateAndAmount = line.replace(/^\d{2}[\/\.]\d{2}[\/\.]\d{4}/, '').replace(/([\+\-]?)(\d+(?:[,\.]\d{2})?)\s*₸?\s*$/, '').trim();
-      if (/поступлени|зачислени|перевод.*на.*счет|возврат|возмещение|доход/i.test(lineWithoutDateAndAmount)) {
-        isIncome = true;
-      }
+    // В данной выписке все операции - расходы (отрицательные суммы)
+    const isIncome = false;
+    
+    // Извлекаем описание операции
+    // Убираем даты и ищем текст до первой суммы
+    let description = 'Транзакция Халык банка';
+    
+    // Удаляем две даты в начале строки
+    const withoutDates = line.replace(/^\d{2}\.\d{2}\.\d{4}\s+\d{2}\.\d{2}\.\d{4}\s+/, '');
+    
+    // Ищем описание до первой суммы или до KZT
+    const descMatch = withoutDates.match(/^(.+?)\s+(?:-?\d+(?:\s\d{3})*(?:,\d{2})?|KZT)/);
+    if (descMatch && descMatch[1]) {
+      description = descMatch[1].trim();
+      // Очищаем описание от лишних пробелов
+      description = description.replace(/\s+/g, ' ').trim();
     }
     
-    // Извлекаем описание
-    const descriptionMatch = line.match(/^\d{2}[\/\.]\d{2}[\/\.]\d{4}\s+(.+?)\s+([\+\-]?)(\d+(?:[,\.]\d{2})?)\s*₸?\s*$/);
-    let description = descriptionMatch ? descriptionMatch[1].trim() : line;
-    
-    // Очищаем описание от лишних символов
-    description = description.replace(/^\s*[\-\+]\s*/, '').trim();
-    if (!description) {
+    // Если описание пустое или слишком короткое
+    if (!description || description.length < 3) {
       description = 'Транзакция Халык банка';
     }
     
