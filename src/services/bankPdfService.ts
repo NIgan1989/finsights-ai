@@ -57,50 +57,48 @@ const parseKaspiTransactions = (text: string): Omit<Transaction, 'category' | 't
     const line = lines[i].trim();
     if (!line) continue;
     
-    // Ищем строки с датой в формате ДД.ММ.ГГГГ
-    const dateMatch = line.match(/^(\d{2}\.\d{2}\.\d{4})/);
+    // Ищем строки с датой в формате ДД.ММ.ГГ или ДД.ММ.ГГГГ
+    const dateMatch = line.match(/^(\d{2}\.\d{2}\.(\d{2}|\d{4}))/);
     if (!dateMatch) continue;
     
     // Извлекаем дату
     const dateStr = dateMatch[1];
     const dateParts = dateStr.split('.');
-    const isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+    
+    // Определяем год: если двузначный, добавляем 20
+    let year = dateParts[2];
+    if (year.length === 2) {
+      year = `20${year}`;
+    }
+    
+    const isoDate = `${year}-${dateParts[1]}-${dateParts[0]}`;
     
     // Проверяем правильность даты
     const dateObj = new Date(isoDate);
     if (isNaN(dateObj.getTime())) continue;
     
-    // Ищем сумму в конце строки (может быть со знаком + или -)
-    const amountMatches = line.match(/([\+\-]?)(\d+(?:[,\.\s]\d{2})?)\s*₸?\s*$/);
+    // Ищем сумму с знаком (улучшенное регулярное выражение для формата Каспи)
+    const amountMatches = line.match(/([\+\-])\s*(\d+(?:\s?\d{3})*(?:,\d{2})?)\s*₸/);
     if (!amountMatches) continue;
     
-    const sign = amountMatches[1] || '';
-    const amountStr = amountMatches[2].replace(/[\s,]/g, '.').replace(/[^\d\.]/g, '');
+    const sign = amountMatches[1];
+    const amountStr = amountMatches[2].replace(/\s/g, '').replace(',', '.');
     const amount = parseFloat(amountStr);
     if (isNaN(amount) || amount === 0) continue;
     
-    // Определяем тип транзакции по знаку или позиции в строке
-    let isIncome = false;
-    if (sign === '+') {
-      isIncome = true;
-    } else if (sign === '-') {
-      isIncome = false;
-    } else {
-      // Если знак не указан, пытаемся определить по контексту
-      const lineWithoutDateAndAmount = line.replace(/^\d{2}\.\d{2}\.\d{4}/, '').replace(/([\+\-]?)(\d+(?:[,\.\s]\d{2})?)\s*₸?\s*$/, '').trim();
-      // Ключевые слова для доходов
-      if (/поступлени|зачислени|перевод.*на.*счет|возврат|возмещение|доход/i.test(lineWithoutDateAndAmount)) {
-        isIncome = true;
-      }
+    // Определяем тип транзакции по знаку
+    const isIncome = sign === '+';
+    
+    // Извлекаем описание операции (все после знака и суммы)
+    const descriptionMatch = line.match(/^\d{2}\.\d{2}\.(?:\d{2}|\d{4})\s+[\+\-]\s*\d+(?:\s?\d{3})*(?:,\d{2})?\s*₸\s*(.+)$/);
+    let description = 'Транзакция Каспи банка';
+    
+    if (descriptionMatch && descriptionMatch[1]) {
+      description = descriptionMatch[1].trim();
     }
     
-    // Извлекаем описание (все между датой и суммой)
-    const descriptionMatch = line.match(/^\d{2}\.\d{2}\.\d{4}\s+(.+?)\s+([\+\-]?)(\d+(?:[,\.\s]\d{2})?)\s*₸?\s*$/);
-    let description = descriptionMatch ? descriptionMatch[1].trim() : line;
-    
     // Очищаем описание от лишних символов
-    description = description.replace(/^\s*[\-\+]\s*/, '').trim();
-    if (!description) {
+    if (!description || description.length < 3) {
       description = 'Транзакция Каспи банка';
     }
     
@@ -197,7 +195,7 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
     if (!line) continue;
     
     // Ищем любую дату в различных форматах
-    const dateMatch = line.match(/(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{4})/);
+    const dateMatch = line.match(/(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-](?:\d{2}|\d{4}))/);
     if (!dateMatch) continue;
     
     // Извлекаем дату
@@ -207,6 +205,9 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
     
     if (dateParts[2].length === 4) { // ДД/ММ/ГГГГ
       isoDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+    } else if (dateParts[2].length === 2) { // ДД/ММ/ГГ
+      const year = `20${dateParts[2]}`;
+      isoDate = `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
     } else { // ГГГГ/ММ/ДД
       isoDate = `${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`;
     }
