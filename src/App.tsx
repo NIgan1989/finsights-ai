@@ -192,6 +192,7 @@ function App() {
                     <EnhancedDashboard 
                         transactions={transactions} 
                         onRefresh={() => window.location.reload()}
+                        onUpdateTransaction={handleUpdateTransaction}
                         dateRange={dateRange}
                     />
                 }

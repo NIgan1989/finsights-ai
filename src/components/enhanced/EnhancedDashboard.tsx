@@ -33,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import { FinancialCard } from './FinancialCard';
 import { AdvancedChart } from './AdvancedChart';
+import TransactionsTable from '../TransactionsTable';
 import { AdvancedFinanceService } from '../../services/advancedFinanceService';
 import { Transaction } from '../../types';
 import { colors } from '../../theme/designSystem';
@@ -41,6 +42,7 @@ interface EnhancedDashboardProps {
   transactions: Transaction[];
   loading?: boolean;
   onRefresh?: () => void;
+  onUpdateTransaction?: (originalTx: Transaction, updates: { description: string; category: string; }, applyToAll: boolean) => void;
   dateRange?: {
     start: string;
     end: string;
@@ -73,6 +75,7 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   transactions,
   loading = false,
   onRefresh,
+  onUpdateTransaction,
   dateRange,
   onDateRangeChange,
 }) => {
@@ -318,6 +321,7 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           <Tab label="Расходы по категориям" />
           <Tab label="Коэффициенты" />
           <Tab label="Прогнозы" />
+          <Tab label="Транзакции" />
           <Tab label={
             <Badge 
               badgeContent={riskAnalysis?.alerts.length || 0} 
@@ -629,8 +633,26 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           </Grid>
         </TabPanel>
 
-        {/* Риски */}
+        {/* Транзакции */}
         <TabPanel value={activeTab} index={5}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Детальные транзакции
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Полный список всех транзакций с возможностью редактирования категорий и описаний
+              </Typography>
+              <TransactionsTable 
+                transactions={transactions} 
+                onUpdateTransaction={onUpdateTransaction || (() => {})} 
+              />
+            </CardContent>
+          </Card>
+        </TabPanel>
+
+        {/* Риски */}
+        <TabPanel value={activeTab} index={6}>
           {riskAnalysis && (
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
