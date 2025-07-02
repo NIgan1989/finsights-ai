@@ -1,5 +1,6 @@
 import { Transaction, PnLData, CashFlowData, BalanceSheetData, FinancialReport } from '../types';
 import { categorizeExpenses, identifyTransactionsForClarification, extractTransactionsFromImage } from './openaiService';
+import { parseBankPdf, validateBankStatement } from './bankPdfService';
 
 const parseCSV = (csvText: string): Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] => {
     const lines = csvText.trim().split('\n');
@@ -63,8 +64,43 @@ export const processAndCategorizeTransactions = async (file: File, onProgress: (
             reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
             reader.readAsText(file, 'utf-8');
         });
-    } else if (['application/pdf', 'image/png', 'image/jpeg'].includes(file.type)) {
-        onProgress("Извлечение данных из документа (может занять до минуты)...");
+    } else if (file.type === 'application/pdf') {
+        onProgress("Обработка PDF банковской выписки...");
+        try {
+            // Используем специализированный парсер для банковских PDF
+            const result = await parseBankPdf(file);
+            onProgress(`Определен банк: ${result.bankType.toUpperCase()}. Найдено транзакций: ${result.transactions.length}`);
+            
+            // Проверяем, что это действительно банковская выписка
+            if (!validateBankStatement(result.extractedText)) {
+                throw new Error('PDF файл не содержит данных банковской выписки');
+            }
+
+            // Конвертируем банковские транзакции в CSV формат для дальнейшей обработки
+            const csvHeader = "Дата,Описание,Сумма";
+            const csvRows = result.transactions.map(tx => 
+                `${tx.date},"${tx.description.replace(/"/g, '""')}",${tx.type === 'income' ? tx.amount : -tx.amount}`
+            );
+            csvContent = [csvHeader, ...csvRows].join('\n');
+            
+        } catch (error) {
+            console.error('Ошибка обработки PDF банковской выписки:', error);
+            // Fallback к общему методу извлечения данных
+            onProgress("Извлечение данных из PDF документа (может занять до минуты)...");
+            try {
+                const base64String: string = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => resolve((event.target?.result as string).split(',')[1]);
+                    reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
+                    reader.readAsDataURL(file);
+                });
+                csvContent = await extractTransactionsFromImage({ mimeType: file.type, data: base64String });
+            } catch (e) {
+                throw new Error(`Не удалось обработать PDF файл: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+            }
+        }
+    } else if (['image/png', 'image/jpeg'].includes(file.type)) {
+        onProgress("Извлечение данных из изображения (может занять до минуты)...");
         try {
             const base64String: string = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -76,9 +112,8 @@ export const processAndCategorizeTransactions = async (file: File, onProgress: (
         } catch (e) {
             throw e; // re-throw specific error from geminiService
         }
-
     } else {
-        throw new Error(`Неподдерживаемый тип файла: ${file.type}`);
+        throw new Error(`Неподдерживаемый тип файла: ${file.type}. Поддерживаются: CSV, PDF (банковские выписки), PNG, JPEG`);
     }
 
     if (!csvContent || csvContent.trim() === '') {

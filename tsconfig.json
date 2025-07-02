@@ -19,12 +19,20 @@
     "isolatedModules": true,
     "noEmit": true,
     "useDefineForClassFields": true,
-    "noEmitOnError": true,
+    "noEmitOnError": false,
     "jsx": "react-jsx",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "paths": {
+      "react": ["node_modules/@types/react"],
+      "react-dom": ["node_modules/@types/react-dom"]
+    }
   },
   "include": [
     "src",
+    "src/types/**/*",
     "**/*.ts",
     "**/*.tsx"
   ],

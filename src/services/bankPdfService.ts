@@ -1,10 +1,9 @@
 import { Transaction } from '../types';
+import { getDocument, GlobalWorkerOptions, version as pdfjsVersion, PDFDocumentProxy } from 'pdfjs-dist';
 
-// Устанавливаем PDF.js worker
-const pdfjsLib = (window as any).pdfjsLib;
-if (pdfjsLib) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
+// Определяем URL воркера через импорт мета
+// Webpack превратит это в ссылку на собранный файл в /static/js
+GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
 
 // Паттерны для извлечения данных из PDF выписок банков
 const KASPI_PATTERNS = {
@@ -53,37 +52,49 @@ const parseKaspiTransactions = (text: string): Omit<Transaction, 'category' | 't
   const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
-    const cleanLine = line.trim();
-    if (!cleanLine) continue;
-    
-    // Ищем строки с датой в формате ДД.ММ.ГГГГ
-    const dateMatch = cleanLine.match(/^(\d{2}\.\d{2}\.\d{4})/);
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    if (!rawLine) continue;
+
+    const line = rawLine.replace(/\u202f|\u00A0/g, ' ').trim(); // заменяем неразрывные пробелы
+
+    // Проверяем начало строки на дату ДД.ММ.ГГ(ГГ)
+    const dateMatch = line.match(/^(\d{2}\.\d{2}\.\d{2,4})/);
     if (!dateMatch) continue;
-    
-    // Извлекаем дату
+
     const dateStr = dateMatch[1];
     const dateParts = dateStr.split('.');
-    const isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-    
-    // Ищем сумму в конце строки
-    const amountMatch = cleanLine.match(/([\-\+]?\d+(?:\.\d{2})?)\s*₸?\s*$/);
-    if (!amountMatch) continue;
-    
-    const amountStr = amountMatch[1].replace(/[^\d\-\+\.]/g, '');
+    let [dd, MM, yy] = dateParts;
+    if (yy.length === 2) yy = `20${yy}`;
+    const isoDate = `${yy}-${MM}-${dd}`;
+    const dateObj = new Date(isoDate);
+    if (isNaN(dateObj.getTime())) continue;
+
+    // Удаляем дату из строки
+    const rest = line.slice(dateStr.length).trim();
+
+    // Ищем сумму в конце строки (± число ,дд) перед символом ₸
+    const amountRegex = /([\+\-])\s*([\d\s]+(?:,[\d]{2})?)\s*₸\s*$/;
+    const amtMatch = rest.match(amountRegex);
+    if (!amtMatch) continue;
+
+    const sign = amtMatch[1];
+    const amountStr = amtMatch[2].replace(/\s/g, '').replace(',', '.');
     const amount = parseFloat(amountStr);
-    if (isNaN(amount)) continue;
-    
-    // Извлекаем описание (все между датой и суммой)
-    const descriptionMatch = cleanLine.match(/^\d{2}\.\d{2}\.\d{4}\s*(.+?)\s*[\-\+]?\d+(?:\.\d{2})?\s*₸?\s*$/);
-    const description = descriptionMatch ? descriptionMatch[1].trim() : cleanLine;
-    
+    if (isNaN(amount) || amount === 0) continue;
+
+    // Описание = всё, что между началом rest и позицией amountRegex
+    const desc = rest.replace(amountRegex, '').trim();
+    const description = desc && desc.length >= 3 ? desc : 'Транзакция Каспи банка';
+
+    const isIncome = sign === '+';
+
     transactions.push({
-      id: `kaspi_${Date.now()}_${transactions.length}`,
+      id: `kaspi_${Date.now()}_${transactions.length}_${Math.random().toString(36).substr(2, 9)}`,
       date: isoDate,
-      description: description || 'Транзакция Каспи банка',
+      description,
       amount: Math.abs(amount),
-      type: amount >= 0 ? 'income' : 'expense',
+      type: isIncome ? 'income' : 'expense',
     });
   }
   
@@ -97,37 +108,67 @@ const parseHalykTransactions = (text: string): Omit<Transaction, 'category' | 't
   const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
-    const cleanLine = line.trim();
-    if (!cleanLine) continue;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
     
-    // Ищем строки с датой в формате ДД/ММ/ГГГГ или ДД.ММ.ГГГГ
-    const dateMatch = cleanLine.match(/^(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
+    // Ищем строки с датой в формате ДД.ММ.ГГГГ (табличный формат Халык банка)
+    const dateMatch = line.match(/^(\d{2}\.\d{2}\.\d{4})/);
     if (!dateMatch) continue;
     
     // Извлекаем дату
     const dateStr = dateMatch[1];
-    const dateParts = dateStr.split(/[\/\.]/);
+    const dateParts = dateStr.split('.');
     const isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
     
-    // Ищем сумму (может быть с запятой в качестве разделителя)
-    const amountMatch = cleanLine.match(/([\-\+]?\d+(?:[,\.]\d{2})?)\s*₸?\s*$/);
-    if (!amountMatch) continue;
+    // Проверяем правильность даты
+    const dateObj = new Date(isoDate);
+    if (isNaN(dateObj.getTime())) continue;
     
-    const amountStr = amountMatch[1].replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
+    // Для табличного формата Халык банка:
+    // Формат: ДАТА ДАТА ОПИСАНИЕ СУММА KZT ПРИХОД РАСХОД КОМИССИЯ НОМЕР
+    // Нужно найти столбец с отрицательной суммой в "Расход в валюте счета"
+    
+    // Ищем паттерн: -СУММА,XX после описания и до конца строки
+    const amountMatches = line.match(/-(\d+(?:\s\d{3})*(?:,\d{2})?)/g);
+    if (!amountMatches || amountMatches.length === 0) continue;
+    
+    // Берем последнюю найденную отрицательную сумму (это должна быть сумма расхода)
+    const lastAmountMatch = amountMatches[amountMatches.length - 1];
+    const amountStr = lastAmountMatch.replace('-', '').replace(/\s/g, '').replace(',', '.');
     const amount = parseFloat(amountStr);
-    if (isNaN(amount)) continue;
     
-    // Извлекаем описание
-    const descriptionMatch = cleanLine.match(/^\d{2}[\/\.]\d{2}[\/\.]\d{4}\s*(.+?)\s*[\-\+]?\d+(?:[,\.]\d{2})?\s*₸?\s*$/);
-    const description = descriptionMatch ? descriptionMatch[1].trim() : cleanLine;
+    if (isNaN(amount) || amount === 0) continue;
+    
+    // В данной выписке все операции - расходы (отрицательные суммы)
+    const isIncome = false;
+    
+    // Извлекаем описание операции
+    // Убираем даты и ищем текст до первой суммы
+    let description = 'Транзакция Халык банка';
+    
+    // Удаляем две даты в начале строки
+    const withoutDates = line.replace(/^\d{2}\.\d{2}\.\d{4}\s+\d{2}\.\d{2}\.\d{4}\s+/, '');
+    
+    // Ищем описание до первой суммы или до KZT
+    const descMatch = withoutDates.match(/^(.+?)\s+(?:-?\d+(?:\s\d{3})*(?:,\d{2})?|KZT)/);
+    if (descMatch && descMatch[1]) {
+      description = descMatch[1].trim();
+      // Очищаем описание от лишних пробелов
+      description = description.replace(/\s+/g, ' ').trim();
+    }
+    
+    // Если описание пустое или слишком короткое
+    if (!description || description.length < 3) {
+      description = 'Транзакция Халык банка';
+    }
     
     transactions.push({
-      id: `halyk_${Date.now()}_${transactions.length}`,
+      id: `halyk_${Date.now()}_${transactions.length}_${Math.random().toString(36).substr(2, 9)}`,
       date: isoDate,
-      description: description || 'Транзакция Халык банка',
+      description: description,
       amount: Math.abs(amount),
-      type: amount >= 0 ? 'income' : 'expense',
+      type: isIncome ? 'income' : 'expense',
     });
   }
   
@@ -141,12 +182,12 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
   const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
-    const cleanLine = line.trim();
-    if (!cleanLine) continue;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
     
     // Ищем любую дату в различных форматах
-    const dateMatch = cleanLine.match(/(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{4})/);
+    const dateMatch = line.match(/(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-](?:\d{2}|\d{4}))/);
     if (!dateMatch) continue;
     
     // Извлекаем дату
@@ -156,23 +197,31 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
     
     if (dateParts[2].length === 4) { // ДД/ММ/ГГГГ
       isoDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+    } else if (dateParts[2].length === 2) { // ДД/ММ/ГГ
+      const year = `20${dateParts[2]}`;
+      isoDate = `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
     } else { // ГГГГ/ММ/ДД
       isoDate = `${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`;
     }
     
+    // Проверяем правильность даты
+    const dateObj = new Date(isoDate);
+    if (isNaN(dateObj.getTime())) continue;
+    
     // Ищем сумму
-    const amountMatch = cleanLine.match(/([\-\+]?\d+(?:[,\.]\d{2})?)/g);
-    if (!amountMatch) continue;
+    const amountMatches = line.match(/([\-\+]?\d+(?:[,\.]\d{2})?)/g);
+    if (!amountMatches || amountMatches.length === 0) continue;
     
     // Берем последнее число как сумму
-    const amountStr = amountMatch[amountMatch.length - 1].replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
+    const lastAmount = amountMatches[amountMatches.length - 1];
+    const amountStr = lastAmount.replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
     const amount = parseFloat(amountStr);
-    if (isNaN(amount)) continue;
+    if (isNaN(amount) || amount === 0) continue;
     
     transactions.push({
-      id: `generic_${Date.now()}_${transactions.length}`,
+      id: `generic_${Date.now()}_${transactions.length}_${Math.random().toString(36).substr(2, 9)}`,
       date: isoDate,
-      description: cleanLine,
+      description: line.trim() || 'Банковская транзакция',
       amount: Math.abs(amount),
       type: amount >= 0 ? 'income' : 'expense',
     });
@@ -186,23 +235,17 @@ const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 
  */
 const extractTextFromPdf = async (file: File): Promise<string> => {
   try {
-    if (!pdfjsLib) {
-      throw new Error('PDF.js не загружен. Пожалуйста, убедитесь, что библиотека подключена.');
-    }
-
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    const pdf: PDFDocumentProxy = await getDocument({ data: arrayBuffer }).promise;
     let fullText = '';
-    
+
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ');
+      const pageText = textContent.items.map((item: any) => (item as any).str).join(' ');
       fullText += pageText + '\n';
     }
-    
+
     return fullText;
   } catch (error) {
     console.error('Ошибка извлечения текста из PDF:', error);
@@ -263,7 +306,8 @@ export const validateBankStatement = (text: string): boolean => {
   const keywords = [
     'выписка', 'statement', 'transaction', 'транзакция',
     'баланс', 'balance', 'каспи', 'kaspi', 'халык', 'halyk',
-    'банк', 'bank', 'дата', 'date', 'сумма', 'amount'
+    'банк', 'bank', 'дата', 'date', 'сумма', 'amount',
+    'счет', 'account', 'операци', 'operation'
   ];
   
   const textLower = text.toLowerCase();

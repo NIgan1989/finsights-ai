@@ -1,8 +1,9 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font, pdf } from '@react-pdf/renderer';
 import { FinancialReport } from '../types';
-import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
+
+// Локальный тип для функции перевода
+type TFunction = (key: string, options?: any) => string;
 
 // Загрузка шрифта
 Font.register({
@@ -122,7 +123,11 @@ export interface FinancialReportPDFProps {
     t: TFunction;
 }
 
-export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ report, dateRange, t }) => {
+export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ 
+    report, 
+    dateRange, 
+    t 
+}: FinancialReportPDFProps) => {
     const { pnl, cashFlow, balanceSheet } = report;
 
     // Форматируем даты для заголовка
@@ -221,7 +226,7 @@ export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ repo
 
                 {/* Расходы по категориям */}
                 <Text style={styles.subsection}>{t('financialReport.expensesByCategory')}</Text>
-                {pnl.expenseByCategory.slice(0, 5).map((expense, index) => (
+                {pnl.expenseByCategory.slice(0, 5).map((expense: any, index: number) => (
                     <View key={index} style={styles.row}>
                         <Text style={styles.indentedLabel}>{expense.name}</Text>
                         <Text style={styles.value}>{formatCurrency(expense.value)}</Text>
@@ -497,13 +502,26 @@ export const FinancialReportContent: React.FC<FinancialReportPDFProps> = ({ repo
     );
 };
 
-const FinancialReportPDF: React.FC<FinancialReportPDFProps> = ({ report, dateRange }) => {
-    const { t } = useTranslation();
+// Note: This component is not currently used in the application
+// The main export is FinancialReportContent which is used for PDF generation
+// If you need a PDF preview component, you'll need to pass the t function as a prop
+export interface FinancialReportPDFPreviewProps {
+    report: FinancialReport;
+    dateRange: { start: string; end: string };
+    t: TFunction;
+}
 
+const FinancialReportPDF: React.FC<FinancialReportPDFPreviewProps> = ({ 
+    report, 
+    dateRange, 
+    t 
+}: FinancialReportPDFPreviewProps) => {
     return (
         <div>
             <PDFViewer style={{ width: '100%', height: '80vh' }}>
-                <FinancialReportContent report={report} dateRange={dateRange} t={t} />
+                <Document>
+                    <FinancialReportContent report={report} dateRange={dateRange} t={t} />
+                </Document>
             </PDFViewer>
         </div>
     );
