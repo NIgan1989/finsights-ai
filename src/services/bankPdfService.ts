@@ -1,9 +1,9 @@
 import { Transaction } from '../types';
 import { getDocument, GlobalWorkerOptions, version as pdfjsVersion, PDFDocumentProxy } from 'pdfjs-dist';
-import workerSrc from 'pdfjs-dist/build/pdf.worker.min.js';
 
-// Устанавливаем локальный worker (Webpack выдаёт URL)
-GlobalWorkerOptions.workerSrc = workerSrc as any;
+// Определяем URL воркера через импорт мета
+// Webpack превратит это в ссылку на собранный файл в /static/js
+GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
 
 // Паттерны для извлечения данных из PDF выписок банков
 const KASPI_PATTERNS = {
