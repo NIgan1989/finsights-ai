@@ -6,7 +6,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "setup-local": "node setup-local.js",
+    "check-env": "node -e \"console.log('Node:', process.version); console.log('npm:', require('child_process').execSync('npm -v', {encoding:'utf8'}).trim());\""
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
