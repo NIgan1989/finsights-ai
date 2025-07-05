@@ -70,14 +70,21 @@ export const processAndCategorizeTransactions = async (file: File, onProgress: (
     } else if (file.type === 'application/pdf') {
         onProgress("Анализ PDF выписки банка...");
         try {
-            // Пытаемся использовать специализированный парсер для банковских PDF
-            const bankPdfResult = await parseBankPdf(file);
+                    // Пытаемся использовать специализированный парсер для банковских PDF
+        const bankPdfResult = await parseBankPdf(file);
+        
+        if (bankPdfResult.transactions.length > 0) {
+            onProgress(`Обнаружена выписка банка: ${bankPdfResult.bankType.toUpperCase()}. Найдено транзакций: ${bankPdfResult.transactions.length}`);
+            console.log('Результат парсинга банковского PDF:', formatParseResult(bankPdfResult));
             
-            if (bankPdfResult.transactions.length > 0) {
-                onProgress(`Обнаружена выписка банка: ${bankPdfResult.bankType.toUpperCase()}. Найдено транзакций: ${bankPdfResult.transactions.length}`);
-                console.log('Результат парсинга банковского PDF:', formatParseResult(bankPdfResult));
-                transactions = bankPdfResult.transactions;
-            } else {
+            // Показываем дополнительную отладочную информацию пользователю
+            if (bankPdfResult.debugInfo) {
+                console.log('Детальная информация о парсинге:', bankPdfResult.debugInfo);
+                onProgress(`Парсинг завершен успешно. Проверьте консоль браузера для детальной информации.`);
+            }
+            
+            transactions = bankPdfResult.transactions;
+        } else {
                 // Если банковский парсер не сработал, используем AI извлечение
                 onProgress("Извлечение данных из PDF с помощью AI (может занять до минуты)...");
                 const base64String: string = await new Promise((resolve, reject) => {

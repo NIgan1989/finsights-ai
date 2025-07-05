@@ -6,25 +6,11 @@ if (pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// Паттерны для извлечения данных из PDF выписок банков
-const KASPI_PATTERNS = {
-  transaction: /(\d{2}\.\d{2}\.\d{4})\s*(.+?)\s*([\-\+]?\d+(?:\.\d{2})?)/g,
-  date: /(\d{2}\.\d{2}\.\d{4})/,
-  amount: /([\-\+]?\d+(?:\.\d{2})?)/,
-  description: /^\d{2}\.\d{2}\.\d{4}\s*(.+?)\s*[\-\+]?\d+(?:\.\d{2})?$/
-};
-
-const HALYK_PATTERNS = {
-  transaction: /(\d{2}\/\d{2}\/\d{4})\s*(.+?)\s*([\-\+]?\d+(?:,\d{2})?)/g,
-  date: /(\d{2}\/\d{2}\/\d{4})/,
-  amount: /([\-\+]?\d+(?:,\d{2})?)/,
-  description: /^\d{2}\/\d{2}\/\d{4}\s*(.+?)\s*[\-\+]?\d+(?:,\d{2})?$/
-};
-
 interface BankPdfParseResult {
   transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[];
   bankType: 'kaspi' | 'halyk' | 'unknown';
   extractedText: string;
+  debugInfo?: string;
 }
 
 /**
@@ -47,157 +33,342 @@ const detectBankType = (text: string): 'kaspi' | 'halyk' | 'unknown' => {
 };
 
 /**
- * Парсит транзакции из текста выписки Каспи банка
+ * Улучшенный парсер для транзакций Каспи банка
  */
-const parseKaspiTransactions = (text: string): Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] => {
+const parseKaspiTransactions = (text: string): { 
+  transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[], 
+  debugInfo: string 
+} => {
   const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
+  const debugLines: string[] = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
-    const cleanLine = line.trim();
-    if (!cleanLine) continue;
+  debugLines.push(`Всего строк для анализа: ${lines.length}`);
+  debugLines.push('--- Начинаем парсинг транзакций Каспи банка ---');
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
     
-    // Ищем строки с датой в формате ДД.ММ.ГГГГ
-    const dateMatch = cleanLine.match(/^(\d{2}\.\d{2}\.\d{2}(?:\d{2})?)/);
-    if (!dateMatch) continue;
+    // Различные паттерны для строк с транзакциями в выписках Каспи
+    const patterns = [
+      // Основной формат: ДД.ММ.ГГГГ описание ±сумма ₸
+      /^(\d{1,2}\.\d{1,2}\.\d{4})\s+(.+?)\s+([\+\-]?\d[\d\s]*[,.]?\d{0,2})\s*₸?\s*$/,
+      
+      // Формат с временем: ДД.ММ.ГГГГ ЧЧ:ММ описание ±сумма ₸
+      /^(\d{1,2}\.\d{1,2}\.\d{4})\s+\d{1,2}:\d{2}\s+(.+?)\s+([\+\-]?\d[\d\s]*[,.]?\d{0,2})\s*₸?\s*$/,
+      
+      // Формат с разделением по столбцам
+      /^(\d{1,2}\.\d{1,2}\.\d{4})\s+(.+?)\s+([\+\-]?\d[\d\s]*[,.]?\d{0,2})$/,
+      
+      // Простой формат без символа валюты
+      /^(\d{1,2}\.\d{1,2}\.\d{4})\s+(.+?)\s+([\+\-]?\d+(?:[,.]\d{1,2})?)$/,
+      
+      // Формат с дополнительными символами
+      /(\d{1,2}\.\d{1,2}\.\d{4})\s+(.+?)\s+([\+\-]?\d[\d\s,\.]*)\s*₸?\s*(?:Остаток|Balance|Итого)?/
+    ];
     
-    // Извлекаем дату
-    const dateStr = dateMatch[1];
-    const dateParts = dateStr.split('.');
-    let year = dateParts[2];
-    if (year.length === 2) {
-      // Предполагаем 2000-й век
-      year = `20${year}`;
+    let matched = false;
+    
+    for (const pattern of patterns) {
+      const match = line.match(pattern);
+      if (match) {
+        const [, dateStr, description, amountStr] = match;
+        
+        // Парсинг даты
+        const dateParts = dateStr.split('.');
+        if (dateParts.length !== 3) continue;
+        
+        let [day, month, year] = dateParts;
+        
+        // Добавляем ведущие нули
+        day = day.padStart(2, '0');
+        month = month.padStart(2, '0');
+        
+        // Проверяем корректность года
+        if (year.length === 2) {
+          year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
+        }
+        
+        const isoDate = `${year}-${month}-${day}`;
+        
+        // Проверка корректности даты
+        const dateObj = new Date(isoDate);
+        if (isNaN(dateObj.getTime())) {
+          debugLines.push(`❌ Строка ${i+1}: Некорректная дата ${dateStr}`);
+          continue;
+        }
+        
+        // Парсинг суммы
+        let cleanAmountStr = amountStr
+          .replace(/\s+/g, '') // Убираем пробелы
+          .replace(/[^\d\+\-,\.]/g, '') // Оставляем только цифры, знаки и разделители
+          .replace(/,/g, '.'); // Заменяем запятые на точки
+        
+        // Обработка знака
+        const isNegative = cleanAmountStr.includes('-');
+        const isPositive = cleanAmountStr.includes('+');
+        cleanAmountStr = cleanAmountStr.replace(/[\+\-]/g, '');
+        
+        const amount = parseFloat(cleanAmountStr);
+        if (isNaN(amount) || amount === 0) {
+          debugLines.push(`❌ Строка ${i+1}: Некорректная сумма "${amountStr}" -> "${cleanAmountStr}"`);
+          continue;
+        }
+        
+        // Определение типа транзакции
+        let transactionType: 'income' | 'expense' = 'expense';
+        
+        if (isPositive || (!isNegative && (
+          description.toLowerCase().includes('пополнение') ||
+          description.toLowerCase().includes('поступление') ||
+          description.toLowerCase().includes('зарплата') ||
+          description.toLowerCase().includes('перевод на счет') ||
+          description.toLowerCase().includes('возврат') ||
+          description.toLowerCase().includes('доход')
+        ))) {
+          transactionType = 'income';
+        }
+        
+        // Очистка описания
+        const cleanDescription = description
+          .replace(/\s+/g, ' ')
+          .replace(/^[^\w\u0400-\u04FF]+/, '') // Убираем символы в начале
+          .replace(/[^\w\u0400-\u04FF\s]+$/, '') // Убираем символы в конце
+          .trim();
+        
+        const transaction = {
+          id: `kaspi_${Date.now()}_${transactions.length}`,
+          date: isoDate,
+          description: cleanDescription || 'Транзакция Каспи банка',
+          amount: amount,
+          type: transactionType,
+        };
+        
+        transactions.push(transaction);
+        debugLines.push(`✅ Строка ${i+1}: ${dateStr} | ${cleanDescription} | ${amount} ₸ (${transactionType})`);
+        matched = true;
+        break;
+      }
     }
-    const isoDate = `${year}-${dateParts[1]}-${dateParts[0]}`;
     
-    // Ищем сумму в конце строки
-    const amountMatch = cleanLine.match(/([\-\+]?\d[\d\s]*[\,\.]?\d{0,2})\s*₸?\s*$/);
-    if (!amountMatch) continue;
-    
-    const amountStr = amountMatch[1].replace(/\s+/g,'').replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount)) continue;
-    
-    // Извлекаем описание (все между датой и суммой)
-    const descriptionMatch = cleanLine.match(/^\d{2}\.\d{2}\.\d{2}(?:\d{2})?\s*(.+?)\s*[\-\+]?\d[\d\s]*[\,\.]?\d{0,2}\s*₸?\s*$/);
-    const description = descriptionMatch ? descriptionMatch[1].trim() : cleanLine;
-    
-    transactions.push({
-      id: `kaspi_${Date.now()}_${transactions.length}`,
-      date: isoDate,
-      description: description || 'Транзакция Каспи банка',
-      amount: Math.abs(amount),
-      type: amount >= 0 ? 'income' : 'expense',
-    });
+    if (!matched && line.match(/\d{1,2}\.\d{1,2}\.\d{4}/)) {
+      debugLines.push(`⚠️ Строка ${i+1}: Содержит дату, но не распознана: "${line}"`);
+    }
   }
   
-  return transactions;
+  debugLines.push(`--- Итого найдено транзакций: ${transactions.length} ---`);
+  
+  return {
+    transactions,
+    debugInfo: debugLines.join('\n')
+  };
 };
 
 /**
- * Парсит транзакции из текста выписки Халык банка
+ * Улучшенный парсер для транзакций Халык банка
  */
-const parseHalykTransactions = (text: string): Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] => {
+const parseHalykTransactions = (text: string): { 
+  transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[], 
+  debugInfo: string 
+} => {
   const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
+  const debugLines: string[] = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
-    const cleanLine = line.trim();
-    if (!cleanLine) continue;
+  debugLines.push(`Всего строк для анализа: ${lines.length}`);
+  debugLines.push('--- Начинаем парсинг транзакций Халык банка ---');
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
     
-    // Ищем строки с датой в формате ДД/ММ/ГГГГ или ДД.ММ.ГГГГ
-    const dateMatch = cleanLine.match(/^(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
-    if (!dateMatch) continue;
+    // Паттерны для Халык банка
+    const patterns = [
+      // Формат с слешами: ДД/ММ/ГГГГ описание ±сумма
+      /^(\d{1,2}\/\d{1,2}\/\d{4})\s+(.+?)\s+([\+\-]?\d[\d\s]*[,.]?\d{0,2})\s*₸?\s*$/,
+      
+      // Формат с точками: ДД.ММ.ГГГГ описание ±сумма
+      /^(\d{1,2}\.\d{1,2}\.\d{4})\s+(.+?)\s+([\+\-]?\d[\d\s]*[,.]?\d{0,2})\s*₸?\s*$/,
+      
+      // Формат с временем
+      /^(\d{1,2}[\/\.]\d{1,2}[\/\.]\d{4})\s+\d{1,2}:\d{2}\s+(.+?)\s+([\+\-]?\d[\d\s]*[,.]?\d{0,2})\s*₸?\s*$/,
+    ];
     
-    // Извлекаем дату
-    const dateStr = dateMatch[1];
-    const dateParts = dateStr.split(/[\/\.]/);
-    let year = dateParts[2];
-    if (year.length === 2) {
-      // Предполагаем 2000-й век
-      year = `20${year}`;
+    let matched = false;
+    
+    for (const pattern of patterns) {
+      const match = line.match(pattern);
+      if (match) {
+        const [, dateStr, description, amountStr] = match;
+        
+        // Парсинг даты
+        const dateParts = dateStr.split(/[\/\.]/);
+        if (dateParts.length !== 3) continue;
+        
+        let [day, month, year] = dateParts;
+        day = day.padStart(2, '0');
+        month = month.padStart(2, '0');
+        
+        if (year.length === 2) {
+          year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
+        }
+        
+        const isoDate = `${year}-${month}-${day}`;
+        
+        // Парсинг суммы
+        let cleanAmountStr = amountStr
+          .replace(/\s+/g, '')
+          .replace(/[^\d\+\-,\.]/g, '')
+          .replace(/,/g, '.');
+        
+        const isNegative = cleanAmountStr.includes('-');
+        const isPositive = cleanAmountStr.includes('+');
+        cleanAmountStr = cleanAmountStr.replace(/[\+\-]/g, '');
+        
+        const amount = parseFloat(cleanAmountStr);
+        if (isNaN(amount) || amount === 0) continue;
+        
+        // Определение типа транзакции для Халык банка
+        let transactionType: 'income' | 'expense' = 'expense';
+        
+        if (isPositive || (!isNegative && (
+          description.toLowerCase().includes('пополнение') ||
+          description.toLowerCase().includes('поступление') ||
+          description.toLowerCase().includes('зарплата') ||
+          description.toLowerCase().includes('доход')
+        ))) {
+          transactionType = 'income';
+        }
+        
+        const cleanDescription = description.replace(/\s+/g, ' ').trim();
+        
+        transactions.push({
+          id: `halyk_${Date.now()}_${transactions.length}`,
+          date: isoDate,
+          description: cleanDescription || 'Транзакция Халык банка',
+          amount: amount,
+          type: transactionType,
+        });
+        
+        debugLines.push(`✅ Строка ${i+1}: ${dateStr} | ${cleanDescription} | ${amount} ₸ (${transactionType})`);
+        matched = true;
+        break;
+      }
     }
-    const isoDate = `${year}-${dateParts[1]}-${dateParts[0]}`;
     
-    // Ищем сумму (может быть с запятой в качестве разделителя)
-    const amountMatch = cleanLine.match(/([\-\+]?\d[\d\s]*[,\.]?\d{0,2})\s*₸?\s*$/);
-    if (!amountMatch) continue;
-    
-    const amountStr = amountMatch[1].replace(/\s+/g,'').replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount)) continue;
-    
-    // Извлекаем описание
-    const descriptionMatch = cleanLine.match(/^\d{2}[\/\.]\d{2}[\/\.]\d{4}\s*(.+?)\s*[\-\+]?\d+(?:[,\.]\d{2})?\s*₸?\s*$/);
-    const description = descriptionMatch ? descriptionMatch[1].trim() : cleanLine;
-    
-    transactions.push({
-      id: `halyk_${Date.now()}_${transactions.length}`,
-      date: isoDate,
-      description: description || 'Транзакция Халык банка',
-      amount: Math.abs(amount),
-      type: amount >= 0 ? 'income' : 'expense',
-    });
+    if (!matched && line.match(/\d{1,2}[\/\.]\d{1,2}[\/\.]\d{4}/)) {
+      debugLines.push(`⚠️ Строка ${i+1}: Содержит дату, но не распознана: "${line}"`);
+    }
   }
   
-  return transactions;
+  debugLines.push(`--- Итого найдено транзакций: ${transactions.length} ---`);
+  
+  return {
+    transactions,
+    debugInfo: debugLines.join('\n')
+  };
 };
 
 /**
- * Парсит общий формат транзакций (для неопознанных банков)
+ * Улучшенный общий парсер для неопознанных банков
  */
-const parseGenericTransactions = (text: string): Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] => {
+const parseGenericTransactions = (text: string): { 
+  transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[], 
+  debugInfo: string 
+} => {
   const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
+  const debugLines: string[] = [];
   const lines = text.split('\n');
   
-  for (const line of lines) {
-    const cleanLine = line.trim();
-    if (!cleanLine) continue;
+  debugLines.push(`Всего строк для анализа: ${lines.length}`);
+  debugLines.push('--- Начинаем общий парсинг транзакций ---');
+  
+  // Универсальные паттерны для различных форматов дат и транзакций
+  const datePatterns = [
+    /(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{4})/,  // ДД/ММ/ГГГГ, ДД.ММ.ГГГГ, ДД-ММ-ГГГГ
+    /(\d{4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,2})/   // ГГГГ/ММ/ДД, ГГГГ.ММ.ДД, ГГГГ-ММ-ДД
+  ];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
     
-    // Ищем любую дату в различных форматах
-    const dateMatch = cleanLine.match(/(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{4})/);
+    let dateMatch = null;
+    let dateFormat = '';
+    
+    // Ищем дату в различных форматах
+    for (const pattern of datePatterns) {
+      const match = line.match(pattern);
+      if (match) {
+        dateMatch = match;
+        dateFormat = match[1];
+        break;
+      }
+    }
+    
     if (!dateMatch) continue;
     
-    // Извлекаем дату
-    const dateStr = dateMatch[1];
-    const dateParts = dateStr.split(/[\/\.\-]/);
-    let year = dateParts[2];
-    if (year.length === 2) {
-      // Предполагаем 2000-й век
-      year = `20${year}`;
-    }
+    // Парсинг даты
+    const dateParts = dateFormat.split(/[\/\.\-]/);
     let isoDate: string;
     
-    if (dateParts[2].length === 4) { // ДД/ММ/ГГГГ
-      isoDate = `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
-    } else { // ГГГГ/ММ/ДД
-      isoDate = `${year}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+    if (dateParts[0].length === 4) {
+      // Формат ГГГГ/ММ/ДД
+      const [year, month, day] = dateParts;
+      isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    } else {
+      // Формат ДД/ММ/ГГГГ
+      const [day, month, year] = dateParts;
+      const fullYear = year.length === 2 ? (parseInt(year) > 50 ? `19${year}` : `20${year}`) : year;
+      isoDate = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
     
-    // Ищем сумму
-    const amountMatch = cleanLine.match(/([\-\+]?\d[\d\s]*[,\.]?\d{0,2})/g);
-    if (!amountMatch) continue;
+    // Ищем все числа в строке (потенциальные суммы)
+    const numberMatches = line.match(/([\+\-]?\d[\d\s]*[,.]?\d{0,2})/g);
+    if (!numberMatches || numberMatches.length === 0) continue;
     
-    // Берем последнее число как сумму
-    const amountStr = amountMatch[amountMatch.length - 1].replace(/\s+/g,'').replace(/,/g, '.').replace(/[^\d\-\+\.]/g, '');
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount)) continue;
+    // Берем последнее число как сумму транзакции
+    const amountStr = numberMatches[numberMatches.length - 1];
+    let cleanAmountStr = amountStr
+      .replace(/\s+/g, '')
+      .replace(/[^\d\+\-,\.]/g, '')
+      .replace(/,/g, '.');
+    
+    const isNegative = cleanAmountStr.includes('-');
+    cleanAmountStr = cleanAmountStr.replace(/[\+\-]/g, '');
+    
+    const amount = parseFloat(cleanAmountStr);
+    if (isNaN(amount) || amount === 0) continue;
+    
+    // Извлекаем описание (вся строка без даты и суммы)
+    const description = line
+      .replace(dateFormat, '')
+      .replace(amountStr, '')
+      .replace(/\s+/g, ' ')
+      .trim();
     
     transactions.push({
       id: `generic_${Date.now()}_${transactions.length}`,
       date: isoDate,
-      description: cleanLine,
-      amount: Math.abs(amount),
-      type: amount >= 0 ? 'income' : 'expense',
+      description: description || 'Транзакция',
+      amount: amount,
+      type: isNegative ? 'expense' : 'income',
     });
+    
+    debugLines.push(`✅ Строка ${i+1}: ${dateFormat} | ${description} | ${amount} (${isNegative ? 'расход' : 'доход'})`);
   }
   
-  return transactions;
+  debugLines.push(`--- Итого найдено транзакций: ${transactions.length} ---`);
+  
+  return {
+    transactions,
+    debugInfo: debugLines.join('\n')
+  };
 };
 
 /**
- * Извлекает текст из PDF файла
+ * Улучшенная функция извлечения текста из PDF
  */
 const extractTextFromPdf = async (file: File): Promise<string> => {
   try {
@@ -212,16 +383,26 @@ const extractTextFromPdf = async (file: File): Promise<string> => {
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
+      
+      // Улучшенная обработка текста с учетом позиций
       const pageText = textContent.items
+        .sort((a: any, b: any) => {
+          // Сортируем по вертикальной позиции (y), затем по горизонтальной (x)
+          if (Math.abs(a.transform[5] - b.transform[5]) > 2) {
+            return b.transform[5] - a.transform[5]; // Сортировка сверху вниз
+          }
+          return a.transform[4] - b.transform[4]; // Сортировка слева направо
+        })
         .map((item: any) => item.str)
         .join(' ');
+      
       fullText += pageText + '\n';
     }
     
     return fullText;
   } catch (error) {
     console.error('Ошибка извлечения текста из PDF:', error);
-    throw new Error('Не удалось извлечь текст из PDF файла');
+    throw new Error(`Не удалось извлечь текст из PDF файла: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -230,6 +411,8 @@ const extractTextFromPdf = async (file: File): Promise<string> => {
  */
 export const parseBankPdf = async (file: File): Promise<BankPdfParseResult> => {
   try {
+    console.log('Начинаем парсинг PDF файла:', file.name);
+    
     // Извлекаем текст из PDF
     const extractedText = await extractTextFromPdf(file);
     
@@ -237,32 +420,41 @@ export const parseBankPdf = async (file: File): Promise<BankPdfParseResult> => {
       throw new Error('PDF файл не содержит текста или не может быть прочитан');
     }
     
+    console.log('Извлечен текст из PDF, длина:', extractedText.length);
+    
     // Определяем тип банка
     const bankType = detectBankType(extractedText);
+    console.log('Определен тип банка:', bankType);
     
     // Парсим транзакции в зависимости от типа банка
-    let transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
+    let parseResult: { 
+      transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[], 
+      debugInfo: string 
+    };
     
     switch (bankType) {
       case 'kaspi':
-        transactions = parseKaspiTransactions(extractedText);
+        parseResult = parseKaspiTransactions(extractedText);
         break;
       case 'halyk':
-        transactions = parseHalykTransactions(extractedText);
+        parseResult = parseHalykTransactions(extractedText);
         break;
       default:
-        transactions = parseGenericTransactions(extractedText);
+        parseResult = parseGenericTransactions(extractedText);
         break;
     }
     
-    if (transactions.length === 0) {
+    console.log('Результат парсинга:', parseResult.debugInfo);
+    
+    if (parseResult.transactions.length === 0) {
       throw new Error('Не удалось найти транзакции в PDF файле. Проверьте формат выписки.');
     }
     
     return {
-      transactions,
+      transactions: parseResult.transactions,
       bankType,
-      extractedText
+      extractedText,
+      debugInfo: parseResult.debugInfo
     };
     
   } catch (error) {
@@ -286,15 +478,27 @@ export const validateBankStatement = (text: string): boolean => {
 };
 
 /**
- * Форматирует результат для отладки
+ * Улучшенное форматирование результата для отладки
  */
 export const formatParseResult = (result: BankPdfParseResult): string => {
-  return `
-Тип банка: ${result.bankType}
+  const summary = `
+=== РЕЗУЛЬТАТ ПАРСИНГА PDF ===
+Тип банка: ${result.bankType.toUpperCase()}
 Найдено транзакций: ${result.transactions.length}
-Первые 5 транзакций:
+
+${result.debugInfo || ''}
+
+=== ПЕРВЫЕ 5 ТРАНЗАКЦИЙ ===
 ${result.transactions.slice(0, 5).map((tx, i) => 
-  `${i + 1}. ${tx.date} | ${tx.description} | ${tx.amount} ₸ (${tx.type})`
+  `${i + 1}. ${tx.date} | ${tx.description} | ${tx.amount} ₸ (${tx.type === 'income' ? 'доход' : 'расход'})`
 ).join('\n')}
+
+=== СУММАРНАЯ СТАТИСТИКА ===
+Доходы: ${result.transactions.filter(tx => tx.type === 'income').length} транзакций
+Расходы: ${result.transactions.filter(tx => tx.type === 'expense').length} транзакций
+Общая сумма доходов: ${result.transactions.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0).toFixed(2)} ₸
+Общая сумма расходов: ${result.transactions.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0).toFixed(2)} ₸
   `.trim();
+  
+  return summary;
 };
