@@ -1,43 +1,27 @@
-# Dependencies
+# Dependency directories
 node_modules/
-/.pnp
-.pnp.js
+.npm
+.yarn
 
-# Testing
-/coverage
-
-# Production builds
+# Build outputs
 /build
-dist/
+/dist
+/.next
+/out
 
 # Environment variables
 .env
-.env.production
-# НЕ игнорируем .env.local - он нужен для локальной настройки
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Cache
-.npm
-.eslintcache
-.cache/
-
-# IDE и редакторы
-.vscode/
+# IDE files
 .idea/
+.vscode/
+*.sublime-*
 *.swp
 *.swo
-*~
 
 # OS generated files
 .DS_Store
@@ -48,29 +32,20 @@ pids
 ehthumbs.db
 Thumbs.db
 
-# Optional npm cache directory
-.npm
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
 
-# Optional REPL history
-.node_repl_history
+# Coverage directory
+/coverage
 
-# Output of 'npm pack'
-*.tgz
+# Temporary files
+/tmp
+/temp
 
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.parcel-cache
-
-# Временные файлы
-temp/
-tmp/
-*.tmp
-
-# Локальные конфигурационные файлы (ВАЖНО: НЕ игнорируем)
-# .nvmrc - нужен для версии Node.js
-# .env.local - нужен для переменных окружения  
-# package-lock-exact.json - нужен для точных версий
-# setup-local.js - нужен для автоматической настройки
-# LOCAL_SETUP_GUIDE.md - нужен для инструкций
+# Specific files to exclude
+IMPROVEMENTS.md
+QUICKSTART.md
