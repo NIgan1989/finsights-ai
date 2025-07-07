@@ -2,15 +2,21 @@ import React from 'react';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import { TrendingUp, TrendingDown, AccountBalanceWallet } from '@mui/icons-material';
 
-interface StatCardProps {
+export interface StatCardProps {
   title: string;
   value: string;
   type: 'revenue' | 'expense' | 'net';
+  icon?: React.ReactNode;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, type }) => {
+const StatCard: React.FC<StatCardProps> = ({ title, value, type, icon }) => {
   const getIcon = () => {
     const iconStyle = { fontSize: 40, color: 'primary.main' };
+
+    if (icon) {
+      return icon;
+    }
+
     switch (type) {
       case 'revenue':
         return <TrendingUp sx={iconStyle} />;
@@ -24,7 +30,16 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, type }) => {
   };
 
   return (
-    <Card>
+    <Card
+      sx={{
+        height: '100%',
+        transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: 4
+        }
+      }}
+    >
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>

@@ -2,14 +2,17 @@ import { Transaction, PnLData, CashFlowData, BalanceSheetData, FinancialReport }
 import { categorizeExpenses, identifyTransactionsForClarification, extractTransactionsFromImage } from './openaiService';
 import { parseBankPdf, validateBankStatement, formatParseResult } from './bankPdfService';
 
+/**
+ * Парсит CSV данные и извлекает транзакции
+ */
 const parseCSV = (csvText: string): Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] => {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
     const transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
 
-    const dateIndex = headers.findIndex(h => h.includes('дата'));
-    const descIndex = headers.findIndex(h => h.includes('описание'));
-    const amountIndex = headers.findIndex(h => h.includes('сумма'));
+    const dateIndex = headers.findIndex(h => h.includes('дата') || h.includes('date'));
+    const descIndex = headers.findIndex(h => h.includes('описание') || h.includes('desc'));
+    const amountIndex = headers.findIndex(h => h.includes('сумма') || h.includes('amount'));
 
     if (dateIndex === -1 || descIndex === -1 || amountIndex === -1) {
         throw new Error('Неверный формат CSV. Убедитесь, что файл содержит колонки "Дата", "Описание" и "Сумма".');
@@ -19,13 +22,14 @@ const parseCSV = (csvText: string): Omit<Transaction, 'category' | 'transactionT
         const data = lines[i].split(',');
         if (data.length < headers.length) continue;
 
-        const amount = parseFloat(data[amountIndex].trim());
+        const amount = parseFloat(data[amountIndex].trim().replace(/\s+/g, '').replace(',', '.'));
         if (isNaN(amount)) continue;
 
         const dateRaw = data[dateIndex].trim();
-        // Handle dd.mm.yyyy and yyyy-mm-dd
+        // Обрабатываем разные форматы дат
         const dateParts = dateRaw.split(/[.-]/);
         let dateObj;
+
         if (dateParts.length === 3) {
             if (dateParts[0].length === 4) { // yyyy-mm-dd
                 dateObj = new Date(`${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`);
@@ -33,11 +37,11 @@ const parseCSV = (csvText: string): Omit<Transaction, 'category' | 'transactionT
                 dateObj = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
             }
         } else {
-            // Try parsing directly if format is unusual
+            // Пробуем парсить напрямую если формат необычный
             dateObj = new Date(dateRaw);
         }
 
-        // Check if date is valid
+        // Проверка валидности даты
         if (isNaN(dateObj.getTime())) continue;
 
         const isoDate = dateObj.toISOString().split('T')[0];
@@ -53,104 +57,122 @@ const parseCSV = (csvText: string): Omit<Transaction, 'category' | 'transactionT
     return transactions;
 };
 
+/**
+ * Извлекает текст из файла в формате CSV
+ */
+const readTextFromFile = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target?.result as string);
+        reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
+        reader.readAsText(file, 'utf-8');
+    });
+};
+
+/**
+ * Преобразует файл в base64 для обработки с помощью AI
+ */
+const readFileAsBase64 = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve((event.target?.result as string).split(',')[1]);
+        reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
+        reader.readAsDataURL(file);
+    });
+};
+
+/**
+ * Обрабатывает файл выписки и извлекает транзакции
+ */
 export const processAndCategorizeTransactions = async (file: File, onProgress: (msg: string) => void): Promise<Transaction[]> => {
-    let csvContent: string;
+    // Заглушка для прогресса, если не передана
+    onProgress = onProgress || ((msg: string) => console.log(msg));
+
     let transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[] = [];
 
-    if (file.type === 'text/csv') {
-        onProgress("Обработка CSV файла...");
-        csvContent = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (event) => resolve(event.target?.result as string);
-            reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
-            reader.readAsText(file, 'utf-8');
-        });
-        transactions = parseCSV(csvContent);
-        
-    } else if (file.type === 'application/pdf') {
-        onProgress("Анализ PDF выписки банка...");
-        try {
-                    // Пытаемся использовать специализированный парсер для банковских PDF
-        const bankPdfResult = await parseBankPdf(file);
-        
-        if (bankPdfResult.transactions.length > 0) {
-            onProgress(`Обнаружена выписка банка: ${bankPdfResult.bankType.toUpperCase()}. Найдено транзакций: ${bankPdfResult.transactions.length}`);
-            console.log('Результат парсинга банковского PDF:', formatParseResult(bankPdfResult));
-            
-            // Показываем дополнительную отладочную информацию пользователю
-            if (bankPdfResult.debugInfo) {
-                console.log('Детальная информация о парсинге:', bankPdfResult.debugInfo);
-                onProgress(`Парсинг завершен успешно. Проверьте консоль браузера для детальной информации.`);
-            }
-            
-            transactions = bankPdfResult.transactions;
-        } else {
-                // Если банковский парсер не сработал, используем AI извлечение
-                onProgress("Извлечение данных из PDF с помощью AI (может занять до минуты)...");
-                const base64String: string = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (event) => resolve((event.target?.result as string).split(',')[1]);
-                    reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
-                    reader.readAsDataURL(file);
-                });
-                csvContent = await extractTransactionsFromImage({ mimeType: file.type, data: base64String });
-                transactions = parseCSV(csvContent);
-            }
-        } catch (bankPdfError) {
-            console.warn('Ошибка парсинга банковского PDF:', bankPdfError);
-            // Fallback на AI извлечение
-            onProgress("Извлечение данных из PDF с помощью AI (может занять до минуты)...");
-            try {
-                const base64String: string = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (event) => resolve((event.target?.result as string).split(',')[1]);
-                    reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
-                    reader.readAsDataURL(file);
-                });
-                csvContent = await extractTransactionsFromImage({ mimeType: file.type, data: base64String });
-                transactions = parseCSV(csvContent);
-            } catch (aiError) {
-                const bankErrorMessage = bankPdfError instanceof Error ? bankPdfError.message : String(bankPdfError);
-                const aiErrorMessage = aiError instanceof Error ? aiError.message : String(aiError);
-                throw new Error(`Не удалось обработать PDF файл. Ошибка банковского парсера: ${bankErrorMessage}. Ошибка AI: ${aiErrorMessage}`);
-            }
-        }
-        
-    } else if (['image/png', 'image/jpeg'].includes(file.type)) {
-        onProgress("Извлечение данных из изображения (может занять до минуты)...");
-        try {
-            const base64String: string = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (event) => resolve((event.target?.result as string).split(',')[1]);
-                reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
-                reader.readAsDataURL(file);
-            });
-            csvContent = await extractTransactionsFromImage({ mimeType: file.type, data: base64String });
+    try {
+        // Обработка CSV файлов
+        if (file.type === 'text/csv') {
+            onProgress("Обработка CSV файла...");
+            const csvContent = await readTextFromFile(file);
             transactions = parseCSV(csvContent);
-        } catch (e) {
-            throw e; // re-throw specific error from geminiService
+        }
+        // Обработка PDF файлов
+        else if (file.type === 'application/pdf') {
+            onProgress("Анализ PDF выписки банка...");
+            try {
+                // Специализированный парсер для банковских PDF
+                const bankPdfResult = await parseBankPdf(file);
+
+                if (bankPdfResult.transactions.length > 0) {
+                    onProgress(`Обнаружена выписка банка: ${bankPdfResult.bankType.toUpperCase()}. Найдено транзакций: ${bankPdfResult.transactions.length}`);
+                    console.log('Результат парсинга банковского PDF:', formatParseResult(bankPdfResult));
+
+                    if (bankPdfResult.debugInfo) {
+                        console.log('Детальная информация о парсинге:', bankPdfResult.debugInfo);
+                        onProgress(`Парсинг завершен успешно. Проверьте консоль браузера для детальной информации.`);
+                    }
+
+                    transactions = bankPdfResult.transactions;
+                    // Выходим из обработки, так как транзакции уже успешно извлечены
+                    return await categorizeAndFinalize(transactions, onProgress);
+                }
+            } catch (bankPdfError) {
+                console.warn('Ошибка парсинга банковского PDF:', bankPdfError);
+                // Продолжаем с AI извлечением
+            }
+
+            // Если стандартный парсер не сработал, используем AI извлечение
+            onProgress("Извлечение данных из PDF с помощью AI (может занять до минуты)...");
+            const base64String = await readFileAsBase64(file);
+            const csvContent = await extractTransactionsFromImage({ mimeType: file.type, data: base64String });
+            transactions = parseCSV(csvContent);
+        }
+        // Обработка изображений
+        else if (['image/png', 'image/jpeg'].includes(file.type)) {
+            onProgress("Извлечение данных из изображения (может занять до минуты)...");
+            const base64String = await readFileAsBase64(file);
+            const csvContent = await extractTransactionsFromImage({ mimeType: file.type, data: base64String });
+            transactions = parseCSV(csvContent);
+        }
+        // Неподдерживаемые типы файлов
+        else {
+            throw new Error(`Неподдерживаемый тип файла: ${file.type}. Поддерживаются: CSV, PDF (банковские выписки), PNG, JPEG`);
         }
 
-    } else {
-        throw new Error(`Неподдерживаемый тип файла: ${file.type}. Поддерживаются: CSV, PDF (банковские выписки), PNG, JPEG`);
-    }
+        return await categorizeAndFinalize(transactions, onProgress);
 
+    } catch (error) {
+        console.error('Ошибка обработки файла:', error);
+        throw error instanceof Error ? error : new Error(String(error));
+    }
+};
+
+/**
+ * Категоризирует и финализирует список транзакций
+ */
+const categorizeAndFinalize = async (
+    transactions: Omit<Transaction, 'category' | 'transactionType' | 'isCapitalized'>[],
+    onProgress: (msg: string) => void
+): Promise<Transaction[]> => {
     if (transactions.length === 0) {
         throw new Error('Не удалось извлечь или найти транзакции в файле.');
     }
 
     onProgress("Анализ и классификация транзакций...");
 
+    // Подготавливаем данные для классификации
     const transactionsToCategorize = transactions.map(tx => ({
         id: tx.id,
         description: tx.description,
         type: tx.type
     }));
 
+    // Классифицируем транзакции
     const classifications = await categorizeExpenses(transactionsToCategorize);
-
     const classificationMap = new Map(classifications.map(c => [c.id, c]));
 
+    // Применяем классификацию к транзакциям
     const categorizedTransactions: Transaction[] = transactions.map(tx => {
         const classification = classificationMap.get(tx.id);
         const defaultCategory = tx.type === 'income' ? 'Основная выручка' : 'Прочие расходы';
@@ -162,9 +184,11 @@ export const processAndCategorizeTransactions = async (file: File, onProgress: (
         };
     });
 
+    // Выявляем транзакции, требующие уточнения
     onProgress("Выявление неточностей для уточнения...");
     const idsToClarify = await identifyTransactionsForClarification(categorizedTransactions);
 
+    // Формируем итоговый список транзакций
     const finalTransactions = categorizedTransactions.map(tx => ({
         ...tx,
         needsClarification: idsToClarify.includes(tx.id)
