@@ -14,7 +14,9 @@ import {
     Tabs,
     Grid,
     Paper,
-    Tooltip
+    Tooltip,
+    Avatar,
+    Chip
 } from '@mui/material';
 import { 
     Language as LanguageIcon, 
@@ -22,7 +24,14 @@ import {
     Dashboard as DashboardIcon, 
     Chat as ChatIcon,
     LightMode,
-    DarkMode
+    DarkMode,
+    AccountCircle,
+    Business,
+    Settings,
+    ExitToApp,
+    Person,
+    AccountBalance,
+    Assessment
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
@@ -31,11 +40,15 @@ import Dashboard from './components/Dashboard';
 import AiAssistant from './components/AiAssistant';
 import Loader from './components/Loader';
 import DateRangeFilter from './components/DateRangeFilter';
+import LoginForm from './components/LoginForm';
+import CompanyProfile from './components/CompanyProfile';
+import BudgetManagement from './components/BudgetManagement';
 import { Transaction, FinancialReport } from './types';
 import { processAndCategorizeTransactions, generateFinancialReport } from './services/financeService';
 import { generatePdf } from './services/pdfService';
 import { DateRangeProvider } from './contexts/DateRangeContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const LanguageSwitcher = () => {
     const { i18n } = useTranslation();
@@ -106,8 +119,84 @@ const ThemeToggle = () => {
     );
 };
 
+const UserMenu = () => {
+    const { user, company, logout } = useAuth();
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+
+    const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleLogout = () => {
+        logout();
+        handleClose();
+    };
+
+    if (!user) return null;
+
+    return (
+        <div>
+            <Tooltip title="Профиль пользователя">
+                <IconButton
+                    size="large"
+                    onClick={handleMenu}
+                    color="inherit"
+                >
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                        {user.firstName[0]}{user.lastName[0]}
+                    </Avatar>
+                </IconButton>
+            </Tooltip>
+            <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                sx={{ mt: 1 }}
+            >
+                <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                    <Typography variant="subtitle2" noWrap>
+                        {user.firstName} {user.lastName}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                        {user.email}
+                    </Typography>
+                    {company && (
+                        <Chip 
+                            size="small" 
+                            label={company.name} 
+                            sx={{ mt: 0.5, maxWidth: 200 }} 
+                        />
+                    )}
+                </Box>
+                <MenuItem onClick={handleClose}>
+                    <Person sx={{ mr: 1 }} />
+                    Личный профиль
+                </MenuItem>
+                <MenuItem onClick={handleClose}>
+                    <Business sx={{ mr: 1 }} />
+                    Профиль компании
+                </MenuItem>
+                <MenuItem onClick={handleClose}>
+                    <Settings sx={{ mr: 1 }} />
+                    Настройки
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>
+                    <ExitToApp sx={{ mr: 1 }} />
+                    Выйти
+                </MenuItem>
+            </Menu>
+        </div>
+    );
+};
+
 function AppContent() {
     const { t } = useTranslation();
+    const { user, company, isAuthenticated, isLoading } = useAuth();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progressMessage, setProgressMessage] = useState('');
@@ -118,6 +207,21 @@ function AppContent() {
         start: '',
         end: ''
     });
+    const [showRegister, setShowRegister] = useState(false);
+
+    // Show loading screen while checking authentication
+    if (isLoading) {
+        return <Loader message="Загрузка приложения..." />;
+    }
+
+    // Show login form if not authenticated
+    if (!isAuthenticated) {
+        return (
+            <LoginForm 
+                onSwitchToRegister={() => setShowRegister(true)} 
+            />
+        );
+    }
 
     const handleDataUpload = async (file: File) => {
         setIsProcessing(true);
@@ -177,6 +281,16 @@ function AppContent() {
             return <Loader message={progressMessage || "Analyzing your financial data..."} />;
         }
 
+        // Company Profile Tab
+        if (activeTab === 'profile') {
+            return <CompanyProfile />;
+        }
+
+        // Budget Management Tab
+        if (activeTab === 'budget') {
+            return <BudgetManagement transactions={transactions} />;
+        }
+
         const uploadComponent = (
             <Box sx={{ textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
                 <Box>
@@ -227,6 +341,8 @@ function AppContent() {
                 >
                     <Tab icon={<DashboardIcon />} label={t('dashboard.title')} value="dashboard" />
                     <Tab icon={<ChatIcon />} label={t('ai_assistant')} value="assistant" />
+                    <Tab icon={<AccountBalance />} label="Бюджеты" value="budget" />
+                    <Tab icon={<Business />} label="Профиль компании" value="profile" />
                 </Tabs>
 
                 {activeTab === 'dashboard' && <Dashboard transactions={transactions} onUpdateTransaction={handleUpdateTransaction} />}
@@ -250,9 +366,26 @@ function AppContent() {
                         <Typography variant="h5" component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
                             FinSights AI
                         </Typography>
+                        
+                        {company && (
+                            <Box sx={{ mr: 2 }}>
+                                <Chip 
+                                    icon={<Business />}
+                                    label={company.name}
+                                    variant="outlined"
+                                    sx={{ 
+                                        color: 'white', 
+                                        borderColor: 'rgba(255, 255, 255, 0.5)',
+                                        '& .MuiChip-icon': { color: 'white' }
+                                    }}
+                                />
+                            </Box>
+                        )}
+                        
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <ThemeToggle />
                             <LanguageSwitcher />
+                            <UserMenu />
                         </Box>
                     </Toolbar>
                 </AppBar>
@@ -267,9 +400,11 @@ function AppContent() {
 function App() {
     return (
         <ThemeProvider>
-            <DateRangeProvider>
-                <AppContent />
-            </DateRangeProvider>
+            <AuthProvider>
+                <DateRangeProvider>
+                    <AppContent />
+                </DateRangeProvider>
+            </AuthProvider>
         </ThemeProvider>
     );
 }
