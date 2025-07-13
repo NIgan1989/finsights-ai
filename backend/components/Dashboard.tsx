@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 // PDF and related imports are now dynamically imported in handleDownload
-import { FinancialReport, ForecastData, Transaction, Granularity, BusinessProfile, CounterpartyData, Theme } from '../../types.ts';
+import { FinancialReport, AdvancedFinancialReport, ForecastData, Transaction, Granularity, BusinessProfile, CounterpartyData, Theme } from '../../types.ts';
 import StatCard from './StatCard.tsx';
 import ChartCard from './ChartCard.tsx';
 import CategoryChartCard from './CategoryChartCard.tsx';
@@ -20,6 +20,9 @@ import html2canvas from 'html2canvas';
 (pdfMake as any).vfs = (vfsFonts as any).vfs;
 
 import WaterfallChart from './WaterfallChart.tsx';
+import AdvancedFinancialDashboard from './AdvancedFinancialDashboard.tsx';
+import { generateAdvancedFinancialReport } from '../../services/advancedFinancialService.ts';
+import { generateAdvancedPdfReport } from '../../services/advancedPdfService.ts';
 
 interface DashboardProps {
     report: FinancialReport;
@@ -29,7 +32,7 @@ interface DashboardProps {
     theme: Theme;
 }
 
-type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts';
+type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts' | 'advanced';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('ru-RU').format(Math.round(value)) + ' ₸';
 
@@ -259,6 +262,12 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     };
 
     const kpiColor = (val: number, positive = true) => (positive ? (val > 1 ? 'green' : 'red') : (val > 0 ? 'green' : 'red'));
+
+    const handleDownloadAdvancedReport = async () => {
+        const advancedReport = generateAdvancedFinancialReport(transactions, profile || undefined);
+        const pdf = generateAdvancedPdfReport(advancedReport, profile?.businessName || 'Бизнес');
+        pdf.download(`advanced-financial-report-${new Date().toISOString().split('T')[0]}.pdf`);
+    };
 
     const handleDownloadFullReport = async () => {
         const { pnl, cashFlow, balanceSheet, counterpartyReport, debtReport } = report;
@@ -1030,6 +1039,14 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                     {showGranularitySwitcher && <GranularitySwitcher activeGranularity={granularity} setGranularity={setGranularity} />}
                     <ReportTabs activeReport={activeReport} setActiveReport={setActiveReport} />
                     <button
+                        onClick={handleDownloadAdvancedReport}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-md"
+                        aria-label="Скачать передовой PDF-отчет"
+                    >
+                        <DownloadIcon className="w-5 h-5" />
+                        <span>Скачать передовой отчет</span>
+                    </button>
+                    <button
                         onClick={handleDownloadFullReport}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary-hover transition-colors shadow-md"
                         aria-label="Скачать полный PDF-отчет"
@@ -1047,6 +1064,9 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                 <div style={reportContainerStyle('forecast')}><ForecastView /></div>
                 <div style={reportContainerStyle('counterparties')}><CounterpartyView /></div>
                 <div style={reportContainerStyle('debts')}><DebtsView /></div>
+                <div style={reportContainerStyle('advanced')}>
+                    <AdvancedFinancialDashboard report={generateAdvancedFinancialReport(transactions, profile || undefined)} />
+                </div>
                 <ExplanationsSection />
             </div>
         </div>

@@ -9,6 +9,7 @@ import Profile from './backend/components/Profile.tsx';
 import Loader from './backend/components/Loader.tsx';
 import DateRangeFilter from './backend/components/DateRangeFilter.tsx';
 import { processAndCategorizeTransactions, generateFinancialReport } from './services/financeService.ts';
+import { generateAdvancedFinancialReport } from './services/advancedFinancialService.ts';
 
 const Dashboard = lazy(() => import('./backend/components/Dashboard.tsx'));
 

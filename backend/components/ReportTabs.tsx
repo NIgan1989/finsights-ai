@@ -1,6 +1,6 @@
 import React from 'react';
 
-type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts';
+type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts' | 'advanced';
 
 interface ReportTabsProps {
     activeReport: ReportView;
@@ -14,6 +14,7 @@ const tabs: { id: ReportView; label: string }[] = [
     { id: 'counterparties', label: 'Контрагенты' },
     { id: 'debts', label: 'Долги' },
     { id: 'forecast', label: 'Прогноз' },
+    { id: 'advanced', label: 'Аналитика' },
 ];
 
 const ReportTabs: React.FC<ReportTabsProps> = ({ activeReport, setActiveReport }) => {
