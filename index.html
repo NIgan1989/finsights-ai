@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinSights AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --color-primary: 221 83% 53%;
+      --color-primary-hover: 221 83% 63%;
+      --color-primary-foreground: 210 40% 98%;
+
+      --color-background: 210 40% 98%;
+      --color-surface: 0 0% 100%;
+      --color-surface-accent: 210 40% 96%;
+      --color-border: 214 32% 91%;
+
+      --color-text-primary: 222 47% 11%;
+      --color-text-secondary: 215 20% 45%;
+      --color-text-disabled: 215 28% 65%;
+
+      --color-destructive: 0 72% 51%;
+      --color-destructive-foreground: 210 40% 98%;
+      --color-success: 142 71% 35%;
+      --color-success-foreground: 210 40% 98%;
+
+      --color-chart-grid: 220 13% 91%;
+      --color-chart-axis: 215 20% 45%;
+    }
+
+    html.dark {
+      --color-primary: 221 83% 53%;
+      --color-primary-hover: 221 83% 63%;
+      --color-primary-foreground: 210 40% 98%;
+
+      --color-background: 222 47% 11%;
+      --color-surface: 222 47% 15%;
+      --color-surface-accent: 222 47% 20%;
+      --color-border: 214 32% 21%;
+
+      --color-text-primary: 210 40% 98%;
+      --color-text-secondary: 215 20% 65%;
+      --color-text-disabled: 215 28% 45%;
+
+      --color-destructive: 0 72% 51%;
+      --color-destructive-foreground: 210 40% 98%;
+      --color-success: 142 71% 45%;
+      --color-success-foreground: 210 40% 98%;
+
+      --color-chart-grid: 214 32% 25%;
+      --color-chart-axis: 215 20% 65%;
+    }
+
+    body {
+      background-color: hsl(var(--color-background));
+      color: hsl(var(--color-text-primary));
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .dark {
+      color-scheme: dark;
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react-dropzone": "https://esm.sh/react-dropzone@14.2.3?deps=react@18.2.0",
+    "recharts": "https://esm.sh/recharts@2.12.7",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "jspdf-autotable": "https://esm.sh/jspdf-autotable@3.8.2",
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1"
+  }
+}
+</script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: 'hsl(var(--color-primary))',
+              hover: 'hsl(var(--color-primary-hover))',
+              foreground: 'hsl(var(--color-primary-foreground))',
+            },
+            background: 'hsl(var(--color-background))',
+            surface: 'hsl(var(--color-surface))',
+            'surface-accent': 'hsl(var(--color-surface-accent))',
+            border: 'hsl(var(--color-border))',
+            'text-primary': 'hsl(var(--color-text-primary))',
+            'text-secondary': 'hsl(var(--color-text-secondary))',
+            'text-disabled': 'hsl(var(--color-text-disabled))',
+            destructive: 'hsl(var(--color-destructive))',
+            success: 'hsl(var(--color-success))',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

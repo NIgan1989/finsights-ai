@@ -1,0 +1,26 @@
+{
+    "name": "finsights-ai-studio",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "vite",
+        "start:backend": "cd backend && npm start",
+        "dev:all": "concurrently \"npm run dev\" \"npm run start:backend\""
+    },
+    "dependencies": {
+        "html2canvas": "^1.4.1",
+        "pdfjs-dist": "^5.3.93",
+        "pdfmake": "^0.2.20",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-dropzone": "^14.2.3",
+        "recharts": "^2.8.0"
+    },
+    "devDependencies": {
+        "@types/react": "^18.2.14",
+        "@types/react-dom": "^18.2.7",
+        "concurrently": "^8.2.2",
+        "typescript": "^5.0.0",
+        "vite": "^4.0.0"
+    }
+}
