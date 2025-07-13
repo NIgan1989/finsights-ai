@@ -1,9 +1,9 @@
 import { Transaction, PnLData, CashFlowData, BalanceSheetData, FinancialReport, BusinessProfile, DebtReport } from '../types';
 // import { classifyAndReviewTransactions, extractTransactionsFromImage } from './geminiService.ts';
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist';
 
 // Используем CDN для worker
-GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`;
 
 // --- Улучшенная система автокатегоризации ---
 const categoryKeywords: { [key: string]: string[] } = {
@@ -344,7 +344,7 @@ export const processAndCategorizeTransactions = async (file: File, _profile: Bus
         } else if (file.name.toLowerCase().endsWith('.pdf')) {
             onProgress('Обрабатываем PDF файл...');
             const arrayBuffer = await file.arrayBuffer();
-            const pdf = await getDocument({ data: arrayBuffer }).promise;
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
             rawText = '';
             
             for (let i = 1; i <= pdf.numPages; i++) {
