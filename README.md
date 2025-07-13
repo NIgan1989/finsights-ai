@@ -1,14 +1,48 @@
-# Run and deploy your AI Studio app
+# Finsights AI
 
-This contains everything you need to run your app locally.
+**Finsights AI** — система для анализа и парсинга финансовых выписок (Kaspi, Halyk и др.), автоматической категоризации транзакций и прогнозирования с помощью ИИ.
 
-## Run Locally
+## Возможности
+- Загрузка PDF-выписок из разных банков
+- Автоматический парсинг и категоризация транзакций
+- Интеграция с OpenAI для прогнозирования и fallback-анализа
+- Веб-интерфейс для просмотра и фильтрации данных
 
-**Prerequisites:**  Node.js
+## Быстрый старт
 
+1. Клонируйте репозиторий:
+   ```sh
+   git clone https://github.com/NIgan1989/finsights-ai.git
+   cd finsights-ai
+   ```
+2. Установите зависимости:
+   ```sh
+   npm install
+   ```
+3. Создайте файл `.env` в папке `backend/` и добавьте свои ключи (см. пример ниже).
+4. Запустите проект:
+   ```sh
+   npm run dev
+   ```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Пример .env (backend/.env)
+```
+OPENAI_API_KEY=your_openai_key_here
+# Другие переменные по необходимости
+```
+
+## Структура проекта
+- `backend/` — серверная логика, парсеры PDF, API
+- `services/` — сервисы для работы с данными
+- `components/` — React-компоненты интерфейса
+- `public/` — статические файлы
+
+## TODO
+- [ ] Парсер PDF для Halyk банка
+- [ ] Улучшение парсера Kaspi
+- [ ] Интеграция fallback через OpenAI Vision/LLM
+- [ ] Проверка и доработка прогноза
+
+---
+
+**Внимание!** Не храните секретные ключи в репозитории. Используйте `.env` и добавляйте его в `.gitignore`.
