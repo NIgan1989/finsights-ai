@@ -1,4 +1,4 @@
-import { Transaction, PnLData, CashFlowData, BalanceSheetData, FinancialReport, BusinessProfile, DebtReport } from '../types.ts';
+import { Transaction, PnLData, CashFlowData, BalanceSheetData, FinancialReport, BusinessProfile, DebtReport } from '../types';
 // import { classifyAndReviewTransactions, extractTransactionsFromImage } from './geminiService.ts';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 
