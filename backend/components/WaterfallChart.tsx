@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, LabelList } from 'recharts';
 
 interface WaterfallDataPoint {
@@ -26,9 +26,17 @@ const formatCurrency = (value: number) => {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-2 border border-gray-300 rounded shadow">
-        <p className="font-bold">{label}</p>
-        <p>{formatCurrency(payload[0].value)}</p>
+      <div style={{
+        background: '#1e293b',
+        color: '#fff',
+        padding: 8,
+        borderRadius: 8,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+        border: '1px solid #334155',
+        minWidth: 100
+      }}>
+        <div style={{ fontWeight: 700, fontSize: 15 }}>{label}</div>
+        <div style={{ fontWeight: 600, fontSize: 14 }}>{formatCurrency(payload[0].value)}</div>
       </div>
     );
   }
@@ -57,6 +65,7 @@ const COLOR_SCHEMES = {
 };
 
 const WaterfallChart: React.FC<WaterfallChartProps> = ({ data, width = '100%', height = 300, colorScheme = 'cashflow' }) => {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   let cumulative = 0;
   const processedData = data.map((point) => {
     const start = cumulative;
@@ -75,7 +84,17 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ data, width = '100%', h
   return (
     <div className="bg-surface rounded-2xl p-4 shadow-lg border border-border" style={{background: 'rgba(40,60,100,0.10)'}}> {/* светлый фон */}
       <ResponsiveContainer width={width} height={height}>
-        <BarChart data={processedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barSize={Math.min(40, 300 / processedData.length)}>
+        <BarChart
+          data={processedData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          barSize={Math.min(40, 300 / processedData.length)}
+          onMouseMove={state => {
+            if (state && state.activeTooltipIndex !== undefined && state.activeTooltipIndex !== null) {
+              setActiveIndex(state.activeTooltipIndex);
+            }
+          }}
+          onMouseLeave={() => setActiveIndex(null)}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke={COLOR_SCHEMES.default.other} />
           <XAxis dataKey="name" stroke={COLOR_SCHEMES.default.other} tick={{ fontSize: 14, fill: COLOR_SCHEMES.default.other }} />
           <YAxis stroke={COLOR_SCHEMES.default.other} tickFormatter={formatCurrency} tick={{ fontSize: 14, fill: COLOR_SCHEMES.default.other }} />
@@ -91,9 +110,8 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ data, width = '100%', h
               const yNum = Number(y);
               const widthNum = Number(width);
               const heightNum = Number(height);
-              // Положение подписи: над положительным столбцом, под отрицательным
+              // Стандартное положение подписи: над положительным столбцом, под отрицательным
               const labelY = isPositive ? yNum - 8 : yNum + Math.abs(heightNum) + 18;
-              // Цвет подписи: если внутри столбца — белый, если снаружи — цвет категории
               const labelColor = isPositive && heightNum > 24 ? '#fff' : barColor;
               return (
                 <text

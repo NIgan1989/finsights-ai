@@ -213,8 +213,38 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                 body: JSON.stringify({ pnlMonthlyData: pnl.monthlyData })
             });
             if (!response.ok) throw new Error('Ошибка сервера');
-            const data = await response.json();
-            setForecastData(data);
+            let data = await response.json();
+            console.log('Forecast API response:', data);
+            // Если data — строка, пробуем распарсить как JSON
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                    console.log('Parsed string data:', data);
+                } catch (e) {
+                    setForecastError('Ошибка парсинга ответа: ' + data);
+                    return;
+                }
+            }
+            if (!Array.isArray(data.forecastedRevenue)) {
+                setForecastError('Некорректный формат ответа: ' + JSON.stringify(data));
+                return;
+            }
+            // Преобразуем ответ к нужному формату
+            const now = new Date();
+            const months = Array.from({ length: data.forecastedRevenue.length }, (_, i) => {
+                const d = new Date(now.getFullYear(), now.getMonth() + 1 + i, 1);
+                return d.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+            });
+            const monthlyForecast = data.forecastedRevenue.map((rev: number, i: number) => ({
+                month: months[i],
+                forecastRevenue: rev,
+                forecastExpenses: data.forecastedExpenses[i],
+                forecastProfit: data.forecastedProfit[i],
+            }));
+            setForecastData({
+                monthlyForecast,
+                summary: data.assumptions || ''
+            });
         } catch (e: any) {
             setForecastError(e.message || "Произошла ошибка при генерации прогноза.");
         } finally {
@@ -954,7 +984,18 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                     <div className="lg:col-span-2">
                         <FinancialStatementCard title="Анализ прогноза от ИИ">
                             <FinancialStatementCard.Section>
-                                <p className="text-text-secondary text-sm leading-relaxed">{forecastData.summary}</p>
+                                {typeof forecastData.summary === 'string'
+                                    ? <p className="text-text-secondary text-sm leading-relaxed">{forecastData.summary}</p>
+                                    : Array.isArray(forecastData.summary)
+                                        ? (forecastData.summary as any[]).map((item: any, i: number) => <p key={i}>{String(item)}</p>)
+                                        : typeof forecastData.summary === 'object' && forecastData.summary !== null
+                                            ? <ul className="text-text-secondary text-sm leading-relaxed">
+                                                {Object.entries(forecastData.summary).map(([key, value]) => (
+                                                    <li key={key}><b>{key}:</b> {String(value)}</li>
+                                                ))}
+                                            </ul>
+                                            : null
+                                }
                             </FinancialStatementCard.Section>
                             <div className="pt-4 mt-4 border-t border-border">
                                 <button onClick={handleGenerateForecast} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-primary-foreground bg-primary/90 rounded-lg hover:bg-primary transition-colors">
