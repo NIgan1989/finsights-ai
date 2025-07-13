@@ -454,7 +454,7 @@ export const processAndCategorizeTransactions = async (file: File, _profile: Bus
 const getMonthYear = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString('ru-RU', { month: 'short', year: 'numeric' });
-}
+};
 
 export const generateFinancialReport = (transactions: Transaction[]): FinancialReport => {
     const monthlySummary: {
