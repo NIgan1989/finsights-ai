@@ -1,6 +1,13 @@
 import React from 'react';
 
-const formatCurrency = (value: number) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'KZT', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+const formatCurrency = (value: number) => {
+  const formatted = new Intl.NumberFormat('ru-RU', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+  return formatted + ' KZT'; // неразрывный пробел
+};
 
 // --- Sub-components for structure ---
 
@@ -12,7 +19,7 @@ interface RowProps {
 const Row: React.FC<RowProps> = ({ label, value, level = 0 }) => (
     <div className="flex justify-between items-center py-2 text-sm" style={{ paddingLeft: `${level * 1.5}rem`}}>
         <span className="text-text-secondary">{label}</span>
-        <span className="font-mono text-text-primary">{formatCurrency(value)}</span>
+        <span className="font-mono text-text-primary text-right">{formatCurrency(value)}</span>
     </div>
 );
 
@@ -58,7 +65,7 @@ interface TotalProps {
 const Total: React.FC<TotalProps> = ({ label, value }) => (
     <div className="flex justify-between items-center mt-4 pt-3 border-t-2 border-border font-bold text-lg">
         <span className="text-text-primary">{label}</span>
-        <span className="font-mono text-text-primary">{formatCurrency(value)}</span>
+        <span className={`font-mono text-right ${value >= 0 ? 'text-success' : 'text-destructive'}`}>{formatCurrency(value)}</span>
     </div>
 );
 
@@ -81,7 +88,7 @@ type FinancialStatementCardComponent = React.FC<FinancialStatementCardProps> & {
 
 const FinancialStatementCard: FinancialStatementCardComponent = ({ title, children }) => {
   return (
-    <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border h-full">
+    <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border w-full min-w-0 max-w-none md:max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto">
       <h3 className="text-xl font-bold text-text-primary mb-4">{title}</h3>
       <div className="space-y-2">
         {children}

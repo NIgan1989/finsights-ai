@@ -19,6 +19,8 @@ import vfsFonts from 'pdfmake/build/vfs_fonts';
 import html2canvas from 'html2canvas';
 (pdfMake as any).vfs = (vfsFonts as any).vfs;
 
+import WaterfallChart from './WaterfallChart.tsx';
+
 interface DashboardProps {
     report: FinancialReport;
     dateRange: { start: string; end: string };
@@ -55,6 +57,70 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                 background: '#ffffff' // светлый фон
               };
     }, [theme]);
+
+    const kpi = useMemo(() => {
+        const quickRatio = (balanceSheet.assets.cash + balanceSheet.assets.receivables) / (balanceSheet.liabilities.payables || 1);
+        const currentRatio = balanceSheet.assets.totalAssets / (balanceSheet.liabilities.totalLiabilities || 1);
+        const profitMargin = pnl.totalRevenue ? (pnl.netProfit / pnl.totalRevenue) * 100 : 0;
+        // Динамика прибыли
+        let profitDelta = 0;
+        if (pnl.monthlyData.length > 1) {
+            const last = pnl.monthlyData[pnl.monthlyData.length - 1].Прибыль;
+            const prev = pnl.monthlyData[pnl.monthlyData.length - 2].Прибыль;
+            profitDelta = last - prev;
+        }
+        return { quickRatio, currentRatio, profitMargin, profitDelta };
+    }, [balanceSheet, pnl]);
+
+    const explanations = useMemo(() => {
+        const result: string[] = [];
+        const data = pnl.monthlyData;
+        for (let i = 1; i < data.length; i++) {
+            const prev = data[i - 1];
+            const curr = data[i];
+            // Прибыль
+            if (prev.Прибыль !== 0) {
+                const profitChange = ((curr.Прибыль - prev.Прибыль) / Math.abs(prev.Прибыль)) * 100;
+                if (Math.abs(profitChange) > 30) {
+                    result.push(`В ${curr.month} прибыль ${profitChange > 0 ? 'выросла' : 'упала'} на ${profitChange.toFixed(1)}% по сравнению с предыдущим месяцем.`);
+                }
+            }
+            // Расходы
+            if (prev.Расход !== 0) {
+                const expenseChange = ((curr.Расход - prev.Расход) / Math.abs(prev.Расход)) * 100;
+                if (Math.abs(expenseChange) > 30) {
+                    result.push(`В ${curr.month} расходы ${expenseChange > 0 ? 'выросли' : 'снизились'} на ${expenseChange.toFixed(1)}% по сравнению с предыдущим месяцем.`);
+                }
+            }
+        }
+        return result.length ? result : ['Существенных изменений не обнаружено.'];
+    }, [pnl.monthlyData]);
+
+    const ExplanationsSection = () => (
+        <div className="mt-8 p-6 bg-surface-accent rounded-2xl shadow">
+            <h3 className="text-xl font-bold mb-4">Пояснения</h3>
+            <ul className="list-disc pl-6 space-y-1 text-text-secondary">
+                {explanations.map((ex, i) => <li key={i}>{ex}</li>)}
+            </ul>
+        </div>
+    );
+
+    const ExecutiveSummary = () => (
+        <div className="mb-8 p-6 bg-surface-accent rounded-2xl shadow flex flex-col md:flex-row gap-6 items-center">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatCard title="Quick Ratio" value={Number(kpi.quickRatio.toFixed(2))} isCurrency={false} />
+                <StatCard title="Current Ratio" value={Number(kpi.currentRatio.toFixed(2))} isCurrency={false} />
+                <StatCard title="Profit Margin %" value={Number(kpi.profitMargin.toFixed(2))} isCurrency={false} />
+            </div>
+            <div className="flex-1 flex flex-col items-center md:items-start">
+                <div className={`flex items-center text-lg font-semibold ${kpi.profitDelta > 0 ? 'text-green-600' : kpi.profitDelta < 0 ? 'text-red-600' : 'text-gray-500'}`}> 
+                    {kpi.profitDelta > 0 ? '▲' : kpi.profitDelta < 0 ? '▼' : '→'}
+                    <span className="ml-2">{kpi.profitDelta > 0 ? 'Чистая прибыль растет' : kpi.profitDelta < 0 ? 'Чистая прибыль снижается' : 'Без изменений'}</span>
+                </div>
+                <div className="text-text-secondary text-sm mt-2">{forecastData?.summary || 'Аналитика по итогам периода.'}</div>
+            </div>
+        </div>
+    );
 
     // Refs to capture charts as images
     const pnlChartRef = useRef<HTMLDivElement>(null);
@@ -162,6 +228,8 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
         return canvas.toDataURL('image/png');
     };
 
+    const kpiColor = (val: number, positive = true) => (positive ? (val > 1 ? 'green' : 'red') : (val > 0 ? 'green' : 'red'));
+
     const handleDownloadFullReport = async () => {
         const { pnl, cashFlow, balanceSheet, counterpartyReport, debtReport } = report;
         const start = new Date(dateRange.start).toLocaleDateString('ru-RU');
@@ -175,15 +243,65 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
             getChartImage(categoryChartRef)
         ]);
 
+        const executiveSummaryTable = {
+            table: {
+                headerRows: 1,
+                widths: ['*', 'auto'],
+                body: [
+                    [
+                        { text: 'Показатель', style: 'tableHeader', alignment: 'center' },
+                        { text: 'Значение', style: 'tableHeader', alignment: 'center' }
+                    ],
+                    [
+                        'Quick Ratio',
+                        { text: kpi.quickRatio.toFixed(2), color: kpi.quickRatio > 1 ? 'green' : 'red', bold: true }
+                    ],
+                    [
+                        'Current Ratio',
+                        { text: kpi.currentRatio.toFixed(2), color: kpi.currentRatio > 1 ? 'green' : 'red', bold: true }
+                    ],
+                    [
+                        'Profit Margin %',
+                        { text: kpi.profitMargin.toFixed(2) + '%', color: kpi.profitMargin > 0 ? 'green' : 'red', bold: true }
+                    ]
+                ]
+            },
+            layout: {
+                fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+                hLineColor: () => '#d1d5db',
+                vLineColor: () => '#d1d5db',
+                paddingLeft: () => 8,
+                paddingRight: () => 8,
+                paddingTop: () => 4,
+                paddingBottom: () => 4,
+            },
+            alignment: 'center',
+            margin: [0, 0, 0, 18]
+        };
+        const executiveSummarySection = [
+            { text: 'Executive Summary', style: 'header', alignment: 'center', margin: [0, 0, 0, 12] },
+            executiveSummaryTable,
+            { text: kpi.profitDelta > 0 ? 'Чистая прибыль растет' : kpi.profitDelta < 0 ? 'Чистая прибыль снижается' : 'Без изменений', color: kpi.profitDelta > 0 ? 'green' : kpi.profitDelta < 0 ? 'red' : 'gray', alignment: 'center', margin: [0, 0, 0, 8] },
+            { text: forecastData?.summary || 'Аналитика по итогам периода.', style: 'meta', alignment: 'center', margin: [0, 0, 0, 8] },
+            { text: `Сформировано автоматически • ${now}`, style: 'meta', alignment: 'right', margin: [0, 0, 0, 8] },
+        ];
+
         // ГОСТ-поля: левое 85, верх/низ 57, правое 28 (в pt)
         const docDefinition = {
             pageSize: 'A4',
             pageMargins: [85, 57, 28, 57],
             content: [
+                ...executiveSummarySection,
                 { text: 'Финансовый отчет', style: 'header', alignment: 'center', margin: [0, 0, 0, 12] },
                 profile?.businessName ? { text: profile.businessName, style: 'subheader', alignment: 'center', margin: [0, 0, 0, 12] } : {},
                 { text: `Период: с ${start} по ${end}`, alignment: 'center', style: 'meta', margin: [0, 0, 0, 6] },
                 { text: `Дата формирования: ${now}`, alignment: 'center', style: 'meta', margin: [0, 0, 0, 18] },
+                { text: 'Ключевые KPI', style: 'sectionHeader' },
+                { text: `Quick Ratio: ${kpi.quickRatio.toFixed(2)}`, color: kpi.quickRatio > 1 ? 'green' : 'red' },
+                { text: `Current Ratio: ${kpi.currentRatio.toFixed(2)}`, color: kpi.currentRatio > 1 ? 'green' : 'red' },
+                { text: `Profit Margin: ${kpi.profitMargin.toFixed(2)}%`, color: kpi.profitMargin > 0 ? 'green' : 'red' },
                 { text: 'Динамика прибыли и убытков', style: 'sectionHeader', margin: [0, 0, 0, 8] },
                 pnlChartImg ? { image: pnlChartImg, width: 382, alignment: 'center', margin: [0, 0, 0, 12] } : {},
                 { text: 'Отчет о прибылях и убытках (ОПиУ)', style: 'sectionHeader', margin: [0, 0, 0, 8] },
@@ -493,6 +611,10 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                     alignment: 'center',
                     margin: [0, 0, 0, 12]
                 } : {},
+                { text: 'Пояснения', style: 'sectionHeader', margin: [0, 0, 0, 8] },
+                {
+                    ul: explanations.map(e => ({ text: e, margin: [0, 0, 0, 2] }))
+                },
             ],
             styles: {
                 header: { fontSize: 16, bold: true, lineHeight: 1.5, margin: [0, 0, 0, 12] },
@@ -538,69 +660,77 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
         </div>
     );
 
-    const CashflowView = () => (
-        <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Денежный поток от операций" value={cashFlow.operatingActivities} />
-                <StatCard title="Денежный поток от инвестиций" value={cashFlow.investingActivities} />
-                <StatCard title="Денежный поток от финансов" value={cashFlow.financingActivities} />
-                <StatCard title="Чистый денежный поток" value={cashFlow.netCashFlow} />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                <div className="lg:col-span-3" ref={cashflowChartRef}>
-                    <ChartCard
-                        title="Движение денежных средств (ДДС)"
-                        data={aggregatedChartData.cashFlowData}
-                        series={[
-                            { key: 'Поступления', type: 'area', color: chartColors.revenue },
-                            { key: 'Выбытия', type: 'area', color: chartColors.expense },
-                            { key: 'Чистый поток', type: 'line', color: chartColors.profit },
-                        ]}
-                    />
+    const CashflowView = () => {
+        return (
+            <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatCard title="Денежный поток от операций" value={cashFlow.operatingActivities} />
+                    <StatCard title="Денежный поток от инвестиций" value={cashFlow.investingActivities} />
+                    <StatCard title="Денежный поток от финансов" value={cashFlow.financingActivities} />
+                    <StatCard title="Чистый денежный поток" value={cashFlow.netCashFlow} />
                 </div>
-                <div className="lg:col-span-2">
-                    <FinancialStatementCard title="Итоговый ДДС">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+                    <div className="lg:col-span-3" ref={cashflowChartRef}>
+                        <ChartCard
+                            title="Движение денежных средств (ДДС)"
+                            data={aggregatedChartData.cashFlowData}
+                            series={[
+                                { key: 'Поступления', type: 'area', color: chartColors.revenue },
+                                { key: 'Выбытия', type: 'area', color: chartColors.expense },
+                                { key: 'Чистый поток', type: 'line', color: chartColors.profit },
+                            ]}
+                        />
+                    </div>
+                    <div className="lg:col-span-2 flex flex-col gap-8">
+                        <WaterfallChart data={[{name: 'Операции', value: cashFlow.operatingActivities}, {name: 'Инвестиции', value: cashFlow.investingActivities}, {name: 'Финансы', value: cashFlow.financingActivities}, {name: 'Итого', value: cashFlow.netCashFlow, isTotal: true}]} />
+                        <FinancialStatementCard title="Итоговый ДДС">
+                            <FinancialStatementCard.Section>
+                                <FinancialStatementCard.Row label="От операционной деятельности" value={cashFlow.operatingActivities} />
+                                <FinancialStatementCard.Row label="От инвестиционной деятельности" value={cashFlow.investingActivities} />
+                                <FinancialStatementCard.Row label="От финансовой деятельности" value={cashFlow.financingActivities} />
+                            </FinancialStatementCard.Section>
+                            <FinancialStatementCard.Total label="Чистое изменение ден. средств" value={cashFlow.netCashFlow} />
+                        </FinancialStatementCard>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const BalanceView = () => {
+        return (
+            <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <FinancialStatementCard title="Активы">
                         <FinancialStatementCard.Section>
-                            <FinancialStatementCard.Row label="От операционной деятельности" value={cashFlow.operatingActivities} />
-                            <FinancialStatementCard.Row label="От инвестиционной деятельности" value={cashFlow.investingActivities} />
-                            <FinancialStatementCard.Row label="От финансовой деятельности" value={cashFlow.financingActivities} />
+                            <FinancialStatementCard.Row label="Денежные средства" value={balanceSheet.assets.cash} />
+                            <FinancialStatementCard.Row label="Дебиторская задолженность" value={balanceSheet.assets.receivables} />
+                            <FinancialStatementCard.SubSection title="Основные средства">
+                                <FinancialStatementCard.Row label="Первоначальная стоимость" value={balanceSheet.assets.equipment} />
+                                <FinancialStatementCard.Row label="Накопленная амортизация" value={-balanceSheet.assets.accumulatedDepreciation} />
+                                <FinancialStatementCard.SubTotal label="Чистая стоимость ОС" value={balanceSheet.assets.netEquipment} />
+                            </FinancialStatementCard.SubSection>
                         </FinancialStatementCard.Section>
-                        <FinancialStatementCard.Total label="Чистое изменение ден. средств" value={cashFlow.netCashFlow} />
+                        <FinancialStatementCard.Total label="Итого активы" value={balanceSheet.assets.totalAssets} />
+                    </FinancialStatementCard>
+                    <FinancialStatementCard title="Капитал и Обязательства">
+                        <FinancialStatementCard.Section title="Обязательства">
+                            <FinancialStatementCard.Row label="Кредиторская задолженность" value={balanceSheet.liabilities.payables} />
+                            <FinancialStatementCard.Total label="Итого обязательства" value={balanceSheet.liabilities.totalLiabilities} />
+                        </FinancialStatementCard.Section>
+                        <FinancialStatementCard.Section title="Капитал">
+                            <FinancialStatementCard.Row label="Нераспределенная прибыль" value={balanceSheet.equity.retainedEarnings} />
+                            <FinancialStatementCard.Total label="Итого капитал" value={balanceSheet.equity.totalEquity} />
+                        </FinancialStatementCard.Section>
+                        <FinancialStatementCard.Total label="Итого капитал и обязательства" value={balanceSheet.totalLiabilitiesAndEquity} />
                     </FinancialStatementCard>
                 </div>
+                <div>
+                    <WaterfallChart data={[{name: 'Активы', value: balanceSheet.assets.totalAssets}, {name: 'Обязательства', value: -balanceSheet.liabilities.totalLiabilities}, {name: 'Капитал', value: balanceSheet.equity.totalEquity}, {name: 'Итого', value: balanceSheet.totalLiabilitiesAndEquity, isTotal: true}]} />
+                </div>
             </div>
-        </div>
-    );
-
-    const BalanceView = () => (
-        <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FinancialStatementCard title="Активы">
-                    <FinancialStatementCard.Section>
-                        <FinancialStatementCard.Row label="Денежные средства" value={balanceSheet.assets.cash} />
-                        <FinancialStatementCard.Row label="Дебиторская задолженность" value={balanceSheet.assets.receivables} />
-                        <FinancialStatementCard.SubSection title="Основные средства">
-                            <FinancialStatementCard.Row label="Первоначальная стоимость" value={balanceSheet.assets.equipment} />
-                            <FinancialStatementCard.Row label="Накопленная амортизация" value={-balanceSheet.assets.accumulatedDepreciation} />
-                            <FinancialStatementCard.SubTotal label="Чистая стоимость ОС" value={balanceSheet.assets.netEquipment} />
-                        </FinancialStatementCard.SubSection>
-                    </FinancialStatementCard.Section>
-                    <FinancialStatementCard.Total label="Итого активы" value={balanceSheet.assets.totalAssets} />
-                </FinancialStatementCard>
-                <FinancialStatementCard title="Капитал и Обязательства">
-                    <FinancialStatementCard.Section title="Обязательства">
-                        <FinancialStatementCard.Row label="Кредиторская задолженность" value={balanceSheet.liabilities.payables} />
-                        <FinancialStatementCard.Total label="Итого обязательства" value={balanceSheet.liabilities.totalLiabilities} />
-                    </FinancialStatementCard.Section>
-                    <FinancialStatementCard.Section title="Капитал">
-                        <FinancialStatementCard.Row label="Нераспределенная прибыль" value={balanceSheet.equity.retainedEarnings} />
-                        <FinancialStatementCard.Total label="Итого капитал" value={balanceSheet.equity.totalEquity} />
-                    </FinancialStatementCard.Section>
-                    <FinancialStatementCard.Total label="Итого капитал и обязательства" value={balanceSheet.totalLiabilitiesAndEquity} />
-                </FinancialStatementCard>
-            </div>
-        </div>
-    );
+        );
+    };
 
     const CounterpartyView = () => {
         const [sortConfig, setSortConfig] = useState<{ key: keyof CounterpartyData; direction: 'asc' | 'desc' } | null>({ key: 'balance', direction: 'desc' });
@@ -738,14 +868,14 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
 
     const ForecastView = () => {
         const forecastStats = useMemo(() => {
-            if (!forecastData) return null;
+            if (!forecastData || !forecastData.monthlyForecast) return null;
             const totalForecastRevenue = forecastData.monthlyForecast.reduce((sum, item) => sum + item.forecastRevenue, 0);
             const totalForecastProfit = forecastData.monthlyForecast.reduce((sum, item) => sum + item.forecastProfit, 0);
             return { totalForecastRevenue, totalForecastProfit };
         }, [forecastData]);
 
         const combinedChartData = useMemo(() => {
-            if (!forecastData) return [];
+            if (!forecastData || !forecastData.monthlyForecast) return [];
             const historicalPart = pnl.monthlyData.map(d => ({
                 label: d.month,
                 'Доход': d['Доход'],
@@ -852,6 +982,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
 
     return (
         <div className="p-8 space-y-6">
+            <ExecutiveSummary />
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-text-primary">Финансовый Дашборд</h1>
                 <div className="flex items-center gap-4">
@@ -875,6 +1006,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                 <div style={reportContainerStyle('forecast')}><ForecastView /></div>
                 <div style={reportContainerStyle('counterparties')}><CounterpartyView /></div>
                 <div style={reportContainerStyle('debts')}><DebtsView /></div>
+                <ExplanationsSection />
             </div>
         </div>
     );

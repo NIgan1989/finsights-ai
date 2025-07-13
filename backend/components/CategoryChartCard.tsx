@@ -30,6 +30,9 @@ const CustomTooltip: React.FC<any> = ({ active, payload }) => {
 const CategoryChartCard: React.FC<CategoryChartCardProps> = ({ data }) => {
     
     const totalExpenses = useMemo(() => data.reduce((sum, entry) => sum + entry.value, 0), [data]);
+    // Определяем топ-3 категории
+    const sorted = [...data].sort((a, b) => b.value - a.value);
+    const top3Names = sorted.slice(0, 3).map(d => d.name);
 
     return (
         <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border h-full flex flex-col">
@@ -53,7 +56,7 @@ const CategoryChartCard: React.FC<CategoryChartCardProps> = ({ data }) => {
                             paddingAngle={2}
                         >
                             {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke={COLORS[index % COLORS.length]} />
+                                <Cell key={`cell-${index}`} fill={top3Names.includes(entry.name) ? COLORS[index % COLORS.length] : '#cbd5e1'} stroke={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
@@ -63,7 +66,7 @@ const CategoryChartCard: React.FC<CategoryChartCardProps> = ({ data }) => {
                             verticalAlign="middle"
                             align="right"
                             wrapperStyle={{ paddingLeft: '20px', color: 'hsl(var(--color-text-secondary))', fontSize: '14px' }}
-                            formatter={(value) => value}
+                            formatter={(value) => top3Names.includes(value) ? `★ ${value}` : value}
                         />
                     </PieChart>
                 </ResponsiveContainer>

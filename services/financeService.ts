@@ -219,50 +219,89 @@ const parseCSV = (csvText: string): Omit<Transaction, 'category' | 'transactionT
 
 // --- Kaspi PDF Parser ---
 const parseKaspiPdfText = (pdfText: string): Transaction[] => {
+    console.log('Raw lines for parsing:', pdfText.split('\n'));
     const transactions: Transaction[] = [];
-    const lines = pdfText.split('\n').map(l => l.trim()).filter(Boolean);
-    // Найти первую строку с датой (dd.mm.yy)
-    const dateRegex = /^\d{2}\.\d{2}\.\d{2}$/;
-    let i = 0;
-    // Пропускаем всё до первой даты
-    while (i < lines.length && !dateRegex.test(lines[i])) i++;
-    // Теперь парсим блоки по 4 строки
-    while (i + 3 < lines.length) {
-        const dateLine = lines[i];
-        const amountLine = lines[i + 1];
-        const operationLine = lines[i + 2];
-        const detailsLine = lines[i + 3];
-        if (!dateRegex.test(dateLine)) { i++; continue; }
+    
+    // Предварительная обработка текста - разбиваем длинные строки на отдельные транзакции
+    let processedText = pdfText;
+    // Заменяем заголовки страниц пустой строкой
+    processedText = processedText.replace(/АО «Kaspi Bank», БИК CASPKZKA, www\.kaspi\.kz/g, '\n');
+    
+    // Разбиваем по датам (dd.mm.yy) с пробелами после них
+    const datePattern = /(\d{2}\.\d{2}\.\d{2})\s+/g;
+    processedText = processedText.replace(datePattern, '\n$1 ');
+    
+    // Теперь разбиваем на строки и обрабатываем каждую строку
+    const lines = processedText.split('\n').map(l => l.trim()).filter(Boolean);
+    console.log('Processed lines:', lines);
+    
+    let parsing = false;
+    for (const line of lines) {
+        // Игнорируем заголовки и служебные строки
+        if (line.includes('ВЫПИСКА') || 
+            line.includes('Краткое содержание') || 
+            line.includes('Доступно на') || 
+            line.includes('Валюта счета') ||
+            line.includes('Дата   Сумма   Операция   Детали') ||
+            line.includes('Сумма заблокирована')) {
+            if (line.includes('Дата   Сумма   Операция   Детали')) {
+                parsing = true;
+            }
+            continue;
+        }
+        
+        // Если строка содержит дату в формате dd.mm.yy, то это транзакция
+        const dateMatch = line.match(/^(\d{2}\.\d{2}\.\d{2})/);
+        if (!dateMatch || !parsing) continue;
+        
+        // Улучшенный regex для парсинга строки
+        const match = line.match(/(\d{2}\.\d{2}\.\d{2})\s+([+-]?\s*[\d\s]+,\d{2}\s*₸)\s+([\wА-Яа-яЁё\s]+)\s+(.+)/);
+        if (!match) {
+            console.log('Skipped line:', line);
+            continue;
+        }
+        
+        const [, dateStr, amountStr, operation, details] = match;
+        
         // Парсим дату
-        const [day, month, year] = dateLine.split('.');
-        const date = new Date(2000 + parseInt(year), parseInt(month) - 1, parseInt(day));
+        const [day, month, yearStr] = dateStr.split('.');
+        const year = parseInt(yearStr) < 50 ? 2000 + parseInt(yearStr) : 1900 + parseInt(yearStr);
+        const date = new Date(year, parseInt(month) - 1, parseInt(day));
+        if (isNaN(date.getTime())) {
+            console.log('Invalid date:', dateStr);
+            continue;
+        }
+        
         // Парсим сумму
-        const amountMatch = amountLine.match(/([+-]?)\s*([\d\s]+,\d{2})\s*₸/);
-        if (!amountMatch) { i++; continue; }
-        const sign = amountMatch[1] === '-' ? -1 : 1;
-        const amount = sign * parseFloat(amountMatch[2].replace(/\s/g, '').replace(',', '.'));
-        // Операция и детали
-        const operation = operationLine;
-        const details = detailsLine;
+        const cleanAmountStr = amountStr.replace(/\s/g, '').replace('₸', '').replace(',', '.');
+        const amount = parseFloat(cleanAmountStr);
+        if (isNaN(amount)) {
+            console.log('Invalid amount:', amountStr);
+            continue;
+        }
+        
         const description = `${operation} ${details}`.trim();
         const counterparty = extractCounterparty(description, operation);
         const category = determineCategory(description, counterparty, operation);
-
-        transactions.push({
-            id: `kaspi_${Date.now()}_${i}`,
+        
+        const tx = {
+            id: `kaspi_${Date.now()}_${transactions.length}`,
             date: date.toISOString().split('T')[0],
             description,
             amount: Math.abs(amount),
-            type: amount >= 0 ? 'income' : 'expense',
+            type: amount >= 0 ? 'income' as 'income' : 'expense' as 'expense',
             counterparty,
             category,
-            transactionType: 'operating',
+            transactionType: 'operating' as 'operating',
             isCapitalized: false,
             needsClarification: false,
-        });
-
-        i += 4;
+        };
+        
+        transactions.push(tx);
+        console.log('Parsed transaction:', tx);
     }
+    
+    console.log('Final parsed transactions:', transactions);
     return transactions;
 };
 
@@ -361,12 +400,18 @@ export const processAndCategorizeTransactions = async (file: File, _profile: Bus
                 rawText += pageText + '\n';
             }
             
+            // Отладка: Выводим сырой текст в консоль
+            console.log('Raw PDF Text:', rawText);
+            
             transactions = parsePdfTextSmart(rawText);
         } else {
             throw new Error('Неподдерживаемый формат файла. Поддерживаются только CSV и PDF файлы.');
         }
 
         onProgress(`Найдено ${transactions.length} транзакций. Категоризируем...`);
+
+        // Отладка: Выводим извлеченные транзакции в консоль
+        console.log('Extracted Transactions:', transactions);
 
         // Категоризация транзакций
         const finalTransactions: Transaction[] = transactions.map(tx => {
@@ -392,6 +437,9 @@ export const processAndCategorizeTransactions = async (file: File, _profile: Bus
                 needsClarification: false,
             };
         });
+
+        // Отладка: Выводим финальные транзакции после категоризации
+        console.log('Categorized Transactions:', finalTransactions);
 
         onProgress('Обработка завершена!');
         return finalTransactions;
