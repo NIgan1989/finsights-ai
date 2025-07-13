@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 // PDF and related imports are now dynamically imported in handleDownload
-import { FinancialReport, ForecastData, Transaction, Granularity, BusinessProfile, CounterpartyData } from '../../types.ts';
+import { FinancialReport, ForecastData, Transaction, Granularity, BusinessProfile, CounterpartyData, Theme } from '../../types.ts';
 import StatCard from './StatCard.tsx';
 import ChartCard from './ChartCard.tsx';
 import CategoryChartCard from './CategoryChartCard.tsx';
@@ -24,19 +24,37 @@ interface DashboardProps {
     dateRange: { start: string; end: string };
     transactions: Transaction[];
     profile: BusinessProfile | null;
+    theme: Theme;
 }
 
 type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('ru-RU').format(Math.round(value)) + ' ₸';
 
-const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, profile }) => {
+const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, profile, theme }) => {
     const { pnl, cashFlow, balanceSheet, counterpartyReport, debtReport } = report;
     const [activeReport, setActiveReport] = useState<ReportView>('pnl');
     const [forecastData, setForecastData] = useState<ForecastData | null>(null);
     const [isForecasting, setIsForecasting] = useState(false);
     const [forecastError, setForecastError] = useState<string | null>(null);
     const [granularity, setGranularity] = useState<Granularity>('month');
+    
+    // Используем theme для адаптации цветов графиков
+    const chartColors = useMemo(() => {
+        return theme === 'dark' 
+            ? { 
+                revenue: '#4ade80', // зеленый для темной темы
+                expense: '#f87171', // красный для темной темы
+                profit: '#60a5fa', // синий для темной темы
+                background: '#1e293b' // темный фон
+              }
+            : {
+                revenue: '#22c55e', // зеленый для светлой темы
+                expense: '#ef4444', // красный для светлой темы
+                profit: '#3b82f6', // синий для светлой темы
+                background: '#ffffff' // светлый фон
+              };
+    }, [theme]);
 
     // Refs to capture charts as images
     const pnlChartRef = useRef<HTMLDivElement>(null);
@@ -507,9 +525,9 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                         title="Отчет о прибылях и убытках (ОПиУ)"
                         data={aggregatedChartData.pnlData}
                         series={[
-                            { key: 'Доход', type: 'area', color: 'hsl(var(--color-success))' },
-                            { key: 'Расход', type: 'area', color: 'hsl(var(--color-destructive))' },
-                            { key: 'Прибыль', type: 'line', color: 'hsl(var(--color-primary))' },
+                            { key: 'Доход', type: 'area', color: chartColors.revenue },
+                            { key: 'Расход', type: 'area', color: chartColors.expense },
+                            { key: 'Прибыль', type: 'line', color: chartColors.profit },
                         ]}
                     />
                 </div>
@@ -534,9 +552,9 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                         title="Движение денежных средств (ДДС)"
                         data={aggregatedChartData.cashFlowData}
                         series={[
-                            { key: 'Поступления', type: 'area', color: 'hsl(var(--color-success))' },
-                            { key: 'Выбытия', type: 'area', color: 'hsl(var(--color-destructive))' },
-                            { key: 'Чистый поток', type: 'line', color: 'hsl(var(--color-primary))' },
+                            { key: 'Поступления', type: 'area', color: chartColors.revenue },
+                            { key: 'Выбытия', type: 'area', color: chartColors.expense },
+                            { key: 'Чистый поток', type: 'line', color: chartColors.profit },
                         ]}
                     />
                 </div>
