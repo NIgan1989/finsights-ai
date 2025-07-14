@@ -58,25 +58,53 @@ app.post('/api/openai/forecast', async (req, res) => {
 app.post('/api/openai/chat', async (req, res) => {
   try {
     const { messages, transactions, report, dateRange, profile } = req.body;
-    // Формируем краткую сводку по финансам
+    // Проверка наличия данных
+    if (!report) console.log('ВНИМАНИЕ: report отсутствует или пустой');
+    if (!transactions || !Array.isArray(transactions) || transactions.length === 0) console.log('ВНИМАНИЕ: transactions отсутствуют или пусты');
+    if (!profile) console.log('ВНИМАНИЕ: profile отсутствует или пустой');
+
+    // Формируем максимально структурированный system prompt
     let summary = '';
-    if (report) {
-      summary += `Финансовый отчет пользователя:\n`;
-      summary += `Период: ${dateRange?.start || ''} - ${dateRange?.end || ''}\n`;
-      summary += `Выручка: ${report.pnl?.totalRevenue ?? '-'}; Операционные расходы: ${report.pnl?.totalOperatingExpenses ?? '-'}; Чистая прибыль: ${report.pnl?.netProfit ?? '-'};\n`;
-      summary += `Денежный поток: ${report.cashFlow?.netCashFlow ?? '-'};\n`;
-      summary += `Контрагентов: ${report.counterpartyReport?.length ?? '-'};\n`;
-    }
-    if (transactions && Array.isArray(transactions)) {
-      summary += `Транзакций за период: ${transactions.length}.\n`;
-    }
     if (profile) {
-      summary += `Профиль бизнеса: ${profile.businessName || ''} (${profile.businessType || ''})\n`;
+      summary += `Профиль бизнеса: ${profile.businessName || '-'} (${profile.businessType || '-'})\n`;
+    }
+    if (dateRange) {
+      summary += `Период: ${dateRange.start || '-'} - ${dateRange.end || '-'}\n`;
+    }
+    if (report) {
+      summary += `\nКлючевые показатели:\n`;
+      summary += `- Выручка: ${report.pnl?.totalRevenue ?? '-'}\n`;
+      summary += `- Операционные расходы: ${report.pnl?.totalOperatingExpenses ?? '-'}\n`;
+      summary += `- Чистая прибыль: ${report.pnl?.netProfit ?? '-'}\n`;
+      summary += `- Денежный поток: ${report.cashFlow?.netCashFlow ?? '-'}\n`;
+      summary += `- Контрагентов: ${report.counterpartyReport?.length ?? '-'}\n`;
+      // Топ категории расходов
+      if (report.pnl?.expenseByCategory) {
+        const topCategories = report.pnl.expenseByCategory
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 3)
+          .map((cat, i) => `${i + 1}. ${cat.name}: ${cat.value}`)
+          .join('\n');
+        summary += `\nТоп-3 категории расходов:\n${topCategories}\n`;
+      }
+      // Динамика по месяцам
+      if (report.pnl?.monthlyData) {
+        summary += '\nДинамика по месяцам:\n' +
+          report.pnl.monthlyData.map(m => `${m.month}: Доход ${m['Доход']}, Расход ${m['Расход']}, Прибыль ${m['Прибыль']}`).join('\n') + '\n';
+      }
+    }
+    if (transactions && Array.isArray(transactions) && transactions.length > 0) {
+      const lastTxs = transactions.slice(-10).reverse();
+      summary += '\nПоследние 10 транзакций:\n' + lastTxs.map(tx =>
+        `${tx.date}: ${tx.description} (${tx.category}) — ${tx.type === 'income' ? '+' : '-'}${tx.amount}`
+      ).join('\n') + '\n';
     }
     const systemPrompt = {
       role: 'system',
-      content: `Ты — финансовый ассистент. Используй эти данные для анализа и ответов на вопросы пользователя.\n${summary}`
+      content: `Ты — финансовый ассистент. Используй только эти данные для анализа и ответов на вопросы пользователя.\n${summary}`
     };
+    // Логируем system prompt для отладки
+    console.log('System prompt для OpenAI:', systemPrompt.content);
     const fullMessages = [systemPrompt, ...(messages || [])];
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
