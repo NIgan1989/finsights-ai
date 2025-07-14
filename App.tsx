@@ -10,6 +10,7 @@ import Loader from './backend/components/Loader.tsx';
 import DateRangeFilter from './backend/components/DateRangeFilter.tsx';
 import { processAndCategorizeTransactions, generateFinancialReport } from './services/financeService.ts';
 
+
 const Dashboard = lazy(() => import('./backend/components/Dashboard.tsx'));
 
 type View = 'dashboard' | 'transactions' | 'ai_assistant' | 'profile';
@@ -223,6 +224,20 @@ export const App: React.FC = () => {
         });
     }, []);
 
+    const handleAddTransaction = useCallback((tx: Transaction) => {
+        setAllTransactions(prev => {
+            const updated = prev ? [...prev, tx] : [tx];
+            localStorage.setItem('transactions', JSON.stringify(updated));
+            return updated;
+        });
+        setDateRange(prev => {
+            if (!prev) return { start: tx.date, end: tx.date };
+            const min = prev.start < tx.date ? prev.start : tx.date;
+            const max = prev.end > tx.date ? prev.end : tx.date;
+            return { start: min, end: max };
+        });
+    }, []);
+
 
     const handleResetData = () => {
         setAllTransactions(null);
@@ -322,7 +337,7 @@ export const App: React.FC = () => {
                                 </Suspense>
                             );
                         case 'transactions':
-                            return <TransactionsTable transactions={filteredTransactions} onUpdateTransaction={handleUpdateTransaction} theme={theme} />;
+                            return <TransactionsTable transactions={filteredTransactions} onUpdateTransaction={handleUpdateTransaction} onAddTransaction={handleAddTransaction} theme={theme} />;
                         case 'ai_assistant':
                             return <AiAssistant transactions={filteredTransactions} report={financialReport} dateRange={dateRange} profile={activeProfile} />;
                         default:

@@ -6,6 +6,7 @@ import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../constants.ts';
 interface TransactionsTableProps {
     transactions: Transaction[];
     onUpdateTransaction: (originalTx: Transaction, updates: Partial<Pick<Transaction, 'description' | 'category' | 'counterparty'>>, applyToAll: boolean) => void;
+    onAddTransaction: (tx: Transaction) => void;
     theme: Theme;
 }
 
@@ -234,11 +235,104 @@ const ClarificationForm: React.FC<{
     );
 };
 
+const AddTransactionModal: React.FC<{
+    open: boolean;
+    onClose: () => void;
+    onAdd: (tx: Transaction) => void;
+}> = ({ open, onClose, onAdd }) => {
+    const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+    const [description, setDescription] = useState('');
+    const [amount, setAmount] = useState<number>(0);
+    const [type, setType] = useState<'income' | 'expense'>('expense');
+    const [category, setCategory] = useState('');
+    const [counterparty, setCounterparty] = useState('');
+    const [transactionType, setTransactionType] = useState<'operating' | 'investing' | 'financing'>('operating');
+    const [isCapitalized, setIsCapitalized] = useState(false);
 
-const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onUpdateTransaction, theme }) => {
+    const categoryList = useMemo(() => type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES, [type]);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!description.trim() || !category.trim() || !date || !amount) return;
+        onAdd({
+            id: Date.now().toString() + Math.random().toString(36).slice(2),
+            date,
+            description,
+            amount: Math.abs(amount),
+            type,
+            category,
+            counterparty,
+            transactionType,
+            isCapitalized,
+        });
+        setDescription(''); setAmount(0); setCategory(''); setCounterparty(''); setIsCapitalized(false);
+        onClose();
+    };
+
+    if (!open) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <form onSubmit={handleSubmit} className="bg-surface rounded-2xl p-8 w-full max-w-lg shadow-xl space-y-4 border border-border">
+                <h2 className="text-xl font-bold mb-2">Добавить транзакцию</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm mb-1">Дата</label>
+                        <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full p-2 rounded-lg border border-border bg-background text-text-primary" required />
+                    </div>
+                    <div>
+                        <label className="block text-sm mb-1">Тип</label>
+                        <select value={type} onChange={e => setType(e.target.value as any)} className="w-full p-2 rounded-lg border border-border bg-background text-text-primary">
+                            <option value="expense">Расход</option>
+                            <option value="income">Доход</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm mb-1">Сумма</label>
+                        <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} className="w-full p-2 rounded-lg border border-border bg-background text-text-primary" required min="0.01" step="0.01" />
+                    </div>
+                    <div>
+                        <label className="block text-sm mb-1">Категория</label>
+                        <select value={category} onChange={e => setCategory(e.target.value)} className="w-full p-2 rounded-lg border border-border bg-background text-text-primary" required>
+                            <option value="">Выберите...</option>
+                            {categoryList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm mb-1">Описание</label>
+                        <input type="text" value={description} onChange={e => setDescription(e.target.value)} className="w-full p-2 rounded-lg border border-border bg-background text-text-primary" required />
+                    </div>
+                    <div>
+                        <label className="block text-sm mb-1">Контрагент</label>
+                        <input type="text" value={counterparty} onChange={e => setCounterparty(e.target.value)} className="w-full p-2 rounded-lg border border-border bg-background text-text-primary" />
+                    </div>
+                    <div>
+                        <label className="block text-sm mb-1">Тип транзакции</label>
+                        <select value={transactionType} onChange={e => setTransactionType(e.target.value as any)} className="w-full p-2 rounded-lg border border-border bg-background text-text-primary">
+                            <option value="operating">Операционная</option>
+                            <option value="investing">Инвестиционная</option>
+                            <option value="financing">Финансовая</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2 mt-6">
+                        <input type="checkbox" id="isCapitalized" checked={isCapitalized} onChange={e => setIsCapitalized(e.target.checked)} />
+                        <label htmlFor="isCapitalized" className="text-sm">Капитализировать</label>
+                    </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4">
+                    <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-text-primary bg-surface-accent rounded-lg hover:bg-border transition-colors">Отмена</button>
+                    <button type="submit" className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary-hover transition-colors shadow-md">Добавить</button>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+
+const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onUpdateTransaction, onAddTransaction, theme }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: keyof Transaction; direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'desc' });
     const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+    const [addModalOpen, setAddModalOpen] = useState(false);
 
     const sortedTransactions = useMemo(() => {
         let sortableItems = [...transactions];
@@ -304,14 +398,21 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
     return (
         <div className="p-8">
             <h1 className="text-3xl font-bold text-text-primary mb-6">Список Транзакций</h1>
-            <div className="mb-4">
+            <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <input
                     type="text"
                     placeholder="Поиск по описанию, категории или контрагенту..."
                     className="w-full max-w-sm p-2 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                <button
+                    onClick={() => setAddModalOpen(true)}
+                    className="px-4 py-2 text-sm font-medium text-primary-foreground bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-md"
+                >
+                    + Добавить транзакцию
+                </button>
             </div>
+            <AddTransactionModal open={addModalOpen} onClose={() => setAddModalOpen(false)} onAdd={onAddTransaction} />
             <div className="bg-surface rounded-2xl overflow-hidden border border-border shadow-lg">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left min-w-full">

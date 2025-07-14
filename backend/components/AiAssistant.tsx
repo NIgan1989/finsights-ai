@@ -11,7 +11,7 @@ interface AiAssistantProps {
     profile: BusinessProfile | null;
 }
 
-const AiAssistant: React.FC<AiAssistantProps> = () => {
+const AiAssistant: React.FC<AiAssistantProps> = ({ transactions, report, dateRange, profile }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -33,15 +33,25 @@ const AiAssistant: React.FC<AiAssistantProps> = () => {
         setIsLoading(true);
 
         try {
-            // В handleSendMessage делаю заглушку:
-            // const stream = await streamChatResponse(input, transactions, report, dateRange, profile);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const fakeResponse = 'AI-ассистент временно недоступен.';
-            setMessages(prev => [...prev, { role: 'model', content: fakeResponse }]);
+            const response = await fetch('http://localhost:3001/api/openai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [...messages, newUserMessage],
+                    transactions,
+                    report,
+                    dateRange,
+                    profile
+                }),
+            });
+            const data = await response.json();
+            if (data.error) {
+                setMessages(prev => [...prev, { role: 'assistant', content: `Ошибка: ${data.error}` }]);
+            } else {
+                setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
+            }
         } catch (error) {
-            console.error("Error streaming response:", error);
-            const errorMessage: ChatMessage = { role: 'model', content: "Извините, произошла ошибка при обработке вашего запроса." };
-            setMessages(prev => [...prev, errorMessage]);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Извините, произошла ошибка при обработке вашего запроса." }]);
         } finally {
             setIsLoading(false);
         }

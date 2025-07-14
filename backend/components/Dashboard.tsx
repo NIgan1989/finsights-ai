@@ -20,6 +20,9 @@ import html2canvas from 'html2canvas';
 (pdfMake as any).vfs = (vfsFonts as any).vfs;
 
 import WaterfallChart from './WaterfallChart.tsx';
+import AdvancedFinancialDashboard from './AdvancedFinancialDashboard.tsx';
+import { generateAdvancedFinancialReport } from '../../services/advancedFinancialService.ts';
+import { generateAdvancedPdfReport } from '../../services/advancedPdfService';
 
 interface DashboardProps {
     report: FinancialReport;
@@ -29,7 +32,7 @@ interface DashboardProps {
     theme: Theme;
 }
 
-type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts';
+type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts' | 'advanced';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('ru-RU').format(Math.round(value)) + ' ₸';
 
@@ -258,7 +261,13 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
         return canvas.toDataURL('image/png');
     };
 
-    const kpiColor = (val: number, positive = true) => (positive ? (val > 1 ? 'green' : 'red') : (val > 0 ? 'green' : 'red'));
+
+
+    const handleDownloadAdvancedReport = async () => {
+        const advancedReport = generateAdvancedFinancialReport(transactions);
+        const pdf = generateAdvancedPdfReport(advancedReport, profile?.businessName || 'Бизнес');
+        pdf.download(`advanced-financial-report-${new Date().toISOString().split('T')[0]}.pdf`);
+    };
 
     const handleDownloadFullReport = async () => {
         const { pnl, cashFlow, balanceSheet, counterpartyReport, debtReport } = report;
@@ -665,7 +674,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
 
     const PnlView = () => (
         <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard title="Выручка" value={pnl.totalRevenue} />
                 <StatCard title="Операционные Расходы" value={-pnl.totalOperatingExpenses} />
                 <StatCard title="Амортизация" value={-pnl.depreciation} isCurrency={true} />
@@ -693,7 +702,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     const CashflowView = () => {
         return (
             <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard title="Денежный поток от операций" value={cashFlow.operatingActivities} />
                     <StatCard title="Денежный поток от инвестиций" value={cashFlow.investingActivities} />
                     <StatCard title="Денежный поток от финансов" value={cashFlow.financingActivities} />
@@ -802,7 +811,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
 
         return (
             <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard title="Всего контрагентов" value={counterpartyReport.length} isCurrency={false} />
                     <StatCard title="Клиентов (с доходом)" value={counterpartyReport.filter(c => c.income > 0).length} isCurrency={false} />
                     <StatCard title="Топ клиент" value={topClient.income} isCurrency={true} />
@@ -1030,12 +1039,12 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                     {showGranularitySwitcher && <GranularitySwitcher activeGranularity={granularity} setGranularity={setGranularity} />}
                     <ReportTabs activeReport={activeReport} setActiveReport={setActiveReport} />
                     <button
-                        onClick={handleDownloadFullReport}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary-hover transition-colors shadow-md"
-                        aria-label="Скачать полный PDF-отчет"
+                        onClick={handleDownloadAdvancedReport}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-md"
+                        aria-label="Скачать передовой PDF-отчет"
                     >
                         <DownloadIcon className="w-5 h-5" />
-                        <span>Скачать полный PDF-отчет</span>
+                        <span>Скачать передовой отчет</span>
                     </button>
                 </div>
             </div>
@@ -1047,6 +1056,9 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                 <div style={reportContainerStyle('forecast')}><ForecastView /></div>
                 <div style={reportContainerStyle('counterparties')}><CounterpartyView /></div>
                 <div style={reportContainerStyle('debts')}><DebtsView /></div>
+                <div style={reportContainerStyle('advanced')}>
+                    <AdvancedFinancialDashboard report={generateAdvancedFinancialReport(transactions)} />
+                </div>
                 <ExplanationsSection />
             </div>
         </div>
