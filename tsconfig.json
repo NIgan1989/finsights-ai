@@ -26,5 +26,11 @@
     "paths": {
       "@/*" :  ["./*"]
     }
-  }
+  },
+  "include": [
+    "./index.css",
+    "./src",
+    "./backend/components",
+    "./*"
+  ]
 }

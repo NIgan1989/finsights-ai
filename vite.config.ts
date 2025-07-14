@@ -11,6 +11,12 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       }
+    },
+    server: {
+      proxy: {
+        '/auth': 'http://localhost:3001',
+        '/api': 'http://localhost:3001'
+      }
     }
   };
 });

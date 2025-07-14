@@ -9,6 +9,10 @@ import Profile from './backend/components/Profile.tsx';
 import Loader from './backend/components/Loader.tsx';
 import DateRangeFilter from './backend/components/DateRangeFilter.tsx';
 import { processAndCategorizeTransactions, generateFinancialReport } from './services/financeService.ts';
+import { UserProvider, useUser } from './backend/components/UserContext';
+import LandingPage from './backend/components/LandingPage';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import PricingPage from './backend/components/PricingPage';
 
 
 const Dashboard = lazy(() => import('./backend/components/Dashboard.tsx'));
@@ -31,7 +35,24 @@ const createNewProfile = (): BusinessProfile => ({
     ownerName: '',
 });
 
-export const App: React.FC = () => {
+// PrivateRoute для защиты приватных страниц
+const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { token, loading } = useUser();
+  const location = useLocation();
+  console.log('[RequireAuth] token:', token, 'loading:', loading, 'location:', location.pathname);
+  if (loading) {
+    return <Loader message="Проверка авторизации..." />;
+  }
+  if (!token) {
+    console.log('[RequireAuth] Нет токена, редирект на /');
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+  console.log('[RequireAuth] Авторизован, рендерим children');
+  return <>{children}</>;
+};
+
+// Основной App
+const App: React.FC = () => {
     const [allTransactions, setAllTransactions] = useState<Transaction[] | null>(null);
     const [allProfiles, setAllProfiles] = useState<BusinessProfile[]>([]);
     const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
@@ -41,6 +62,9 @@ export const App: React.FC = () => {
     const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
     const [loadingMessage, setLoadingMessage] = useState("Загрузка приложения...");
     const [theme, setTheme] = useState<Theme>('light');
+    const { token, email } = useUser();
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
 
     const activeProfile = useMemo(() => {
         return allProfiles.find(p => p.id === activeProfileId) || null;
@@ -121,6 +145,21 @@ export const App: React.FC = () => {
             setAppState('upload');
         }
     }, []);
+
+    useEffect(() => {
+        console.log('[App] token:', token, 'email:', email, 'allProfiles:', allProfiles, 'allTransactions:', allTransactions);
+    }, [token, email, allProfiles, allTransactions]);
+
+    useEffect(() => {
+        // Если пользователь авторизован, но нет профиля — создать дефолтный профиль
+        if (token && email && allProfiles.length === 0) {
+            const newProfile = createNewProfile();
+            setAllProfiles([newProfile]);
+            setActiveProfileId(newProfile.id);
+            localStorage.setItem('businessProfiles', JSON.stringify([newProfile]));
+            localStorage.setItem('activeProfileId', newProfile.id);
+        }
+    }, [token, email, allProfiles.length]);
 
     const handleFileProcess = async (file: File) => {
         setAppState('processing');
@@ -247,6 +286,20 @@ export const App: React.FC = () => {
         setAppState('upload');
     };
 
+    const openUploadModal = () => {
+        setIsUploadModalOpen(true);
+    };
+
+    const closeUploadModal = () => {
+        setIsUploadModalOpen(false);
+        setShowReplaceConfirm(false); // Close confirmation modal if open
+    };
+
+    const confirmReplace = () => {
+        setShowReplaceConfirm(false);
+        setIsUploadModalOpen(true);
+    };
+
     const filteredTransactions = useMemo<Transaction[] | null>(() => {
         if (!allTransactions || !dateRange) return null;
         try {
@@ -283,7 +336,7 @@ export const App: React.FC = () => {
             case 'upload':
                 return (
                     <div className="flex h-screen bg-background text-text-primary">
-                        <Sidebar activeView={activeView} setActiveView={setActiveView} hasData={false} onResetData={handleResetData} theme={theme} onToggleTheme={toggleTheme} />
+                        <Sidebar activeView={activeView} setActiveView={setActiveView} hasData={false} onResetData={openUploadModal} theme={theme} onToggleTheme={toggleTheme} />
                         <main className="flex-1 overflow-y-auto">
                             {activeView === 'profile' ? (
                                 <Profile
@@ -352,7 +405,7 @@ export const App: React.FC = () => {
                 if (!allTransactions && activeView !== 'profile') {
                     return (
                         <div className="flex h-screen bg-background text-text-primary">
-                            <Sidebar activeView={activeView} setActiveView={setActiveView} hasData={false} onResetData={handleResetData} theme={theme} onToggleTheme={toggleTheme} />
+                            <Sidebar activeView={activeView} setActiveView={setActiveView} hasData={false} onResetData={openUploadModal} theme={theme} onToggleTheme={toggleTheme} />
                             <main className="flex-1 overflow-y-auto">
                                 <DataUpload onFileUploaded={(file) => handleFileProcess(file)} isProcessing={false} />
                             </main>
@@ -362,7 +415,7 @@ export const App: React.FC = () => {
 
                 return (
                     <div className="flex h-screen bg-background text-text-primary">
-                        <Sidebar activeView={activeView} setActiveView={setActiveView} hasData={!!allTransactions} onResetData={handleResetData} theme={theme} onToggleTheme={toggleTheme} />
+                        <Sidebar activeView={activeView} setActiveView={setActiveView} hasData={!!allTransactions} onResetData={openUploadModal} theme={theme} onToggleTheme={toggleTheme} />
                         <main className="flex-1 overflow-y-auto flex flex-col">
                             {dateRange && dateBounds && activeView !== 'profile' && (
                                 <DateRangeFilter
@@ -385,5 +438,59 @@ export const App: React.FC = () => {
         }
     };
 
-    return <div className="h-screen">{renderContent()}</div>
+    // Модальное окно подтверждения замены
+    const ReplaceConfirmModal = () => (
+        showReplaceConfirm ? (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-surface p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
+                    <h2 className="text-xl font-bold mb-4 text-text-primary">Заменить данные?</h2>
+                    <p className="mb-6 text-text-secondary">Текущие транзакции и дашборд будут заменены новым файлом. Продолжить?</p>
+                    <div className="flex gap-4 justify-center">
+                        <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90" onClick={confirmReplace}>Заменить</button>
+                        <button className="px-4 py-2 rounded-lg bg-surface-accent text-text-primary border border-border" onClick={closeUploadModal}>Отмена</button>
+                    </div>
+                </div>
+            </div>
+        ) : null
+    );
+
+    // Модальное окно загрузки файла
+    const UploadModal = () => (
+        isUploadModalOpen ? (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-surface p-8 rounded-2xl shadow-xl max-w-xl w-full relative">
+                    <button className="absolute top-4 right-4 text-2xl text-text-secondary hover:text-text-primary" onClick={closeUploadModal}>&times;</button>
+                    <DataUpload
+                        onFileUploaded={async (file) => {
+                            await handleFileProcess(file);
+                            closeUploadModal();
+                        }}
+                        isProcessing={appState === 'processing'}
+                    />
+                </div>
+            </div>
+        ) : null
+    );
+
+    return (
+        <UserProvider>
+            <Router>
+                <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/dashboard" element={
+                        <RequireAuth>
+                            {/* Здесь основной функционал приложения: дашборд, профиль и т.д. */}
+                            {renderContent()}
+                            <ReplaceConfirmModal />
+                            <UploadModal />
+                        </RequireAuth>
+                    } />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </Router>
+        </UserProvider>
+    );
 };
+
+export default App;
