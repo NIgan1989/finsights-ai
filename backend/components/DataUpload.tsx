@@ -10,6 +10,7 @@ interface DataUploadProps {
 
 const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing }) => {
     const [error, setError] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
         setError(null);
@@ -20,9 +21,21 @@ const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing })
 
         const file = acceptedFiles[0];
         if (file) {
-            onFileUploaded(file);
+            setSelectedFile(file);
         }
-    }, [onFileUploaded]);
+    }, []);
+
+    const handleUpload = () => {
+        if (selectedFile) {
+            onFileUploaded(selectedFile);
+            setSelectedFile(null);
+        }
+    };
+
+    const handleCancel = () => {
+        setSelectedFile(null);
+        setError(null);
+    };
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -33,7 +46,7 @@ const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing })
             'image/jpeg': ['.jpg', '.jpeg'],
         },
         multiple: false,
-        disabled: isProcessing,
+        disabled: isProcessing || !!selectedFile,
     });
 
     return (
@@ -42,26 +55,34 @@ const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing })
                 <h1 className="text-4xl font-bold text-text-primary mb-2">Добро пожаловать в FinSights AI</h1>
                 <p className="text-lg text-text-secondary mb-8">Ваш персональный финансовый ассистент. Начните с загрузки выписки по счету.</p>
 
-                <div
-                    {...getRootProps()}
-                    className={`p-10 border-2 border-dashed rounded-2xl transition-colors duration-300 ${isProcessing ? 'cursor-wait bg-surface' : 'cursor-pointer'} ${isDragActive ? 'border-primary bg-surface' : 'border-border hover:border-primary hover:bg-surface'}`}
-                >
-                    <input {...getInputProps()} />
-                    <div className="flex flex-col items-center text-text-secondary">
-                        <UploadIcon className="w-12 h-12 mb-4" />
-                        { isProcessing ? (
-                             <p className="text-xl text-text-primary">Обработка файла...</p>
-                        ) : isDragActive ? (
-                            <p className="text-xl text-primary">Отпустите файл для загрузки</p>
-                        ) : (
-                            <p className="text-xl text-text-primary">Перетащите сюда файл или нажмите для выбора</p>
-                        )}
-                        <p className="text-sm mt-2">Поддерживаются форматы: PDF, PNG, JPG, CSV</p>
+                {!selectedFile ? (
+                    <div
+                        {...getRootProps()}
+                        className={`p-10 border-2 border-dashed rounded-2xl transition-colors duration-300 ${isProcessing ? 'cursor-wait bg-surface' : 'cursor-pointer'} ${isDragActive ? 'border-primary bg-surface' : 'border-border hover:border-primary hover:bg-surface'}`}
+                    >
+                        <input {...getInputProps()} />
+                        <div className="flex flex-col items-center text-text-secondary">
+                            <UploadIcon className="w-12 h-12 mb-4" />
+                            { isProcessing ? (
+                                 <p className="text-xl text-text-primary">Обработка файла...</p>
+                            ) : isDragActive ? (
+                                <p className="text-xl text-primary">Отпустите файл для загрузки</p>
+                            ) : (
+                                <p className="text-xl text-text-primary">Перетащите сюда файл или нажмите для выбора</p>
+                            )}
+                            <p className="text-sm mt-2">Поддерживаются форматы: PDF, PNG, JPG, CSV</p>
+                        </div>
                     </div>
-                </div>
-                
+                ) : (
+                    <div className="flex flex-col items-center gap-4 p-8 border-2 border-primary rounded-2xl bg-surface mt-4">
+                        <p className="text-lg text-text-primary">Выбран файл: <b>{selectedFile.name}</b></p>
+                        <div className="flex gap-4 mt-2">
+                            <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleUpload} disabled={isProcessing}>Загрузить</button>
+                            <button className="px-4 py-2 rounded-lg bg-surface-accent text-text-primary border border-border" onClick={handleCancel} disabled={isProcessing}>Отмена</button>
+                        </div>
+                    </div>
+                )}
                 {error && <p className="text-destructive mt-4">{error}</p>}
-                
                 <div className="mt-8 text-left bg-surface p-6 rounded-2xl border border-border shadow-lg w-full">
                     <h3 className="font-semibold text-text-primary mb-3">Как это работает:</h3>
                     <ul className="text-sm text-text-secondary list-disc list-inside space-y-2">

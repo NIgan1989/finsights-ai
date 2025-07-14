@@ -1,15 +1,96 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import OpenAI from 'openai';
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const OpenAI = require('openai');
+const bodyParser = require('body-parser');
+// Удаляю Stripe
+// const Stripe = require('stripe');
+// const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const session = require('express-session');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
+app.use(bodyParser.json());
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Минимальное хранилище пользователей (MVP)
+const users = {};
+
+// В памяти: userId <-> customerId и статус подписки
+// Удаляю Stripe
+// const userToStripeCustomer = {};
+// const customerToUser = {};
+const userSubscriptionStatus = {};
+
+// Подготовка к интеграции Google OAuth (passport.js)
+// Здесь будет passport.use(...) и маршруты /auth/google, /auth/google/callback
+
+// Сессии
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: '/auth/google/callback'
+}, (accessToken, refreshToken, profile, done) => {
+  users[profile.id] = {
+    id: profile.id,
+    displayName: profile.displayName,
+    email: profile.emails[0].value,
+    photoUrl: profile.photos && profile.photos[0] ? profile.photos[0].value : null
+  };
+  return done(null, users[profile.id]);
+}));
+
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser((id, done) => done(null, users[id]));
+
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/' }),
+  (req, res) => {
+    res.redirect('http://localhost:5173/dashboard');
+  }
+);
+
+app.get('/api/me', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ error: 'Not authenticated' });
+  res.json(req.user);
+});
+
+app.get('/logout', (req, res) => {
+  req.logout(() => {
+    res.redirect('/');
+  });
+});
+
+// Вход
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = users.find(u => u.email === email);
+  if (!user) return res.status(401).json({ error: 'Неверный email или пароль' });
+  // Удалить строки вида:
+  // const valid = await bcrypt.compare(password, user.password);
+  // if (!valid) return res.status(401).json({ error: 'Неверный email или пароль' });
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token });
+});
 
 app.post('/api/openai/forecast', async (req, res) => {
     try {
@@ -118,8 +199,61 @@ app.post('/api/openai/chat', async (req, res) => {
   }
 });
 
+// Сброс пароля (заглушка)
+app.post('/api/reset-password', (req, res) => {
+  const { email } = req.body;
+  // В реальном проекте: найти пользователя, сгенерировать токен, отправить email
+  const user = users.find(u => u.email === email);
+  if (user) {
+    console.log(`Отправка письма для сброса пароля на ${email}`);
+  }
+  // Не раскрываем, есть ли пользователь
+  res.json({ success: true });
+});
+
+// Удаляю /api/create-checkout-session и /api/stripe-webhook
+// Вместо этого добавляю endpoint для заявки на оплату через Kaspi Gold
+app.post('/api/kaspi-payment-request', (req, res) => {
+  const { userId } = req.body;
+  // Сохраняем заявку на оплату (MVP: просто в память)
+  if (!userId) return res.status(400).json({ error: 'userId required' });
+  userSubscriptionStatus[userId] = 'pending';
+  // В реальном проекте: уведомить админа, записать в базу, отправить email и т.д.
+  res.json({ success: true, message: 'Заявка на оплату получена. Мы проверим перевод и активируем PRO в течение 24 часов.' });
+});
+
+// Оставляю endpoint для проверки статуса подписки
+app.get('/api/subscription-status', (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.status(400).json({ error: 'userId required' });
+  const status = userSubscriptionStatus[userId] || 'free';
+  res.json({ status });
+});
+
 app.get('/', (req, res) => {
     res.send('FinSights AI backend is running');
+});
+
+// Глобальный обработчик ошибок (добавить в самом конце файла)
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// SPA fallback: отдаём index.html для всех не-API/не-auth/не-static GET-запросов
+const path = require('path');
+app.use((req, res, next) => {
+  if (
+    req.method === 'GET' &&
+    !req.path.startsWith('/api') &&
+    !req.path.startsWith('/auth') &&
+    !req.path.startsWith('/static') &&
+    !req.path.startsWith('/public')
+  ) {
+    res.sendFile(path.resolve(__dirname, '../index.html'));
+  } else {
+    next();
+  }
 });
 
 const PORT = process.env.PORT || 3001;

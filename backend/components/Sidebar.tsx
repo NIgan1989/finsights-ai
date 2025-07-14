@@ -82,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, hasData, o
               className="flex items-center w-full px-4 py-3 mt-4 text-sm font-medium text-text-secondary rounded-lg hover:bg-surface-accent hover:text-text-primary transition-colors duration-200"
             >
               <UploadIcon className="w-6 h-6" />
-              <span className="ml-4">Загрузить новый файл</span>
+              <span className="ml-4">Загрузить или заменить файл</span>
             </button>
           )}
           <button
