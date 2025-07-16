@@ -396,59 +396,153 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
     };
 
     return (
-        <div className="p-8">
-            <h1 className="text-3xl font-bold text-text-primary mb-6">Список Транзакций</h1>
-            <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <input
-                    type="text"
-                    placeholder="Поиск по описанию, категории или контрагенту..."
-                    className="w-full max-w-sm p-2 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button
-                    onClick={() => setAddModalOpen(true)}
-                    className="px-4 py-2 text-sm font-medium text-primary-foreground bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-md"
-                >
-                    + Добавить транзакцию
-                </button>
-            </div>
-            <AddTransactionModal open={addModalOpen} onClose={() => setAddModalOpen(false)} onAdd={onAddTransaction} />
-            <div className="bg-surface rounded-2xl overflow-hidden border border-border shadow-lg">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left min-w-full">
-                        <thead className="bg-surface-accent">
-                            <tr>
-                                <th className="p-4 cursor-pointer whitespace-nowrap text-text-secondary" onClick={() => requestSort('date')}>Дата {getSortIndicator('date')}</th>
-                                <th className="p-4 cursor-pointer whitespace-nowrap text-text-secondary" onClick={() => requestSort('description')}>Описание {getSortIndicator('description')}</th>
-                                <th className="p-4 cursor-pointer whitespace-nowrap text-text-secondary" onClick={() => requestSort('counterparty')}>Контрагент {getSortIndicator('counterparty')}</th>
-                                <th className="p-4 cursor-pointer whitespace-nowrap text-right text-text-secondary" onClick={() => requestSort('amount')}>Сумма {getSortIndicator('amount')}</th>
-                                <th className="p-4 cursor-pointer whitespace-nowrap text-text-secondary" onClick={() => requestSort('category')}>Категория {getSortIndicator('category')}</th>
-                            </tr>
-                        </thead>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+            <div className="max-w-7xl mx-auto">
+                {/* Header Section */}
+                <div className="mb-8">
+                    <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+                        Список транзакций
+                    </h1>
+                    <p className="text-xl text-slate-600">
+                        Управляйте и анализируйте все ваши финансовые операции
+                    </p>
+                </div>
+
+                {/* Filters and Actions */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50 mb-8">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                            <div className="relative flex-1 max-w-md">
+                                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                                </svg>
+                                <input
+                                    type="text"
+                                    placeholder="Поиск по описанию, категории или контрагенту..."
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            
+                            <div className="flex gap-2">
+                                <button className="px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 hover:border-blue-500 hover:text-blue-600 transition-all duration-200 flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+                                    </svg>
+                                    Фильтры
+                                </button>
+                                
+                                <button className="px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 hover:border-blue-500 hover:text-blue-600 transition-all duration-200 flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1zM3 16a1 1 0 011-1h4a1 1 0 110 2H4a1 1 0 01-1-1z" />
+                                    </svg>
+                                    Сортировка
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button
+                            onClick={() => setAddModalOpen(true)}
+                            className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
+                        >
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                            </svg>
+                            Добавить транзакцию
+                        </button>
+                    </div>
+                </div>
+                <AddTransactionModal open={addModalOpen} onClose={() => setAddModalOpen(false)} onAdd={onAddTransaction} />
+                
+                {/* Transactions Table */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg border border-white/50">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left min-w-full">
+                            <thead className="bg-gradient-to-r from-slate-50 to-blue-50">
+                                <tr>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('date')}>
+                                        <div className="flex items-center gap-1 md:gap-2">
+                                            <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="text-sm md:text-base">Дата {getSortIndicator('date')}</span>
+                                        </div>
+                                    </th>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('description')}>
+                                        <div className="flex items-center gap-1 md:gap-2">
+                                            <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="text-sm md:text-base">Описание {getSortIndicator('description')}</span>
+                                        </div>
+                                    </th>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 font-semibold hover:text-blue-600 transition-colors hidden sm:table-cell" onClick={() => requestSort('counterparty')}>
+                                        <div className="flex items-center gap-1 md:gap-2">
+                                            <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="text-sm md:text-base">Контрагент {getSortIndicator('counterparty')}</span>
+                                        </div>
+                                    </th>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-right text-slate-700 font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('amount')}>
+                                        <div className="flex items-center justify-end gap-1 md:gap-2">
+                                            <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="text-sm md:text-base">Сумма {getSortIndicator('amount')}</span>
+                                        </div>
+                                    </th>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('category')}>
+                                        <div className="flex items-center gap-1 md:gap-2">
+                                            <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                                            </svg>
+                                            <span className="text-sm md:text-base">Категория {getSortIndicator('category')}</span>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
                         <tbody>
                             {filteredTransactions.map(tx => (
                                 <React.Fragment key={tx.id}>
-                                    <tr className={`border-t border-border transition-colors ${tx.needsClarification ? (theme === 'dark' ? 'bg-yellow-900/20' : 'bg-yellow-50') : ''} ${expandedRowId === tx.id ? 'bg-surface-accent' : 'hover:bg-surface-accent/50'}`}>
-                                        <td className="p-4 whitespace-nowrap text-text-secondary">{new Date(tx.date).toLocaleDateString('ru-RU')}</td>
-                                        <td className="p-4 text-text-primary">{tx.description}</td>
-                                        <td className="p-4 text-text-secondary">{tx.counterparty}</td>
-                                        <td className={`p-4 text-right font-mono whitespace-nowrap ${tx.type === 'income' ? 'text-success' : 'text-destructive'}`}>
-                                            {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                                    <tr className={`border-t border-slate-200 transition-colors hover:bg-slate-50/50 ${tx.needsClarification ? 'bg-yellow-50' : ''} ${expandedRowId === tx.id ? 'bg-blue-50' : ''}`}>
+                                        <td className="p-4 md:p-6 whitespace-nowrap text-slate-600 text-sm">
+                                            {new Date(tx.date).toLocaleDateString('ru-RU')}
                                         </td>
-                                        <td className="p-4 whitespace-nowrap">
+                                        <td className="p-4 md:p-6 text-slate-900 font-medium">
+                                            <div className="max-w-[200px] md:max-w-none truncate">
+                                                {tx.description}
+                                            </div>
+                                        </td>
+                                        <td className="p-4 md:p-6 text-slate-600 hidden sm:table-cell">
+                                            <div className="max-w-[150px] truncate">
+                                                {tx.counterparty}
+                                            </div>
+                                        </td>
+                                        <td className={`p-4 md:p-6 text-right font-mono whitespace-nowrap font-semibold ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                                            <div className="text-sm md:text-base">
+                                                {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                                            </div>
+                                        </td>
+                                        <td className="p-4 md:p-6 whitespace-nowrap">
                                             {tx.needsClarification ? (
                                                 <button
                                                     onClick={() => toggleRowExpansion(tx.id)}
-                                                    className="px-3 py-1 text-sm font-semibold rounded-full bg-yellow-500 text-black hover:bg-yellow-400 transition-colors flex items-center gap-2"
+                                                    className="px-3 py-1.5 text-xs md:text-sm font-semibold rounded-xl bg-yellow-500 text-white hover:bg-yellow-600 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
                                                 >
-                                                    Уточнить {expandedRowId === tx.id ? '▲' : '▼'}
+                                                    <span className="hidden sm:inline">Уточнить</span>
+                                                    <span className="sm:hidden">!</span>
+                                                    {expandedRowId === tx.id ? '▲' : '▼'}
                                                 </button>
                                             ) : (
                                                 <span
-                                                    className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryClass(tx.category, theme)} cursor-pointer hover:ring-2 hover:ring-primary transition-all`}
+                                                    className={`px-2 md:px-3 py-1 text-xs font-medium rounded-xl ${getCategoryClass(tx.category, theme)} cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all block truncate max-w-[100px] sm:max-w-none text-center sm:text-left`}
                                                     onClick={() => toggleRowExpansion(tx.id)}
+                                                    title={tx.category}
                                                 >
-                                                    {tx.category}
+                                                    <span className="hidden sm:inline">{tx.category}</span>
+                                                    <span className="sm:hidden">📂</span>
                                                 </span>
                                             )}
                                         </td>
@@ -467,15 +561,16 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                                 />
                                             </td>
                                         </tr>
-                                    )}
-                                </React.Fragment>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    );
+                                                        )}
+                </React.Fragment>
+            ))}
+        </tbody>
+    </table>
+</div>
+</div>
+</div>
+</div>
+);
 };
 
 export default TransactionsTable;

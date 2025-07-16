@@ -27,7 +27,7 @@ export interface BusinessProfile {
   ownerName: string;
 }
 
-export interface PnLData {
+interface PnLData {
   totalRevenue: number;
   totalOperatingExpenses: number;
   depreciation: number;
@@ -37,7 +37,7 @@ export interface PnLData {
   expenseByCategory: { name: string; value: number }[];
 }
 
-export interface CashFlowData {
+interface CashFlowData {
     netCashFlow: number;
     operatingActivities: number;
     investingActivities: number;
@@ -45,7 +45,7 @@ export interface CashFlowData {
     monthlyData: { month: string; Поступления: number; Выбытия: number; 'Чистый поток': number }[];
 }
 
-export interface BalanceSheetData {
+interface BalanceSheetData {
     assets: {
         cash: number;
         receivables: number; 
@@ -73,12 +73,12 @@ export interface CounterpartyData {
     balance: number;
 }
 
-export interface DebtData {
+interface DebtData {
     counterparty: string;
     amount: number;
 }
 
-export interface DebtReport {
+interface DebtReport {
     receivables: DebtData[];
     payables: DebtData[];
     totalReceivables: number;
@@ -94,7 +94,7 @@ export type FinancialReport = {
 }
 
 // Расширенные типы для передовой финансовой отчетности
-export interface AdvancedFinancialMetrics {
+interface AdvancedFinancialMetrics {
   // Показатели ликвидности
   currentRatio: number;
   quickRatio: number;
@@ -133,7 +133,7 @@ export interface AdvancedFinancialMetrics {
   concentrationRisk: number;
 }
 
-export interface CashFlowAnalysis {
+interface CashFlowAnalysis {
   operatingCashFlow: number;
   investingCashFlow: number;
   financingCashFlow: number;
@@ -146,7 +146,7 @@ export interface CashFlowAnalysis {
   newDebtIssued: number;
 }
 
-export interface ProfitabilityAnalysis {
+interface ProfitabilityAnalysis {
   grossProfit: number;
   grossProfitMargin: number;
   operatingProfit: number;
@@ -159,7 +159,7 @@ export interface ProfitabilityAnalysis {
   breakEvenPoint: number;
 }
 
-export interface EfficiencyMetrics {
+interface EfficiencyMetrics {
   assetTurnover: number;
   inventoryTurnover: number;
   receivablesTurnover: number;
@@ -170,7 +170,7 @@ export interface EfficiencyMetrics {
   costPerTransaction: number;
 }
 
-export interface RiskMetrics {
+interface RiskMetrics {
   liquidityRisk: number;
   solvencyRisk: number;
   operationalRisk: number;
@@ -180,7 +180,7 @@ export interface RiskMetrics {
   volatilityRisk: number;
 }
 
-export interface TrendAnalysis {
+interface TrendAnalysis {
   revenueTrend: 'increasing' | 'decreasing' | 'stable';
   profitTrend: 'increasing' | 'decreasing' | 'stable';
   cashFlowTrend: 'increasing' | 'decreasing' | 'stable';
@@ -192,7 +192,7 @@ export interface TrendAnalysis {
   };
 }
 
-export interface AdvancedFinancialReport extends FinancialReport {
+interface AdvancedFinancialReport extends FinancialReport {
   advancedMetrics: AdvancedFinancialMetrics;
   cashFlowAnalysis: CashFlowAnalysis;
   profitabilityAnalysis: ProfitabilityAnalysis;
@@ -225,11 +225,42 @@ export interface ForecastData {
   summary: string;
 }
 
-export interface ChatMessage {
-  role: 'user' | 'model' | 'assistant';
-  content: string;
-}
-
 export type Granularity = 'day' | 'week' | 'month';
 
 export type Theme = 'light' | 'dark';
+
+  export type View = 'dashboard' | 'transactions' | 'ai_assistant' | 'profile' | 'financial_model' | 'advanced';
+
+export interface UserLimits {
+  maxProfiles: number;
+  maxTransactions: number;
+  maxAiRequests: number;
+  hasAdvancedAnalytics: boolean;
+  hasExcelExport: boolean;
+  hasPrioritySupport: boolean;
+  hasFinancialModeling: boolean;
+}
+
+export type SubscriptionStatus = 'free' | 'pro' | 'pending';
+
+export interface SubscriptionInfo {
+  status: SubscriptionStatus;
+  limits: UserLimits;
+  currentUsage: {
+    profiles: number;
+    transactions: number;
+    aiRequests: number;
+  };
+}
+
+export interface LimitCheckResult {
+  allowed: boolean;
+  reason?: string;
+  upgradeRequired?: boolean;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'model';
+  content: string;
+  timestamp?: Date;
+}

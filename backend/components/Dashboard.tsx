@@ -8,7 +8,6 @@ import CategoryChartCard from './CategoryChartCard.tsx';
 import FinancialStatementCard from './FinancialStatementCard.tsx';
 import ReportTabs from './ReportTabs.tsx';
 import GranularitySwitcher from './GranularitySwitcher.tsx';
-import { DownloadIcon, LightbulbIcon } from './icons.tsx';
 // import { generateReportSummary, generateFinancialForecast } from '../services/geminiService.ts';
 import Loader from './Loader.tsx';
 // Добавляю декларации для pdfmake и vfs_fonts
@@ -100,27 +99,112 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     }, [pnl.monthlyData]);
 
     const ExplanationsSection = () => (
-        <div className="mt-8 p-6 bg-surface-accent rounded-2xl shadow">
-            <h3 className="text-xl font-bold mb-4">Пояснения</h3>
-            <ul className="list-disc pl-6 space-y-1 text-text-secondary">
-                {explanations.map((ex, i) => <li key={i}>{ex}</li>)}
-            </ul>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 className="text-2xl font-bold text-slate-900">Пояснения</h3>
+                    <p className="text-slate-600 text-sm">Расшифровка финансовых терминов и показателей</p>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {explanations.map((explanation, index) => (
+                    <div key={index} className="flex items-start gap-3 p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <p className="text-slate-700 text-sm leading-relaxed">{explanation}</p>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 
     const ExecutiveSummary = () => (
-        <div className="mb-8 p-6 bg-surface-accent rounded-2xl shadow flex flex-col md:flex-row gap-6 items-center">
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard title="Quick Ratio" value={Number(kpi.quickRatio.toFixed(2))} isCurrency={false} />
-                <StatCard title="Current Ratio" value={Number(kpi.currentRatio.toFixed(2))} isCurrency={false} />
-                <StatCard title="Profit Margin %" value={Number(kpi.profitMargin.toFixed(2))} isCurrency={false} />
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8">
+            <div className="mb-6">
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">Ключевые показатели</h2>
+                <p className="text-slate-600">Основные финансовые метрики за выбранный период</p>
             </div>
-            <div className="flex-1 flex flex-col items-center md:items-start">
-                <div className={`flex items-center text-lg font-semibold ${kpi.profitDelta > 0 ? 'text-green-600' : kpi.profitDelta < 0 ? 'text-red-600' : 'text-gray-500'}`}> 
-                    {kpi.profitDelta > 0 ? '▲' : kpi.profitDelta < 0 ? '▼' : '→'}
-                    <span className="ml-2">{kpi.profitDelta > 0 ? 'Чистая прибыль растет' : kpi.profitDelta < 0 ? 'Чистая прибыль снижается' : 'Без изменений'}</span>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium opacity-90">Quick Ratio</h3>
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div className="text-3xl font-bold">{kpi.quickRatio.toFixed(2)}</div>
+                    <div className="text-sm opacity-75 mt-1">
+                        {kpi.quickRatio > 1 ? 'Отличная ликвидность' : 'Требует внимания'}
+                    </div>
                 </div>
-                <div className="text-text-secondary text-sm mt-2">{forecastData?.summary || 'Аналитика по итогам периода.'}</div>
+                
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium opacity-90">Current Ratio</h3>
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div className="text-3xl font-bold">{kpi.currentRatio.toFixed(2)}</div>
+                    <div className="text-sm opacity-75 mt-1">
+                        {kpi.currentRatio > 1 ? 'Стабильное покрытие' : 'Нужна оптимизация'}
+                    </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium opacity-90">Profit Margin</h3>
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div className="text-3xl font-bold">{kpi.profitMargin.toFixed(1)}%</div>
+                    <div className="text-sm opacity-75 mt-1">
+                        {kpi.profitMargin > 10 ? 'Высокая маржинальность' : 'Средняя рентабельность'}
+                    </div>
+                </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl p-6">
+                <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        kpi.profitDelta > 0 ? 'bg-green-100 text-green-600' : 
+                        kpi.profitDelta < 0 ? 'bg-red-100 text-red-600' : 
+                        'bg-gray-100 text-gray-600'
+                    }`}>
+                        {kpi.profitDelta > 0 ? '📈' : kpi.profitDelta < 0 ? '📉' : '📊'}
+                    </div>
+                    <div className="flex-1">
+                        <div className={`text-lg font-semibold ${
+                            kpi.profitDelta > 0 ? 'text-green-700' : 
+                            kpi.profitDelta < 0 ? 'text-red-700' : 
+                            'text-gray-700'
+                        }`}>
+                            {kpi.profitDelta > 0 ? 'Позитивная динамика' : 
+                             kpi.profitDelta < 0 ? 'Требует внимания' : 
+                             'Стабильные показатели'}
+                        </div>
+                        <div className="text-slate-600 text-sm mt-1">
+                            {forecastData?.summary || 'Аналитика по итогам периода показывает текущие тренды развития бизнеса.'}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -961,7 +1045,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                         disabled={isForecasting}
                         className="mt-6 inline-flex items-center gap-2 mx-auto px-6 py-3 text-lg font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary-hover transition-colors disabled:bg-gray-600 shadow-lg"
                     >
-                        <LightbulbIcon className="w-6 h-6" />
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m6.364-2.364l-.707.707M4.343 17.657l-.707.707M21 12h-1M4 12H3m16.364-4.364l-.707-.707M4.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                         <span>Сгенерировать прогноз</span>
                     </button>
                 </div>
@@ -1008,7 +1092,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                             </FinancialStatementCard.Section>
                             <div className="pt-4 mt-4 border-t border-border">
                                 <button onClick={handleGenerateForecast} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-primary-foreground bg-primary/90 rounded-lg hover:bg-primary transition-colors">
-                                    <LightbulbIcon className="w-5 h-5" />
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m6.364-2.364l-.707.707M4.343 17.657l-.707.707M21 12h-1M4 12H3m16.364-4.364l-.707-.707M4.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                                     Пересчитать прогноз
                                 </button>
                             </div>
@@ -1031,34 +1115,60 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     const showGranularitySwitcher = activeReport === 'pnl' || activeReport === 'cashflow';
 
     return (
-        <div className="p-8 space-y-6">
-            <ExecutiveSummary />
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-text-primary">Финансовый Дашборд</h1>
-                <div className="flex items-center gap-4">
-                    {showGranularitySwitcher && <GranularitySwitcher activeGranularity={granularity} setGranularity={setGranularity} />}
-                    <ReportTabs activeReport={activeReport} setActiveReport={setActiveReport} />
-                    <button
-                        onClick={handleDownloadAdvancedReport}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-md"
-                        aria-label="Скачать передовой PDF-отчет"
-                    >
-                        <DownloadIcon className="w-5 h-5" />
-                        <span>Скачать передовой отчет</span>
-                    </button>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                            Финансовый Дашборд
+                        </h1>
+                        <p className="text-slate-600 mt-2">
+                            Комплексный анализ финансовых показателей вашего бизнеса
+                        </p>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-3">
+                        {showGranularitySwitcher && (
+                            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/50">
+                                <GranularitySwitcher activeGranularity={granularity} setGranularity={setGranularity} />
+                            </div>
+                        )}
+                        
+                        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/50">
+                            <ReportTabs activeReport={activeReport} setActiveReport={setActiveReport} />
+                        </div>
+                        
+                        <button
+                            onClick={handleDownloadAdvancedReport}
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+                            aria-label="Скачать передовой PDF-отчет"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M8 12l4 4m0 0l4-4m-4 4V4" />
+                            </svg>
+                            <span>Скачать отчет</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div>
-                {/* Render all views to ensure refs are populated, but only show the active one */}
-                <div style={reportContainerStyle('pnl')}><PnlView /></div>
-                <div style={reportContainerStyle('cashflow')}><CashflowView /></div>
-                <div style={reportContainerStyle('balance')}><BalanceView /></div>
-                <div style={reportContainerStyle('forecast')}><ForecastView /></div>
-                <div style={reportContainerStyle('counterparties')}><CounterpartyView /></div>
-                <div style={reportContainerStyle('debts')}><DebtsView /></div>
-                <div style={reportContainerStyle('advanced')}>
-                    <AdvancedFinancialDashboard report={generateAdvancedFinancialReport(transactions)} />
+
+                {/* Executive Summary */}
+                <ExecutiveSummary />
+                {/* Content Section */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
+                    {/* Render all views to ensure refs are populated, but only show the active one */}
+                    <div style={reportContainerStyle('pnl')}><PnlView /></div>
+                    <div style={reportContainerStyle('cashflow')}><CashflowView /></div>
+                    <div style={reportContainerStyle('balance')}><BalanceView /></div>
+                    <div style={reportContainerStyle('forecast')}><ForecastView /></div>
+                    <div style={reportContainerStyle('counterparties')}><CounterpartyView /></div>
+                    <div style={reportContainerStyle('debts')}><DebtsView /></div>
+                    <div style={reportContainerStyle('advanced')}>
+                        <AdvancedFinancialDashboard report={generateAdvancedFinancialReport(transactions)} />
+                    </div>
                 </div>
+
+                {/* Explanations Section */}
                 <ExplanationsSection />
             </div>
         </div>
