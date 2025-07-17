@@ -3,11 +3,15 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # Build outputs
 dist/
+dist-ssr/
 build/
 *.tsbuildinfo
+*.local
 
 # Environment variables
 .env
@@ -95,3 +99,10 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# Editor files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
