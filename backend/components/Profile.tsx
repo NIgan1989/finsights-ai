@@ -32,7 +32,7 @@ const PROFILE_TABS = [
     { key: 'help', label: 'Помощь', icon: 'help' },
 ];
 
-function useSubscriptionStatus() {
+// function useSubscriptionStatus() {
     const { email } = useUser();
     if (email && email.includes('pro')) return 'pro';
     return 'free';

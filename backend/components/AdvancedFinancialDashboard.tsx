@@ -129,7 +129,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
                 fill="#8884d8"
                 dataKey="value"
               >
-                {report.pnl.expenseByCategory.slice(0, 6).map((_, index) => (
+                {report.pnl.expenseByCategory.slice(0, 6).map((_: any, index: number) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
@@ -353,30 +353,33 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
 
       {/* Risk Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Object.entries(report.riskMetrics).map(([key, value]) => (
-          <div key={key} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {key === 'liquidityRisk' ? 'Риск ликвидности' :
-                 key === 'solvencyRisk' ? 'Риск платежеспособности' :
-                 key === 'operationalRisk' ? 'Операционный риск' :
-                 key === 'marketRisk' ? 'Рыночный риск' :
-                 key === 'creditRisk' ? 'Кредитный риск' :
-                 key === 'concentrationRisk' ? 'Концентрационный риск' :
-                 key === 'volatilityRisk' ? 'Риск волатильности' : key}
-              </span>
-              <span className={`text-sm font-bold ${getRiskColor(value)}`}>
-                {(value * 100).toFixed(1)}%
-              </span>
+        {Object.entries(report.riskMetrics).map(([key, value]) => {
+          const numericValue = value as number;
+          return (
+            <div key={key} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {key === 'liquidityRisk' ? 'Риск ликвидности' :
+                   key === 'solvencyRisk' ? 'Риск платежеспособности' :
+                   key === 'operationalRisk' ? 'Операционный риск' :
+                   key === 'marketRisk' ? 'Рыночный риск' :
+                   key === 'creditRisk' ? 'Кредитный риск' :
+                   key === 'concentrationRisk' ? 'Концентрационный риск' :
+                   key === 'volatilityRisk' ? 'Риск волатильности' : key}
+                </span>
+                <span className={`text-sm font-bold ${getRiskColor(numericValue)}`}>
+                  {(numericValue * 100).toFixed(1)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full ${numericValue < 0.3 ? 'bg-green-500' : numericValue < 0.7 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                  style={{ width: `${numericValue * 100}%` }}
+                ></div>
+              </div>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full ${value < 0.3 ? 'bg-green-500' : value < 0.7 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                style={{ width: `${value * 100}%` }}
-              ></div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -389,7 +392,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <h4 className="text-red-800 dark:text-red-200 font-semibold mb-2">Критические предупреждения</h4>
             <ul className="space-y-1">
-              {report.alerts.critical.map((alert, index) => (
+              {report.alerts.critical.map((alert: string, index: number) => (
                 <li key={index} className="text-red-700 dark:text-red-300 text-sm">• {alert}</li>
               ))}
             </ul>
@@ -400,7 +403,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
             <h4 className="text-yellow-800 dark:text-yellow-200 font-semibold mb-2">Предупреждения</h4>
             <ul className="space-y-1">
-              {report.alerts.warning.map((alert, index) => (
+              {report.alerts.warning.map((alert: string, index: number) => (
                 <li key={index} className="text-yellow-700 dark:text-yellow-300 text-sm">• {alert}</li>
               ))}
             </ul>
@@ -411,7 +414,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <h4 className="text-blue-800 dark:text-blue-200 font-semibold mb-2">Информация</h4>
             <ul className="space-y-1">
-              {report.alerts.info.map((alert, index) => (
+              {report.alerts.info.map((alert: string, index: number) => (
                 <li key={index} className="text-blue-700 dark:text-blue-300 text-sm">• {alert}</li>
               ))}
             </ul>
@@ -424,7 +427,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Рекомендации</h3>
         {report.recommendations.length > 0 ? (
           <ul className="space-y-3">
-            {report.recommendations.map((recommendation, index) => (
+            {report.recommendations.map((recommendation: string, index: number) => (
               <li key={index} className="flex items-start space-x-3">
                 <span className="text-blue-500 mt-1">💡</span>
                 <span className="text-gray-700 dark:text-gray-300">{recommendation}</span>

@@ -14,7 +14,7 @@ interface AiAssistantProps {
 }
 
 const AiAssistant: React.FC<AiAssistantProps> = ({ transactions, report, dateRange, profile }) => {
-    const { googleId, email, subscriptionInfo } = useUser();
+    const { email } = useUser();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);

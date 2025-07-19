@@ -27,7 +27,7 @@ export interface BusinessProfile {
   ownerName: string;
 }
 
-interface PnLData {
+export interface PnLData {
   totalRevenue: number;
   totalOperatingExpenses: number;
   depreciation: number;
@@ -37,7 +37,7 @@ interface PnLData {
   expenseByCategory: { name: string; value: number }[];
 }
 
-interface CashFlowData {
+export interface CashFlowData {
     netCashFlow: number;
     operatingActivities: number;
     investingActivities: number;
@@ -45,7 +45,7 @@ interface CashFlowData {
     monthlyData: { month: string; Поступления: number; Выбытия: number; 'Чистый поток': number }[];
 }
 
-interface BalanceSheetData {
+export interface BalanceSheetData {
     assets: {
         cash: number;
         receivables: number; 
@@ -78,7 +78,7 @@ interface DebtData {
     amount: number;
 }
 
-interface DebtReport {
+export interface DebtReport {
     receivables: DebtData[];
     payables: DebtData[];
     totalReceivables: number;
@@ -192,7 +192,7 @@ interface TrendAnalysis {
   };
 }
 
-interface AdvancedFinancialReport extends FinancialReport {
+export interface AdvancedFinancialReport extends FinancialReport {
   advancedMetrics: AdvancedFinancialMetrics;
   cashFlowAnalysis: CashFlowAnalysis;
   profitabilityAnalysis: ProfitabilityAnalysis;
