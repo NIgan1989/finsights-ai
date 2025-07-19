@@ -1,8 +1,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { useUser } from './UserContext';
-import { subscriptionService } from '../../services/subscriptionService';
+
 
 interface DataUploadProps {
     onFileUploaded: (file: File) => void;

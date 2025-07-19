@@ -353,6 +353,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
         pdf.download(`advanced-financial-report-${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
+    /* Unused function - commented out to avoid TypeScript warnings
     const handleDownloadFullReport = async () => {
         const { pnl, cashFlow, balanceSheet, counterpartyReport, debtReport } = report;
         const start = new Date(dateRange.start).toLocaleDateString('ru-RU');
@@ -755,6 +756,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
         };
         pdfMake.createPdf(docDefinition).download('FinSights_Full_Report.pdf');
     };
+    */
 
     const PnlView = () => (
         <div className="space-y-8">

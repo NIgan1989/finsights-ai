@@ -294,7 +294,7 @@ const LandingPage: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {plans.map((plan, index) => (
+            {plans.map((plan, _index) => (
               <div 
                 key={plan.name} 
                 className={`relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl ${

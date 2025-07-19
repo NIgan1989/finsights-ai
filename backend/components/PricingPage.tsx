@@ -124,7 +124,7 @@ const PricingPage: React.FC = () => {
 
         {/* Pricing Cards */}
         <div className="flex flex-col lg:flex-row gap-8 justify-center max-w-6xl mx-auto mb-16">
-          {plans.map((plan, index) => (
+          {plans.map((plan, _index) => (
             <div 
               key={plan.name} 
               className={`relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/50 flex-1 max-w-md mx-auto lg:mx-0 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-3xl ${
