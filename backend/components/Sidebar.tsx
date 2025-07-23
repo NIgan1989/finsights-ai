@@ -38,8 +38,14 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const status = subscriptionInfo?.status || 'free';
-  const isLifetimeAdmin = email?.toLowerCase() === 'dulat280489@gmail.com';
+  const isLifetimeAdmin = email?.toLowerCase().trim() === 'dulat280489@gmail.com';
   const isGuest = role === 'guest';
+
+  // Отладка для админ панели
+  console.log('[Sidebar] Email:', email);
+  console.log('[Sidebar] Email lowercase:', email?.toLowerCase());
+  console.log('[Sidebar] Expected:', 'dulat280489@gmail.com');
+  console.log('[Sidebar] isLifetimeAdmin:', isLifetimeAdmin);
 
   // Формируем финальный массив меню
   const menu: MenuItem[] = isLifetimeAdmin 
