@@ -41,18 +41,13 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
   const isLifetimeAdmin = email?.toLowerCase().trim() === 'dulat280489@gmail.com';
   const isGuest = role === 'guest';
 
-  // Отладка для админ панели
-  console.log('[Sidebar] Email:', email);
-  console.log('[Sidebar] Email lowercase:', email?.toLowerCase());
-  console.log('[Sidebar] Expected:', 'dulat280489@gmail.com');
-  console.log('[Sidebar] isLifetimeAdmin:', isLifetimeAdmin);
-
   // Формируем финальный массив меню
   const menu: MenuItem[] = isLifetimeAdmin 
     ? [...baseMenu, { name: 'Админ', icon: <FaCrown />, view: 'admin', description: 'Панель администратора', isAdmin: true }]
     : baseMenu;
   
   const handleMenuClick = (view: string, isPro?: boolean) => {
+    
     if (isPro && status !== 'pro' && !isLifetimeAdmin) {
       subscriptionService.showUpgradeModal('Финансовая модель доступна только в PRO версии');
       return;

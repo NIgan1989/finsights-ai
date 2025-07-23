@@ -6,12 +6,7 @@ const AdminPanel: React.FC = () => {
   const { email } = useUser();
   const isLifetimeAdmin = email?.toLowerCase().trim() === 'dulat280489@gmail.com';
   
-  // Отладка доступа к админ панели
-  console.log('[AdminPanel] Email:', email);
-  console.log('[AdminPanel] isLifetimeAdmin:', isLifetimeAdmin);
-  
   if (!isLifetimeAdmin) {
-    console.log('[AdminPanel] Access denied, redirecting to home');
     return <Navigate to="/" replace />;
   }
 
