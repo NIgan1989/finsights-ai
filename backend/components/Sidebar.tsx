@@ -214,8 +214,11 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
 
   return (
     <>
+      <div style={{position: 'fixed', top: '50px', right: '10px', background: 'blue', color: 'white', padding: '5px', zIndex: 9999}}>
+          DEBUG Sidebar: theme={theme}, isLifetimeAdmin={isLifetimeAdmin}
+      </div>
       {/* Desktop Sidebar */}
-      <aside className={`hidden lg:flex w-72 ${themeClasses.sidebar} shadow-2xl relative overflow-hidden`}>
+      <aside className="hidden lg:flex w-72 bg-white shadow-2xl fixed left-0 top-0 h-full z-30 overflow-hidden" style={{backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff'}}>
         <SidebarContent />
       </aside>
 
