@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
+import { useUser } from './UserContext';
+import { Navigate } from 'react-router-dom';
 
 const AdminPanel: React.FC = () => {
+  const { email } = useUser();
+  const isLifetimeAdmin = email?.toLowerCase() === 'dulat280489@gmail.com';
+  if (!isLifetimeAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
   const [userId, setUserId] = useState('');
   const [adminKey, setAdminKey] = useState('');
   const [message, setMessage] = useState('');

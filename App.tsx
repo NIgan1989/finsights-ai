@@ -572,7 +572,11 @@ const AppContent: React.FC = () => {
                             <FinancialModelPage />
                         </RequireAuth>
                     } />
-                    <Route path="/admin" element={<AdminPanel />} />
+                    <Route path="/admin" element={
+                        <RequireAuth>
+                            <AdminPanel />
+                        </RequireAuth>
+                    } />
                     <Route path="/auth-debug" element={<AuthDebug />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
