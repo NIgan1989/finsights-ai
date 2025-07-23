@@ -58,6 +58,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [role, setRole] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [initialized, setInitialized] = useState<boolean>(false);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
 
   const getUserId = useCallback(() => {
@@ -168,12 +169,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Проверка авторизации при загрузке
   useEffect(() => {
-    if (token && token !== null) {
-      console.log('[UserContext] Already authenticated, skipping auth check. Token:', token);
+    if (initialized) {
+      console.log('[UserContext] Already initialized, skipping auth check');
       return;
     }
     
     console.log('[UserContext] Starting auth check...');
+    setInitialized(true);
     const saved = localStorage.getItem('finsights_auth');
     const guestSaved = sessionStorage.getItem('finsights_guest');
     
@@ -309,7 +311,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
         console.log('[UserContext] Auth check complete - not authenticated');
       });
-  }, [token]);
+  }, []);
 
   // Функция входа
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {

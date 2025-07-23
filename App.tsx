@@ -358,7 +358,7 @@ const AppContent: React.FC = () => {
     const UploadModal = () => (
         isUploadModalOpen ? (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-surface p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                <div className="bg-surface p-6 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold text-text-primary">
                             Загрузить файл
@@ -371,8 +371,12 @@ const AppContent: React.FC = () => {
                         </button>
                     </div>
                     <DataUpload 
-                        onFileUploaded={handleFileProcess} 
+                        onFileUploaded={(file) => {
+                            handleFileProcess(file);
+                            closeUploadModal();
+                        }} 
                         isProcessing={appState === 'processing'} 
+                        isCompact={true}
                     />
                 </div>
             </div>
@@ -413,7 +417,7 @@ const AppContent: React.FC = () => {
                     <div className="min-h-screen bg-background text-text-primary">
                         <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={false} onResetData={openUploadModal} onToggleTheme={toggleTheme} theme={theme} />
                         <main className="lg:ml-72">
-                            {activeView === 'profile' ? (
+                            {activeView === 'profile' && (
                                 <Profile
                                     allProfiles={allProfiles}
                                     activeProfile={activeProfile}
@@ -422,8 +426,26 @@ const AppContent: React.FC = () => {
                                     onDelete={handleDeleteProfile}
                                     onNew={handleNewProfile}
                                 />
-                            ) : (
-                                <DataUpload onFileUploaded={(file) => handleFileProcess(file)} isProcessing={false} />
+                            )}
+                            {activeView === 'dashboard' && (
+                                <div className="p-8 text-center">
+                                    <div className="max-w-md mx-auto">
+                                        <div className="mb-4 text-6xl">📊</div>
+                                        <h2 className="text-xl font-semibold text-text-primary mb-2">Добро пожаловать!</h2>
+                                        <p className="text-text-secondary mb-6">
+                                            Загрузите банковскую выписку чтобы начать анализ ваших финансов.
+                                        </p>
+                                        <button 
+                                            onClick={openUploadModal}
+                                            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition font-medium"
+                                        >
+                                            Загрузить файл
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            {!['profile', 'dashboard'].includes(activeView) && (
+                                <DataUpload onFileUploaded={(file) => handleFileProcess(file)} isProcessing={false} isCompact={true} />
                             )}
                         </main>
                     </div>
