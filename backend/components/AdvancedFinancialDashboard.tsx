@@ -129,7 +129,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
                 fill="#8884d8"
                 dataKey="value"
               >
-                {report.pnl.expenseByCategory.slice(0, 6).map((_, index) => (
+                {report.pnl.expenseByCategory.slice(0, 6).map((category, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
@@ -353,7 +353,9 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
 
       {/* Risk Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Object.entries(report.riskMetrics).map(([key, value]) => (
+        {Object.entries(report.riskMetrics).map(([key, rawValue]) => {
+          const value = rawValue as number;
+          return (
           <div key={key} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -376,7 +378,8 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
               ></div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
     </div>
   );

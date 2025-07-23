@@ -27,7 +27,7 @@ export interface BusinessProfile {
   ownerName: string;
 }
 
-interface PnLData {
+export interface PnLData {
   totalRevenue: number;
   totalOperatingExpenses: number;
   depreciation: number;
@@ -37,7 +37,7 @@ interface PnLData {
   expenseByCategory: { name: string; value: number }[];
 }
 
-interface CashFlowData {
+export interface CashFlowData {
     netCashFlow: number;
     operatingActivities: number;
     investingActivities: number;
@@ -45,7 +45,7 @@ interface CashFlowData {
     monthlyData: { month: string; Поступления: number; Выбытия: number; 'Чистый поток': number }[];
 }
 
-interface BalanceSheetData {
+export interface BalanceSheetData {
     assets: {
         cash: number;
         receivables: number; 
@@ -73,12 +73,12 @@ export interface CounterpartyData {
     balance: number;
 }
 
-interface DebtData {
+export interface DebtData {
     counterparty: string;
     amount: number;
 }
 
-interface DebtReport {
+export interface DebtReport {
     receivables: DebtData[];
     payables: DebtData[];
     totalReceivables: number;
@@ -94,7 +94,7 @@ export type FinancialReport = {
 }
 
 // Расширенные типы для передовой финансовой отчетности
-interface AdvancedFinancialMetrics {
+export interface AdvancedFinancialMetrics {
   // Показатели ликвидности
   currentRatio: number;
   quickRatio: number;
@@ -133,7 +133,7 @@ interface AdvancedFinancialMetrics {
   concentrationRisk: number;
 }
 
-interface CashFlowAnalysis {
+export interface CashFlowAnalysis {
   operatingCashFlow: number;
   investingCashFlow: number;
   financingCashFlow: number;
@@ -146,7 +146,7 @@ interface CashFlowAnalysis {
   newDebtIssued: number;
 }
 
-interface ProfitabilityAnalysis {
+export interface ProfitabilityAnalysis {
   grossProfit: number;
   grossProfitMargin: number;
   operatingProfit: number;
@@ -159,7 +159,7 @@ interface ProfitabilityAnalysis {
   breakEvenPoint: number;
 }
 
-interface EfficiencyMetrics {
+export interface EfficiencyMetrics {
   assetTurnover: number;
   inventoryTurnover: number;
   receivablesTurnover: number;
@@ -170,7 +170,7 @@ interface EfficiencyMetrics {
   costPerTransaction: number;
 }
 
-interface RiskMetrics {
+export interface RiskMetrics {
   liquidityRisk: number;
   solvencyRisk: number;
   operationalRisk: number;
@@ -180,7 +180,7 @@ interface RiskMetrics {
   volatilityRisk: number;
 }
 
-interface TrendAnalysis {
+export interface TrendAnalysis {
   revenueTrend: 'increasing' | 'decreasing' | 'stable';
   profitTrend: 'increasing' | 'decreasing' | 'stable';
   cashFlowTrend: 'increasing' | 'decreasing' | 'stable';
@@ -192,7 +192,7 @@ interface TrendAnalysis {
   };
 }
 
-interface AdvancedFinancialReport extends FinancialReport {
+export interface AdvancedFinancialReport extends FinancialReport {
   advancedMetrics: AdvancedFinancialMetrics;
   cashFlowAnalysis: CashFlowAnalysis;
   profitabilityAnalysis: ProfitabilityAnalysis;

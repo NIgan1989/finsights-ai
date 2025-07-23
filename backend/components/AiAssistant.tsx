@@ -14,7 +14,7 @@ interface AiAssistantProps {
 }
 
 const AiAssistant: React.FC<AiAssistantProps> = ({ transactions, report, dateRange, profile }) => {
-    const { googleId, email, subscriptionInfo } = useUser();
+    const { userId, email, subscriptionInfo } = useUser();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -43,8 +43,8 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ transactions, report, dateRan
         setIsLoading(true);
 
         // Увеличиваем счетчик ИИ запросов
-        const userId = googleId || email || 'demo-user';
-        await subscriptionService.incrementAiRequests(userId);
+        const currentUserId = userId || email || 'demo-user';
+        await subscriptionService.incrementAiRequests(currentUserId);
 
         try {
             const response = await fetch('http://localhost:3001/api/openai/chat', {
