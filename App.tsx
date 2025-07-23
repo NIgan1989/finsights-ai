@@ -553,15 +553,6 @@ const AppContent: React.FC = () => {
         toggleTheme, handleSaveProfile, handleSwitchProfile, handleDeleteProfile, handleNewProfile, handleFileProcess
     ]);
 
-    // Обёртка, которая рендерит контент приложения только после успешной авторизации
-    const ProtectedDashboard: React.FC = () => (
-        <>
-            {renderContent()}
-            <ReplaceConfirmModal />
-            <UploadModal />
-        </>
-    );
-
     // Основной рендер с роутингом
     return (
         <div className="min-h-screen transition-colors duration-300">
@@ -572,7 +563,11 @@ const AppContent: React.FC = () => {
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/dashboard" element={
                         <RequireAuth>
-                            <ProtectedDashboard />
+                            <div className="min-h-screen transition-colors duration-300">
+                                {renderContent()}
+                                <ReplaceConfirmModal />
+                                <UploadModal />
+                            </div>
                         </RequireAuth>
                     } />
                     <Route path="/financial-model" element={
