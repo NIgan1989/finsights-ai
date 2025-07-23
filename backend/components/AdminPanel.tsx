@@ -70,6 +70,7 @@ const AdminPanel: React.FC = () => {
               value={adminKey}
               onChange={(e) => setAdminKey(e.target.value)}
               placeholder="admin123"
+              autoComplete="current-password"
               className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />

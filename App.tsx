@@ -414,10 +414,7 @@ const AppContent: React.FC = () => {
             case 'upload':
                 console.log('[App] Rendering upload state');
                 return (
-                    <div className="min-h-screen" style={{backgroundColor: '#f8fafc', color: '#0f172a'}}>
-                        <div style={{position: 'fixed', top: '90px', right: '10px', background: 'green', color: 'white', padding: '10px', zIndex: 9999}}>
-                            DEBUG Upload: activeView={activeView}, hasData={allTransactions?.length || 0}
-                        </div>
+                    <div className="min-h-screen bg-background text-text-primary">
                         <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={false} onResetData={openUploadModal} onToggleTheme={toggleTheme} theme={theme} />
                         <main className="lg:ml-72 min-h-screen">
                             {activeView === 'profile' && (
@@ -431,10 +428,7 @@ const AppContent: React.FC = () => {
                                 />
                             )}
                             {activeView === 'dashboard' && (
-                                <div className="p-8 text-center" style={{backgroundColor: 'white', color: 'black'}}>
-                                    <div style={{padding: '20px', border: '2px solid red', margin: '20px'}}>
-                                        DEBUG: Desktop view - activeView: {activeView}, appState: {appState}
-                                    </div>
+                                <div className="p-8 text-center">
                                     <div className="max-w-md mx-auto">
                                         <div className="mb-4 text-6xl">📊</div>
                                         <h2 className="text-xl font-semibold text-text-primary mb-2">Добро пожаловать!</h2>
@@ -467,9 +461,6 @@ const AppContent: React.FC = () => {
 
                 return (
                     <div className="min-h-screen bg-background text-text-primary">
-                        <div style={{position: 'fixed', top: '10px', right: '10px', background: 'red', color: 'white', padding: '10px', zIndex: 9999}}>
-                            DEBUG: Dashboard state - transactions: {allTransactions?.length || 0}
-                        </div>
                         <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={true} onResetData={openUploadModal} onToggleTheme={toggleTheme} theme={theme} />
                         <main className="lg:ml-72 min-h-screen">
                             {error && (
