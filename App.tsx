@@ -121,6 +121,8 @@ const AppContent: React.FC = () => {
         // Загружаем данные только если пользователь авторизован
         if (!token || token === null || typeof token !== 'string' || token === 'null') {
             console.log('[App] No valid token, skipping data load. Token:', token, 'Type:', typeof token);
+            // Если пользователь не авторизован, переходим в режим загрузки/запроса файла
+            setAppState('upload');
             return;
         }
 
@@ -551,6 +553,15 @@ const AppContent: React.FC = () => {
         toggleTheme, handleSaveProfile, handleSwitchProfile, handleDeleteProfile, handleNewProfile, handleFileProcess
     ]);
 
+    // Обёртка, которая рендерит контент приложения только после успешной авторизации
+    const ProtectedDashboard: React.FC = () => (
+        <>
+            {renderContent()}
+            <ReplaceConfirmModal />
+            <UploadModal />
+        </>
+    );
+
     // Основной рендер с роутингом
     return (
         <div className="min-h-screen transition-colors duration-300">
@@ -561,10 +572,7 @@ const AppContent: React.FC = () => {
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/dashboard" element={
                         <RequireAuth>
-                            {/* Здесь основной функционал приложения: дашборд, профиль и т.д. */}
-                            {renderContent()}
-                            <ReplaceConfirmModal />
-                            <UploadModal />
+                            <ProtectedDashboard />
                         </RequireAuth>
                     } />
                     <Route path="/financial-model" element={

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { FaUser, FaChartBar, FaTable, FaRobot, FaMagic, FaUpload, FaMoon, FaCrown, FaSun, FaBars, FaTimes } from '../../node_modules/react-icons/fa';
+import { FaUser, FaChartBar, FaTable, FaRobot, FaMagic, FaUpload, FaMoon, FaCrown, FaSun, FaBars, FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from './UserContext';
 import { View } from '../../types';
