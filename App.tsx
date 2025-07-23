@@ -459,6 +459,18 @@ const AppContent: React.FC = () => {
                     return <Loader message="Перенаправление..." />;
                 }
 
+                // Создаем dateRange если его нет
+                const effectiveDateRange = dateRange || (() => {
+                    const dates = allTransactions.map(t => new Date(t.date).getTime());
+                    return {
+                        start: new Date(Math.min(...dates)).toISOString().split('T')[0],
+                        end: new Date(Math.max(...dates)).toISOString().split('T')[0]
+                    };
+                })();
+
+                // Создаем отчет если его нет
+                const effectiveReport = currentReport || generateFinancialReport(allTransactions);
+
                 return (
                     <div className="min-h-screen bg-background text-text-primary">
                         <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={true} onResetData={openUploadModal} onToggleTheme={toggleTheme} theme={theme} />
@@ -474,14 +486,8 @@ const AppContent: React.FC = () => {
                                     <Suspense fallback={<Loader message="Загрузка дашборда..." />}>
                                         <Dashboard
                                             transactions={filteredTransactions || allTransactions}
-                                            report={currentReport || generateFinancialReport(allTransactions)}
-                                            dateRange={dateRange || (() => {
-                                                const dates = allTransactions.map(t => new Date(t.date).getTime());
-                                                return {
-                                                    start: new Date(Math.min(...dates)).toISOString().split('T')[0],
-                                                    end: new Date(Math.max(...dates)).toISOString().split('T')[0]
-                                                };
-                                            })()}
+                                            report={effectiveReport}
+                                            dateRange={effectiveDateRange}
                                             profile={activeProfile}
                                             theme={theme}
                                         />
@@ -520,8 +526,8 @@ const AppContent: React.FC = () => {
                                 <div className="p-6">
                                     <div className="mb-6">
                                         <DateRangeFilter 
-                                            startDate={dateRange?.start || ''}
-                                            endDate={dateRange?.end || ''}
+                                            startDate={effectiveDateRange.start}
+                                            endDate={effectiveDateRange.end}
                                             minDate={allTransactions.length > 0 ? new Date(Math.min(...allTransactions.map(t => new Date(t.date).getTime()))).toISOString().split('T')[0] : ''}
                                             maxDate={allTransactions.length > 0 ? new Date(Math.max(...allTransactions.map(t => new Date(t.date).getTime()))).toISOString().split('T')[0] : ''}
                                             onDateChange={(start, end) => setDateRange({ start, end })}
@@ -543,13 +549,19 @@ const AppContent: React.FC = () => {
                                 </div>
                             )}
 
-                            {activeView === 'ai_assistant' && currentReport && dateRange && (
+                            {activeView === 'ai_assistant' && (
                                 <AiAssistant 
                                     transactions={filteredTransactions || allTransactions} 
-                                    report={currentReport}
-                                    dateRange={dateRange}
+                                    report={effectiveReport}
+                                    dateRange={effectiveDateRange}
                                     profile={activeProfile}
                                 />
+                            )}
+
+                            {activeView === 'financial_model' && (
+                                <Suspense fallback={<Loader message="Загрузка финансовой модели..." />}>
+                                    <FinancialModelPage />
+                                </Suspense>
                             )}
 
                             {activeView === 'profile' && (
@@ -571,7 +583,7 @@ const AppContent: React.FC = () => {
         }
     }, [
         appState, activeView, allTransactions, allProfiles, activeProfile, error, loadingMessage,
-        filteredTransactions, currentReport, dateRange, handleSetActiveView, openUploadModal, 
+        filteredTransactions, currentReport, dateRange, handleSetActiveView, openUploadModal,
         toggleTheme, handleSaveProfile, handleSwitchProfile, handleDeleteProfile, handleNewProfile, handleFileProcess
     ]);
 

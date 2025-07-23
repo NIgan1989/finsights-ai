@@ -64,6 +64,13 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
       return;
     }
     
+    // Для financial_model остаемся в дашборде
+    if (view === 'financial_model') {
+      setActiveView(view as View);
+      setIsMobileMenuOpen(false);
+      return;
+    }
+    
     setActiveView(view as View);
     setIsMobileMenuOpen(false); // Закрываем мобильное меню при выборе
   };
