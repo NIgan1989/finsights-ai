@@ -10,9 +10,10 @@ const AdminPanel: React.FC = () => {
   console.log('[AdminPanel] isLifetimeAdmin:', isLifetimeAdmin);
   
   if (!isLifetimeAdmin) {
-    console.log('[AdminPanel] Access denied, redirecting...');
     return <Navigate to="/" replace />;
   }
+
+  console.log('[AdminPanel] ✅ ACCESS GRANTED - RENDERING ADMIN PANEL');
 
   const [userId, setUserId] = useState('');
   const [adminKey, setAdminKey] = useState('');
@@ -45,11 +46,12 @@ const AdminPanel: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-md mx-auto bg-surface rounded-xl shadow-lg p-8">
-        <h1 className="text-2xl font-bold text-text-primary mb-6 text-center">
-          🔧 Админ-панель
-        </h1>
+    <div className="min-h-screen bg-background p-8">
+      <div style={{background: 'red', color: 'white', padding: '20px', fontSize: '24px', textAlign: 'center', marginBottom: '20px'}}>
+        🔥 АДМИН ПАНЕЛЬ ЗАГРУЖЕНА! EMAIL: {email} 🔥
+      </div>
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold text-text-primary mb-8">Админ Панель</h1>
         
         <form onSubmit={activatePro} className="space-y-4">
           <div>
