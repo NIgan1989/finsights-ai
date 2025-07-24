@@ -52,8 +52,6 @@ export class SubscriptionService {
   private isLifetimeAdmin(userId: string): boolean {
     const normalizedUserId = userId.toLowerCase().trim();
     const isAdmin = this.lifetimeAdmins.includes(normalizedUserId);
-    console.log('[SubscriptionService] isLifetimeAdmin check:', userId, '→', normalizedUserId, '→', isAdmin);
-    console.log('[SubscriptionService] lifetimeAdmins:', this.lifetimeAdmins);
     return isAdmin;
   }
 
