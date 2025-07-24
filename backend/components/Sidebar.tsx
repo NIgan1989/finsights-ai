@@ -47,8 +47,17 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
     : baseMenu;
   
   const handleMenuClick = (view: string, isPro?: boolean) => {
+    console.log('[Sidebar] handleMenuClick:', {
+      view, 
+      isPro, 
+      status, 
+      isLifetimeAdmin, 
+      email: email?.toLowerCase().trim(),
+      subscriptionInfo
+    });
     
     if (isPro && status !== 'pro' && !isLifetimeAdmin) {
+      console.log('[Sidebar] Blocking PRO feature access');
       subscriptionService.showUpgradeModal('Финансовая модель доступна только в PRO версии');
       return;
     }
@@ -60,6 +69,7 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
 
     // Переход в админку
     if (view === 'admin') {
+      console.log('[Sidebar] Navigating to admin panel, isLifetimeAdmin:', isLifetimeAdmin, 'email:', email);
       navigate('/admin');
       setIsMobileMenuOpen(false);
       return;

@@ -361,7 +361,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(false);
 
       // Устанавливаем PRO подписку
-      setSubscriptionInfo({
+      const adminSubscription = {
         status: 'pro',
         limits: {
           maxProfiles: -1,
@@ -373,7 +373,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           hasFinancialModeling: true,
         },
         currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
-      });
+      };
+      console.log('[UserContext] Demo admin - setting subscription:', adminSubscription);
+      setSubscriptionInfo(adminSubscription);
 
       console.log('[UserContext] Demo admin login successful');
       return { success: true };
@@ -416,7 +418,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Специальная обработка для админ пользователя
         if (data.user.email?.toLowerCase().trim() === 'dulat280489@gmail.com') {
           console.log('[UserContext] Admin login detected, setting PRO subscription');
-          setSubscriptionInfo({
+          const adminSubscription = {
             status: 'pro',
             limits: {
               maxProfiles: -1,
@@ -428,7 +430,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               hasFinancialModeling: true,
             },
             currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
-          });
+          };
+          console.log('[UserContext] Setting admin subscription:', adminSubscription);
+          setSubscriptionInfo(adminSubscription);
         } else {
           // Загружаем информацию о подписке для обычных пользователей
           refreshSubscription();
