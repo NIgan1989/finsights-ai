@@ -41,6 +41,16 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
   const isLifetimeAdmin = email?.toLowerCase().trim() === 'dulat280489@gmail.com';
   const isGuest = role === 'guest';
 
+  // Отладка для диагностики проблем
+  console.log('[Sidebar] Render debug:', {
+    email,
+    subscriptionInfo,
+    status,
+    isLifetimeAdmin,
+    isGuest,
+    role
+  });
+
   // Формируем финальный массив меню
   const menu: MenuItem[] = isLifetimeAdmin 
     ? [...baseMenu, { name: 'Админ', icon: <FaCrown />, view: 'admin', description: 'Панель администратора', isAdmin: true }]
