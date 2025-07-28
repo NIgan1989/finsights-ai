@@ -120,6 +120,11 @@ export class SubscriptionService {
     return this.subscriptionInfo;
   }
 
+  // Метод для синхронизации subscriptionInfo из UserContext
+  setSubscriptionInfo(info: SubscriptionInfo): void {
+    this.subscriptionInfo = info;
+  }
+
   checkProfileLimit(currentProfiles: number): LimitCheckResult {
     if (!this.subscriptionInfo) {
       return { allowed: false, reason: 'Subscription info not loaded' };

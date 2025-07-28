@@ -229,7 +229,7 @@ export type Granularity = 'day' | 'week' | 'month';
 
 export type Theme = 'light' | 'dark';
 
-  export type View = 'dashboard' | 'transactions' | 'ai_assistant' | 'profile' | 'financial_model' | 'advanced';
+  export type View = 'dashboard' | 'transactions' | 'ai_assistant' | 'profile' | 'financial_model' | 'advanced' | 'admin';
 
 export interface UserLimits {
   maxProfiles: number;

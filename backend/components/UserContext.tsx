@@ -273,8 +273,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Специальная обработка для админ пользователя
         if (data.email?.toLowerCase().trim() === 'dulat280489@gmail.com') {
           console.log('[UserContext] Admin user detected, setting PRO subscription');
-          setSubscriptionInfo({
-            status: 'pro',
+          const adminSubscription: SubscriptionInfo = {
+            status: 'pro' as const,
             limits: {
               maxProfiles: -1,
               maxTransactions: -1, 
@@ -285,7 +285,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               hasFinancialModeling: true,
             },
             currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
-          });
+          };
+          setSubscriptionInfo(adminSubscription);
+          // Синхронизируем с subscriptionService
+          subscriptionService.setSubscriptionInfo(adminSubscription);
         } else {
           // Загружаем информацию о подписке для обычных пользователей
           refreshSubscription();
@@ -361,8 +364,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(false);
 
       // Устанавливаем PRO подписку
-      const adminSubscription = {
-        status: 'pro',
+      const adminSubscription: SubscriptionInfo = {
+        status: 'pro' as const,
         limits: {
           maxProfiles: -1,
           maxTransactions: -1, 
@@ -376,6 +379,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
       console.log('[UserContext] Demo admin - setting subscription:', adminSubscription);
       setSubscriptionInfo(adminSubscription);
+      // Синхронизируем с subscriptionService
+      subscriptionService.setSubscriptionInfo(adminSubscription);
 
       console.log('[UserContext] Demo admin login successful');
       return { success: true };
@@ -418,8 +423,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Специальная обработка для админ пользователя
         if (data.user.email?.toLowerCase().trim() === 'dulat280489@gmail.com') {
           console.log('[UserContext] Admin login detected, setting PRO subscription');
-          const adminSubscription = {
-            status: 'pro',
+          const adminSubscription: SubscriptionInfo = {
+            status: 'pro' as const,
             limits: {
               maxProfiles: -1,
               maxTransactions: -1, 
@@ -433,6 +438,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           };
           console.log('[UserContext] Setting admin subscription:', adminSubscription);
           setSubscriptionInfo(adminSubscription);
+          // Синхронизируем с subscriptionService
+          subscriptionService.setSubscriptionInfo(adminSubscription);
         } else {
           // Загружаем информацию о подписке для обычных пользователей
           refreshSubscription();

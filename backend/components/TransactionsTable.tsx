@@ -1,13 +1,13 @@
 
 import React, { useState, useMemo } from 'react';
-import { Transaction, Theme } from '../../types.ts';
+import { Transaction } from '../../types.ts';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../constants.ts';
+import { useTheme } from './ThemeProvider';
 
 interface TransactionsTableProps {
     transactions: Transaction[];
     onUpdateTransaction: (originalTx: Transaction, updates: Partial<Pick<Transaction, 'description' | 'category' | 'counterparty'>>, applyToAll: boolean) => void;
     onAddTransaction: (tx: Transaction) => void;
-    theme: Theme;
 }
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('ru-RU').format(amount) + ' ₸';
@@ -123,7 +123,7 @@ const lightCategoryColorMap: { [key: string]: string } = {
 };
 
 
-const getCategoryClass = (category: string, theme: Theme) => {
+const getCategoryClass = (category: string, theme: 'light' | 'dark') => {
     const map = theme === 'dark' ? darkCategoryColorMap : lightCategoryColorMap;
     // Special handling for income categories that might not be in the expense map
     if (!map[category]) {
@@ -328,11 +328,12 @@ const AddTransactionModal: React.FC<{
 };
 
 
-const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onUpdateTransaction, onAddTransaction, theme }) => {
+const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onUpdateTransaction, onAddTransaction }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: keyof Transaction; direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'desc' });
     const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
     const [addModalOpen, setAddModalOpen] = useState(false);
+    const { theme } = useTheme();
 
     const sortedTransactions = useMemo(() => {
         let sortableItems = [...transactions];
@@ -403,13 +404,13 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                     <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
                         Список транзакций
                     </h1>
-                    <p className="text-xl text-slate-600">
+                    <p className="text-xl text-slate-600 dark:text-text-secondary">
                         Управляйте и анализируйте все ваши финансовые операции
                     </p>
                 </div>
 
                 {/* Filters and Actions */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50 mb-8">
+                <div className="bg-white/80 dark:bg-surface/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50 dark:border-border/50 mb-8">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div className="flex flex-col sm:flex-row gap-4 flex-1">
                             <div className="relative flex-1 max-w-md">
@@ -419,20 +420,20 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                 <input
                                     type="text"
                                     placeholder="Поиск по описанию, категории или контрагенту..."
-                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-border bg-white/70 dark:bg-surface/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                             
                             <div className="flex gap-2">
-                                <button className="px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 hover:border-blue-500 hover:text-blue-600 transition-all duration-200 flex items-center gap-2">
+                                <button className="px-4 py-3 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-border text-slate-700 dark:text-text-primary hover:border-blue-500 hover:text-blue-600 transition-all duration-200 flex items-center gap-2">
                                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
                                     </svg>
                                     Фильтры
                                 </button>
                                 
-                                <button className="px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 hover:border-blue-500 hover:text-blue-600 transition-all duration-200 flex items-center gap-2">
+                                <button className="px-4 py-3 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-border text-slate-700 dark:text-text-primary hover:border-blue-500 hover:text-blue-600 transition-all duration-200 flex items-center gap-2">
                                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1zM3 16a1 1 0 011-1h4a1 1 0 110 2H4a1 1 0 01-1-1z" />
                                     </svg>
@@ -455,12 +456,12 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                 <AddTransactionModal open={addModalOpen} onClose={() => setAddModalOpen(false)} onAdd={onAddTransaction} />
                 
                 {/* Transactions Table */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg border border-white/50">
+                <div className="bg-white/80 dark:bg-surface/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg border border-white/50 dark:border-border/50">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-full">
-                            <thead className="bg-gradient-to-r from-slate-50 to-blue-50">
+                            <thead className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-surface-accent dark:to-surface">
                                 <tr>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('date')}>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('date')}>
                                         <div className="flex items-center gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
@@ -468,7 +469,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                             <span className="text-sm md:text-base">Дата {getSortIndicator('date')}</span>
                                         </div>
                                     </th>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('description')}>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('description')}>
                                         <div className="flex items-center gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
@@ -476,7 +477,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                             <span className="text-sm md:text-base">Описание {getSortIndicator('description')}</span>
                                         </div>
                                     </th>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 font-semibold hover:text-blue-600 transition-colors hidden sm:table-cell" onClick={() => requestSort('counterparty')}>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors hidden sm:table-cell" onClick={() => requestSort('counterparty')}>
                                         <div className="flex items-center gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -484,7 +485,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                             <span className="text-sm md:text-base">Контрагент {getSortIndicator('counterparty')}</span>
                                         </div>
                                     </th>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-right text-slate-700 font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('amount')}>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-right text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('amount')}>
                                         <div className="flex items-center justify-end gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
@@ -493,7 +494,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                             <span className="text-sm md:text-base">Сумма {getSortIndicator('amount')}</span>
                                         </div>
                                     </th>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('category')}>
+                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('category')}>
                                         <div className="flex items-center gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
@@ -506,16 +507,16 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                         <tbody>
                             {filteredTransactions.map(tx => (
                                 <React.Fragment key={tx.id}>
-                                    <tr className={`border-t border-slate-200 transition-colors hover:bg-slate-50/50 ${tx.needsClarification ? 'bg-yellow-50' : ''} ${expandedRowId === tx.id ? 'bg-blue-50' : ''}`}>
-                                        <td className="p-4 md:p-6 whitespace-nowrap text-slate-600 text-sm">
+                                    <tr className={`border-t border-slate-200 dark:border-border transition-colors hover:bg-slate-50/50 dark:hover:bg-surface-accent ${tx.needsClarification ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''} ${expandedRowId === tx.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                                        <td className="p-4 md:p-6 whitespace-nowrap text-slate-600 dark:text-text-secondary text-sm">
                                             {new Date(tx.date).toLocaleDateString('ru-RU')}
                                         </td>
-                                        <td className="p-4 md:p-6 text-slate-900 font-medium">
+                                        <td className="p-4 md:p-6 text-slate-900 dark:text-text-primary font-medium">
                                             <div className="max-w-[200px] md:max-w-none truncate">
                                                 {tx.description}
                                             </div>
                                         </td>
-                                        <td className="p-4 md:p-6 text-slate-600 hidden sm:table-cell">
+                                        <td className="p-4 md:p-6 text-slate-600 dark:text-text-secondary hidden sm:table-cell">
                                             <div className="max-w-[150px] truncate">
                                                 {tx.counterparty}
                                             </div>

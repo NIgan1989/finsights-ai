@@ -355,8 +355,13 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Object.entries(report.riskMetrics).map(([key, rawValue]) => {
           const value = rawValue as number;
+          // Ограничиваем значение до максимума 100% для отображения полосы
+          const displayValue = Math.min(value * 100, 100);
+          // Но показываем реальное значение в тексте
+          const actualValue = value * 100;
+          
           return (
-          <div key={key} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div key={key} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-900 dark:text-white">
                 {key === 'liquidityRisk' ? 'Риск ликвидности' :
@@ -368,15 +373,20 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
                  key === 'volatilityRisk' ? 'Риск волатильности' : key}
               </span>
               <span className={`text-sm font-bold ${getRiskColor(value)}`}>
-                {(value * 100).toFixed(1)}%
+                {actualValue.toFixed(1)}%
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
               <div 
-                className={`h-2 rounded-full ${value < 0.3 ? 'bg-green-500' : value < 0.7 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                style={{ width: `${value * 100}%` }}
+                className={`h-2 rounded-full transition-all duration-300 ${value < 0.3 ? 'bg-green-500' : value < 0.7 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                style={{ width: `${displayValue}%` }}
               ></div>
             </div>
+            {actualValue > 100 && (
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                ⚠️ Критический уровень риска
+              </p>
+            )}
           </div>
         );
         })}
@@ -389,33 +399,51 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
       {/* Alerts */}
       <div className="space-y-4">
         {report.alerts.critical.length > 0 && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <h4 className="text-red-800 dark:text-red-200 font-semibold mb-2">Критические предупреждения</h4>
-            <ul className="space-y-1">
+          <div className="bg-red-100 dark:bg-red-900/40 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
+            <h4 className="text-red-900 dark:text-red-100 font-bold mb-3 flex items-center">
+              <span className="mr-2 text-lg">🚨</span>
+              Критические предупреждения
+            </h4>
+            <ul className="space-y-2">
               {report.alerts.critical.map((alert, index) => (
-                <li key={index} className="text-red-700 dark:text-red-300 text-sm">• {alert}</li>
+                <li key={index} className="text-red-800 dark:text-red-200 text-sm flex items-start">
+                  <span className="mr-2 mt-1 text-red-600 dark:text-red-300">•</span>
+                  <span className="flex-1">{alert}</span>
+                </li>
               ))}
             </ul>
           </div>
         )}
 
         {report.alerts.warning.length > 0 && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <h4 className="text-yellow-800 dark:text-yellow-200 font-semibold mb-2">Предупреждения</h4>
-            <ul className="space-y-1">
+          <div className="bg-amber-100 dark:bg-amber-900/40 border-l-4 border-amber-500 rounded-lg p-4 shadow-sm">
+            <h4 className="text-amber-900 dark:text-amber-100 font-bold mb-3 flex items-center">
+              <span className="mr-2 text-lg">⚠️</span>
+              Предупреждения
+            </h4>
+            <ul className="space-y-2">
               {report.alerts.warning.map((alert, index) => (
-                <li key={index} className="text-yellow-700 dark:text-yellow-300 text-sm">• {alert}</li>
+                <li key={index} className="text-amber-800 dark:text-amber-200 text-sm flex items-start">
+                  <span className="mr-2 mt-1 text-amber-600 dark:text-amber-300">•</span>
+                  <span className="flex-1">{alert}</span>
+                </li>
               ))}
             </ul>
           </div>
         )}
 
         {report.alerts.info.length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <h4 className="text-blue-800 dark:text-blue-200 font-semibold mb-2">Информация</h4>
-            <ul className="space-y-1">
+          <div className="bg-blue-100 dark:bg-blue-900/40 border-l-4 border-blue-500 rounded-lg p-4 shadow-sm">
+            <h4 className="text-blue-900 dark:text-blue-100 font-bold mb-3 flex items-center">
+              <span className="mr-2 text-lg">ℹ️</span>
+              Информация
+            </h4>
+            <ul className="space-y-2">
               {report.alerts.info.map((alert, index) => (
-                <li key={index} className="text-blue-700 dark:text-blue-300 text-sm">• {alert}</li>
+                <li key={index} className="text-blue-800 dark:text-blue-200 text-sm flex items-start">
+                  <span className="mr-2 mt-1 text-blue-600 dark:text-blue-300">•</span>
+                  <span className="flex-1">{alert}</span>
+                </li>
               ))}
             </ul>
           </div>
@@ -423,19 +451,27 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
       </div>
 
       {/* Recommendations */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Рекомендации</h3>
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-6 shadow-sm border border-green-200 dark:border-green-700">
+        <h3 className="text-lg font-bold mb-4 text-green-900 dark:text-green-100 flex items-center">
+          <span className="mr-2 text-xl">💡</span>
+          Рекомендации
+        </h3>
         {report.recommendations.length > 0 ? (
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {report.recommendations.map((recommendation, index) => (
-              <li key={index} className="flex items-start space-x-3">
-                <span className="text-blue-500 mt-1">💡</span>
-                <span className="text-gray-700 dark:text-gray-300">{recommendation}</span>
+              <li key={index} className="flex items-start space-x-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-green-200 dark:border-green-600 shadow-sm">
+                <span className="text-green-600 dark:text-green-400 mt-1 text-lg">💡</span>
+                <span className="text-gray-800 dark:text-gray-200 font-medium flex-1">{recommendation}</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400">Все показатели в норме. Продолжайте в том же духе!</p>
+          <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-green-200 dark:border-green-600 shadow-sm">
+            <p className="text-green-700 dark:text-green-300 font-medium flex items-center">
+              <span className="mr-2 text-lg">✅</span>
+              Все показатели в норме. Продолжайте в том же духе!
+            </p>
+          </div>
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Theme } from '../../types.ts';
+import { useTheme } from './ThemeProvider';
 
 interface DateRangeFilterProps {
   startDate: string;
@@ -8,7 +8,6 @@ interface DateRangeFilterProps {
   minDate: string;
   maxDate: string;
   onDateChange: (start: string, end: string) => void;
-  theme: Theme;
 }
 
 const toYyyyMmDd = (dateString: string) => {
@@ -24,7 +23,9 @@ const toYyyyMmDd = (dateString: string) => {
   }
 }
 
-const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ startDate, endDate, minDate, maxDate, onDateChange, theme }) => {
+const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ startDate, endDate, minDate, maxDate, onDateChange }) => {
+  const { theme } = useTheme();
+  
   return (
     <div className="bg-surface p-4 border-b border-border flex items-center gap-4 sticky top-0 z-20 shadow-md">
       <span className="text-text-secondary font-medium">Период:</span>

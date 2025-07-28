@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { FaUser, FaChartBar, FaTable, FaRobot, FaMagic, FaUpload, FaMoon, FaCrown, FaSun, FaBars, FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from './UserContext';
+import { useTheme } from './ThemeProvider';
 import { View } from '../../types';
 import { subscriptionService } from '../../services/subscriptionService';
 
@@ -20,7 +21,7 @@ const baseMenu: MenuItem[] = [
   { name: 'Дашборд', icon: <FaChartBar />, view: 'dashboard', description: 'Аналитика и отчеты' },
   { name: 'Транзакции', icon: <FaTable />, view: 'transactions', description: 'Список операций' },
   { name: 'ИИ Ассистент', icon: <FaRobot />, view: 'ai_assistant', description: 'Умный помощник' },
-  { name: 'Финансовая модель', icon: <FaMagic />, view: 'financial_model', description: 'DCF моделирование', isPro: true },
+  { name: 'Финансовая модель', icon: <FaMagic />, view: 'financial_model', description: 'ИИ конструктор моделей', isPro: true },
 ];
 
 interface SidebarProps {
@@ -28,12 +29,11 @@ interface SidebarProps {
   setActiveView: (view: View) => void;
   hasData: boolean;
   onResetData: () => void;
-  onToggleTheme: () => void;
-  theme?: 'light' | 'dark';
 }
 
-export default function Sidebar({ activeView, setActiveView, hasData, onResetData, onToggleTheme, theme = 'light' }: SidebarProps) {
+export default function Sidebar({ activeView, setActiveView, hasData, onResetData }: SidebarProps) {
   const { subscriptionInfo, email, role, displayName } = useUser();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -80,8 +80,11 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
     // Переход в админку
     if (view === 'admin') {
       console.log('[Sidebar] Navigating to admin panel, isLifetimeAdmin:', isLifetimeAdmin, 'email:', email);
-      navigate('/admin');
+      console.log('[Sidebar] Setting activeView to admin');
+      // Открываем админ панель как обычный view в дашборде
+      setActiveView('admin' as View);
       setIsMobileMenuOpen(false);
+      console.log('[Sidebar] Admin view set, closing mobile menu');
       return;
     }
     
@@ -230,7 +233,7 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
         )}
         
         <button
-          onClick={onToggleTheme}
+                          onClick={toggleTheme}
           className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] ${themeClasses.bgButton} ${themeClasses.textButton}`}
         >
           {theme === 'light' ? <FaMoon /> : <FaSun />}

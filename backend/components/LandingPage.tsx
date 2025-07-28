@@ -113,7 +113,7 @@ const LandingPage: React.FC = () => {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 backdrop-blur-sm border-b border-white/20 bg-white/30">
+              <header className="relative z-10 backdrop-blur-sm border-b border-white/20 dark:border-border/20 bg-white/30 dark:bg-surface/30">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg">
@@ -143,7 +143,7 @@ const LandingPage: React.FC = () => {
       {/* Hero */}
       <section className="relative z-10 py-24 px-6 text-center max-w-6xl mx-auto">
         <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-blue-200/50 text-blue-700 text-sm font-medium mb-6">
+                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-surface/80 backdrop-blur-sm rounded-full border border-blue-200/50 dark:border-primary/50 text-blue-700 dark:text-primary text-sm font-medium mb-6">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             ИИ-платформа нового поколения
           </div>
@@ -169,7 +169,7 @@ const LandingPage: React.FC = () => {
           </button>
           <button 
             onClick={() => handlePlanSelect('pro')}
-            className="px-8 py-4 bg-white/80 backdrop-blur-sm border-2 border-blue-200 text-blue-700 rounded-xl text-lg font-semibold hover:bg-white hover:border-blue-300 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            className="px-8 py-4 bg-white/80 dark:bg-surface/80 backdrop-blur-sm border-2 border-blue-200 dark:border-primary text-blue-700 dark:text-primary rounded-xl text-lg font-semibold hover:bg-white dark:hover:bg-surface hover:border-blue-300 dark:hover:border-primary-hover transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
             Узнать о PRO тарифе
           </button>

@@ -65,12 +65,45 @@
 
     .bg-background { background-color: hsl(var(--color-background)); }
     .bg-surface { background-color: hsl(var(--color-surface)); }
+    .bg-surface-accent { background-color: hsl(var(--color-surface-accent)); }
     .bg-primary { background-color: hsl(var(--color-primary)); }
     .bg-primary-hover:hover { background-color: hsl(var(--color-primary-hover)); }
     .text-text-primary { color: hsl(var(--color-text-primary)); }
     .text-text-secondary { color: hsl(var(--color-text-secondary)); }
+    .text-text-disabled { color: hsl(var(--color-text-disabled)); }
     .text-primary-foreground { color: hsl(var(--color-primary-foreground)); }
+    .text-destructive { color: hsl(var(--color-destructive)); }
+    .text-success { color: hsl(var(--color-success)); }
     .border-border { border-color: hsl(var(--color-border)); }
+    .border-surface { border-color: hsl(var(--color-surface)); }
+    
+    /* Дополнительные классы для темной темы */
+    .dark .bg-white { background-color: hsl(var(--color-surface)); }
+    .dark .bg-gray-50 { background-color: hsl(var(--color-surface-accent)); }
+    .dark .bg-gray-100 { background-color: hsl(var(--color-surface-accent)); }
+    .dark .bg-gray-200 { background-color: hsl(var(--color-border)); }
+    .dark .bg-gray-800 { background-color: hsl(var(--color-surface)); }
+    .dark .bg-gray-900 { background-color: hsl(var(--color-background)); }
+    
+    .dark .text-gray-900 { color: hsl(var(--color-text-primary)); }
+    .dark .text-gray-800 { color: hsl(var(--color-text-primary)); }
+    .dark .text-gray-700 { color: hsl(var(--color-text-secondary)); }
+    .dark .text-gray-600 { color: hsl(var(--color-text-secondary)); }
+    .dark .text-gray-500 { color: hsl(var(--color-text-disabled)); }
+    .dark .text-gray-400 { color: hsl(var(--color-text-disabled)); }
+    .dark .text-gray-300 { color: hsl(var(--color-text-secondary)); }
+    .dark .text-gray-200 { color: hsl(var(--color-text-primary)); }
+    .dark .text-gray-100 { color: hsl(var(--color-text-primary)); }
+    .dark .text-white { color: hsl(var(--color-text-primary)); }
+    
+    .dark .border-gray-200 { border-color: hsl(var(--color-border)); }
+    .dark .border-gray-300 { border-color: hsl(var(--color-border)); }
+    .dark .border-gray-700 { border-color: hsl(var(--color-border)); }
+    
+    /* Градиенты для темной темы */
+    .dark .from-slate-50 { background-image: linear-gradient(to right, hsl(var(--color-surface-accent)), hsl(var(--color-surface))); }
+    .dark .via-blue-50 { background-image: linear-gradient(to right, hsl(var(--color-surface)), hsl(var(--color-surface-accent))); }
+    .dark .to-indigo-50 { background-image: linear-gradient(to right, hsl(var(--color-surface-accent)), hsl(var(--color-surface))); }
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="importmap">

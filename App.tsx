@@ -10,12 +10,14 @@ import Loader from './backend/components/Loader.tsx';
 import DateRangeFilter from './backend/components/DateRangeFilter.tsx';
 import { processAndCategorizeTransactions, generateFinancialReport } from './services/financeService.ts';
 import { UserProvider, useUser, useUserState, useUserActions } from './backend/components/UserContext';
+import { ThemeProvider } from './backend/components/ThemeProvider';
 import LandingPage from './backend/components/LandingPage';
 
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import PricingPage from './backend/components/PricingPage';
-import FinancialModelPage from './backend/components/FinancialModelPage';
+import FinancialPage from './backend/components/FinancialPage';
 import AdminPanel from './backend/components/AdminPanel';
+import ThemeTest from './backend/components/ThemeTest';
 import { AuthDebug } from './backend/components/AuthDebug';
 
 // Компонент для логирования навигации
@@ -71,7 +73,6 @@ const AppContent: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
     const [loadingMessage, setLoadingMessage] = useState("Загрузка приложения...");
-    const [theme, setTheme] = useState<Theme>('light');
     const { token, email } = useUserState();
     const { loadUserData, saveUserData } = useUserActions();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -81,31 +82,7 @@ const AppContent: React.FC = () => {
         return allProfiles.find(p => p.id === activeProfileId) || null;
     }, [allProfiles, activeProfileId]);
 
-    const toggleTheme = useCallback(() => {
-        setTheme(prevTheme => {
-            const newTheme = prevTheme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('theme', newTheme);
-            return newTheme;
-        });
-    }, []);
 
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') as Theme;
-        if (savedTheme) {
-            setTheme(savedTheme);
-        }
-    }, []);
-
-    // Применяем тему к корневому элементу
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        // Также добавляем класс для обратной совместимости
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }, [theme]);
 
     type AppState = 'upload' | 'processing' | 'dashboard';
 
@@ -415,7 +392,7 @@ const AppContent: React.FC = () => {
                 console.log('[App] Rendering upload state');
                 return (
                     <div className="min-h-screen bg-background text-text-primary">
-                        <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={false} onResetData={openUploadModal} onToggleTheme={toggleTheme} theme={theme} />
+                        <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={false} onResetData={openUploadModal} />
                         <main className="lg:ml-72 min-h-screen">
                             {activeView === 'profile' && (
                                 <Profile
@@ -444,7 +421,13 @@ const AppContent: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                            {!['profile', 'dashboard'].includes(activeView) && (
+                            {activeView === 'admin' && (
+                                <Suspense fallback={<Loader message="Загрузка админ панели..." />}>
+                                    {(() => { console.log('[App] Rendering admin panel in upload state, activeView:', activeView); return null; })()}
+                                    <AdminPanel />
+                                </Suspense>
+                            )}
+                            {!['profile', 'dashboard', 'admin'].includes(activeView) && (
                                 <DataUpload onFileUploaded={(file) => handleFileProcess(file)} isProcessing={false} isCompact={true} />
                             )}
                         </main>
@@ -473,7 +456,7 @@ const AppContent: React.FC = () => {
 
                 return (
                     <div className="min-h-screen bg-background text-text-primary">
-                        <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={true} onResetData={openUploadModal} onToggleTheme={toggleTheme} theme={theme} />
+                        <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={true} onResetData={openUploadModal} />
                         <main className="lg:ml-72 min-h-screen">
                             {error && (
                                 <div className="m-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
@@ -489,7 +472,6 @@ const AppContent: React.FC = () => {
                                             report={effectiveReport}
                                             dateRange={effectiveDateRange}
                                             profile={activeProfile}
-                                            theme={theme}
                                         />
                                     </Suspense>
                                 ) : (
@@ -531,7 +513,7 @@ const AppContent: React.FC = () => {
                                             minDate={allTransactions.length > 0 ? new Date(Math.min(...allTransactions.map(t => new Date(t.date).getTime()))).toISOString().split('T')[0] : ''}
                                             maxDate={allTransactions.length > 0 ? new Date(Math.max(...allTransactions.map(t => new Date(t.date).getTime()))).toISOString().split('T')[0] : ''}
                                             onDateChange={(start, end) => setDateRange({ start, end })}
-                                            theme={theme}
+
                                         />
                                     </div>
                                     <TransactionsTable 
@@ -544,7 +526,7 @@ const AppContent: React.FC = () => {
                                             // TODO: Implement add transaction logic
                                             console.log('Add transaction:', tx);
                                         }}
-                                        theme={theme}
+
                                     />
                                 </div>
                             )}
@@ -560,7 +542,7 @@ const AppContent: React.FC = () => {
 
                             {activeView === 'financial_model' && (
                                 <Suspense fallback={<Loader message="Загрузка финансовой модели..." />}>
-                                    <FinancialModelPage />
+                                    <FinancialPage />
                                 </Suspense>
                             )}
 
@@ -574,6 +556,13 @@ const AppContent: React.FC = () => {
                                     onNew={handleNewProfile}
                                 />
                             )}
+
+                            {activeView === 'admin' && (
+                                <Suspense fallback={<Loader message="Загрузка админ панели..." />}>
+                                    {(() => { console.log('[App] Rendering admin panel, activeView:', activeView); return null; })()}
+                                    <AdminPanel />
+                                </Suspense>
+                            )}
                         </main>
                     </div>
                 );
@@ -584,7 +573,7 @@ const AppContent: React.FC = () => {
     }, [
         appState, activeView, allTransactions, allProfiles, activeProfile, error, loadingMessage,
         filteredTransactions, currentReport, dateRange, handleSetActiveView, openUploadModal,
-        toggleTheme, handleSaveProfile, handleSwitchProfile, handleDeleteProfile, handleNewProfile, handleFileProcess
+        handleSaveProfile, handleSwitchProfile, handleDeleteProfile, handleNewProfile, handleFileProcess
     ]);
 
     // Основной рендер с роутингом
@@ -604,16 +593,8 @@ const AppContent: React.FC = () => {
                             </div>
                         </RequireAuth>
                     } />
-                    <Route path="/financial-model" element={
-                        <RequireAuth>
-                            <FinancialModelPage />
-                        </RequireAuth>
-                    } />
-                    <Route path="/admin" element={
-                        <RequireAuth>
-                            <AdminPanel />
-                        </RequireAuth>
-                    } />
+
+                    <Route path="/theme-test" element={<ThemeTest />} />
                     <Route path="/auth-debug" element={<AuthDebug />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
@@ -622,11 +603,13 @@ const AppContent: React.FC = () => {
     );
 };
 
-// Основной компонент App с UserProvider
+// Основной компонент App с UserProvider и ThemeProvider
 const App: React.FC = () => {
   return (
     <UserProvider>
-      <AppContent />
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </UserProvider>
   );
 };
