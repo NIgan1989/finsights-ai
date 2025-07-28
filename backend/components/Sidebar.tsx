@@ -1,43 +1,97 @@
 
 import React, { useState } from 'react';
-import { FaUser, FaChartBar, FaTable, FaRobot, FaMagic, FaUpload, FaMoon, FaCrown, FaSun, FaBars, FaTimes } from '../../node_modules/react-icons/fa';
+import { FaUser, FaChartBar, FaTable, FaRobot, FaMagic, FaUpload, FaMoon, FaCrown, FaSun, FaBars, FaTimes } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from './UserContext';
+import { useTheme } from './ThemeProvider';
 import { View } from '../../types';
 import { subscriptionService } from '../../services/subscriptionService';
+
+interface MenuItem {
+  name: string;
+  icon: JSX.Element;
+  view: string;
+  description: string;
+  isPro?: boolean;
+  isAdmin?: boolean;
+}
+
+const baseMenu: MenuItem[] = [
+  { name: 'Профиль', icon: <FaUser />, view: 'profile', description: 'Управление профилями' },
+  { name: 'Дашборд', icon: <FaChartBar />, view: 'dashboard', description: 'Аналитика и отчеты' },
+  { name: 'Транзакции', icon: <FaTable />, view: 'transactions', description: 'Список операций' },
+  { name: 'ИИ Ассистент', icon: <FaRobot />, view: 'ai_assistant', description: 'Умный помощник' },
+  { name: 'Финансовая модель', icon: <FaMagic />, view: 'financial_model', description: 'ИИ конструктор моделей', isPro: true },
+];
 
 interface SidebarProps {
   activeView: string;
   setActiveView: (view: View) => void;
   hasData: boolean;
   onResetData: () => void;
-  onToggleTheme: () => void;
-  theme?: 'light' | 'dark';
 }
 
-const menu = [
-  { name: 'Профиль', icon: <FaUser />, view: 'profile', description: 'Управление профилями' },
-  { name: 'Дашборд', icon: <FaChartBar />, view: 'dashboard', description: 'Аналитика и отчеты' },
-  { name: 'Транзакции', icon: <FaTable />, view: 'transactions', description: 'Список операций' },
-  { name: 'ИИ Ассистент', icon: <FaRobot />, view: 'ai_assistant', description: 'Умный помощник' },
-  { name: 'Финансовая модель', icon: <FaMagic />, view: 'financial_model', description: 'DCF моделирование', isPro: true },
-];
-
-export default function Sidebar({ activeView, setActiveView, hasData, onResetData, onToggleTheme, theme = 'light' }: SidebarProps) {
+export default function Sidebar({ activeView, setActiveView, hasData, onResetData }: SidebarProps) {
   const { subscriptionInfo, email, role, displayName } = useUser();
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const status = subscriptionInfo?.status || 'free';
-  const isLifetimeAdmin = email?.toLowerCase() === 'dulat280489@gmail.com';
+  const isLifetimeAdmin = email?.toLowerCase().trim() === 'dulat280489@gmail.com';
   const isGuest = role === 'guest';
+
+  // Отладка для диагностики проблем
+  console.log('[Sidebar] Render debug:', {
+    email,
+    subscriptionInfo,
+    status,
+    isLifetimeAdmin,
+    isGuest,
+    role
+  });
+
+  // Формируем финальный массив меню
+  const menu: MenuItem[] = isLifetimeAdmin 
+    ? [...baseMenu, { name: 'Админ', icon: <FaCrown />, view: 'admin', description: 'Панель администратора', isAdmin: true }]
+    : baseMenu;
   
   const handleMenuClick = (view: string, isPro?: boolean) => {
+    console.log('[Sidebar] handleMenuClick:', {
+      view, 
+      isPro, 
+      status, 
+      isLifetimeAdmin, 
+      email: email?.toLowerCase().trim(),
+      subscriptionInfo
+    });
+    
     if (isPro && status !== 'pro' && !isLifetimeAdmin) {
+      console.log('[Sidebar] Blocking PRO feature access');
       subscriptionService.showUpgradeModal('Финансовая модель доступна только в PRO версии');
       return;
     }
-    
+    // Запрет для гостей на ИИ
     if (view === 'ai_assistant' && isGuest) {
       subscriptionService.showUpgradeModal('ИИ Ассистент недоступен в гостевом режиме');
+      return;
+    }
+
+    // Переход в админку
+    if (view === 'admin') {
+      console.log('[Sidebar] Navigating to admin panel, isLifetimeAdmin:', isLifetimeAdmin, 'email:', email);
+      console.log('[Sidebar] Setting activeView to admin');
+      // Открываем админ панель как обычный view в дашборде
+      setActiveView('admin' as View);
+      setIsMobileMenuOpen(false);
+      console.log('[Sidebar] Admin view set, closing mobile menu');
+      return;
+    }
+    
+    // Для financial_model остаемся в дашборде
+    if (view === 'financial_model') {
+      setActiveView(view as View);
+      setIsMobileMenuOpen(false);
       return;
     }
     
@@ -128,7 +182,8 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
       <nav className="flex-1 p-4 space-y-2">
         {menu.map((item) => {
           const isActive = activeView === item.view;
-          const isDisabled = (item.isPro && status !== 'pro' && !isLifetimeAdmin) || 
+          const isProItem = item.isPro === true;
+          const isDisabled = (isProItem && status !== 'pro' && !isLifetimeAdmin) || 
                             (item.view === 'ai_assistant' && isGuest);
           
           return (
@@ -178,7 +233,7 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
         )}
         
         <button
-          onClick={onToggleTheme}
+                          onClick={toggleTheme}
           className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] ${themeClasses.bgButton} ${themeClasses.textButton}`}
         >
           {theme === 'light' ? <FaMoon /> : <FaSun />}
@@ -191,7 +246,7 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className={`hidden lg:flex w-72 ${themeClasses.sidebar} shadow-2xl relative overflow-hidden`}>
+      <aside className={`hidden lg:flex w-72 ${themeClasses.sidebar} shadow-2xl fixed left-0 top-0 h-full z-30 overflow-hidden`}>
         <SidebarContent />
       </aside>
 

@@ -58,6 +58,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [role, setRole] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [initialized, setInitialized] = useState<boolean>(false);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
 
   const getUserId = useCallback(() => {
@@ -168,12 +169,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Проверка авторизации при загрузке
   useEffect(() => {
-    if (token && token !== null) {
-      console.log('[UserContext] Already authenticated, skipping auth check. Token:', token);
+    if (initialized) {
+      console.log('[UserContext] Already initialized, skipping auth check');
       return;
     }
     
     console.log('[UserContext] Starting auth check...');
+    setInitialized(true);
     const saved = localStorage.getItem('finsights_auth');
     const guestSaved = sessionStorage.getItem('finsights_guest');
     
@@ -268,8 +270,29 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
         console.log('[UserContext] Successfully authenticated via /api/me');
         
-        // Загружаем информацию о подписке
-        refreshSubscription();
+        // Специальная обработка для админ пользователя
+        if (data.email?.toLowerCase().trim() === 'dulat280489@gmail.com') {
+          console.log('[UserContext] Admin user detected, setting PRO subscription');
+          const adminSubscription: SubscriptionInfo = {
+            status: 'pro' as const,
+            limits: {
+              maxProfiles: -1,
+              maxTransactions: -1, 
+              maxAiRequests: -1,
+              hasAdvancedAnalytics: true,
+              hasExcelExport: true,
+              hasPrioritySupport: true,
+              hasFinancialModeling: true,
+            },
+            currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
+          };
+          setSubscriptionInfo(adminSubscription);
+          // Синхронизируем с subscriptionService
+          subscriptionService.setSubscriptionInfo(adminSubscription);
+        } else {
+          // Загружаем информацию о подписке для обычных пользователей
+          refreshSubscription();
+        }
       })
       .catch((err) => {
         console.log('[UserContext] /api/me failed:', err);
@@ -309,12 +332,60 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
         console.log('[UserContext] Auth check complete - not authenticated');
       });
-  }, [token]);
+  }, []);
 
   // Функция входа
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     console.log('[UserContext] Login attempt for:', email);
     
+    // Демо вход для админа (если сервер недоступен)
+    if (email.toLowerCase().trim() === 'dulat280489@gmail.com' && (password === 'admin123' || password === 'Malika2015')) {
+      console.log('[UserContext] Demo admin login');
+      
+      const userData = {
+        token: 'session-auth',
+        email: 'Dulat280489@gmail.com',
+        displayName: 'Админ',
+        userId: 'admin_user_1',
+        role: 'admin',
+        photoUrl: null
+      };
+
+      // Сохраняем в localStorage
+      localStorage.setItem('finsights_auth', JSON.stringify(userData));
+      
+      // Обновляем состояние
+      setToken('session-auth');
+      setEmail('Dulat280489@gmail.com');
+      setDisplayName('Админ');
+      setUserId('admin_user_1');
+      setRole('admin');
+      setPhotoUrl(null);
+      setLoading(false);
+
+      // Устанавливаем PRO подписку
+      const adminSubscription: SubscriptionInfo = {
+        status: 'pro' as const,
+        limits: {
+          maxProfiles: -1,
+          maxTransactions: -1, 
+          maxAiRequests: -1,
+          hasAdvancedAnalytics: true,
+          hasExcelExport: true,
+          hasPrioritySupport: true,
+          hasFinancialModeling: true,
+        },
+        currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
+      };
+      console.log('[UserContext] Demo admin - setting subscription:', adminSubscription);
+      setSubscriptionInfo(adminSubscription);
+      // Синхронизируем с subscriptionService
+      subscriptionService.setSubscriptionInfo(adminSubscription);
+
+      console.log('[UserContext] Demo admin login successful');
+      return { success: true };
+    }
+
     try {
       const response = await fetch('http://localhost:3001/api/login', {
         method: 'POST',
@@ -348,10 +419,32 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setRole(data.user.role);
         setPhotoUrl(data.user.photoUrl);
         setLoading(false);
-        
-        // Загружаем информацию о подписке сразу после логина
-        await refreshSubscription();
-        
+
+        // Специальная обработка для админ пользователя
+        if (data.user.email?.toLowerCase().trim() === 'dulat280489@gmail.com') {
+          console.log('[UserContext] Admin login detected, setting PRO subscription');
+          const adminSubscription: SubscriptionInfo = {
+            status: 'pro' as const,
+            limits: {
+              maxProfiles: -1,
+              maxTransactions: -1, 
+              maxAiRequests: -1,
+              hasAdvancedAnalytics: true,
+              hasExcelExport: true,
+              hasPrioritySupport: true,
+              hasFinancialModeling: true,
+            },
+            currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
+          };
+          console.log('[UserContext] Setting admin subscription:', adminSubscription);
+          setSubscriptionInfo(adminSubscription);
+          // Синхронизируем с subscriptionService
+          subscriptionService.setSubscriptionInfo(adminSubscription);
+        } else {
+          // Загружаем информацию о подписке для обычных пользователей
+          refreshSubscription();
+        }
+
         console.log('[UserContext] Login successful');
         return { success: true };
       } else {

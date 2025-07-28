@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 // PDF and related imports are now dynamically imported in handleDownload
-import { FinancialReport, ForecastData, Transaction, Granularity, BusinessProfile, CounterpartyData, Theme } from '../../types.ts';
+import { FinancialReport, ForecastData, Transaction, Granularity, BusinessProfile, CounterpartyData } from '../../types.ts';
 import StatCard from './StatCard.tsx';
 import ChartCard from './ChartCard.tsx';
 import CategoryChartCard from './CategoryChartCard.tsx';
@@ -10,6 +10,7 @@ import ReportTabs from './ReportTabs.tsx';
 import GranularitySwitcher from './GranularitySwitcher.tsx';
 // import { generateReportSummary, generateFinancialForecast } from '../services/geminiService.ts';
 import Loader from './Loader.tsx';
+import { useTheme } from './ThemeProvider';
 // Добавляю декларации для pdfmake и vfs_fonts
 // @ts-ignore
 import pdfMake from 'pdfmake/build/pdfmake';
@@ -28,20 +29,20 @@ interface DashboardProps {
     dateRange: { start: string; end: string };
     transactions: Transaction[];
     profile: BusinessProfile | null;
-    theme: Theme;
 }
 
 type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts' | 'advanced';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('ru-RU').format(Math.round(value)) + ' ₸';
 
-const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, profile, theme }) => {
+const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, profile }) => {
     const { pnl, cashFlow, balanceSheet, counterpartyReport, debtReport } = report;
     const [activeReport, setActiveReport] = useState<ReportView>('pnl');
     const [forecastData, setForecastData] = useState<ForecastData | null>(null);
     const [isForecasting, setIsForecasting] = useState(false);
     const [forecastError, setForecastError] = useState<string | null>(null);
     const [granularity, setGranularity] = useState<Granularity>('month');
+    const { theme } = useTheme();
     
     // Используем theme для адаптации цветов графиков
     const chartColors = useMemo(() => {
@@ -99,7 +100,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     }, [pnl.monthlyData]);
 
     const ExplanationsSection = () => (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8">
+        <div className="bg-white/80 dark:bg-surface/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 dark:border-border/50 p-8">
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -107,20 +108,20 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                     </svg>
                 </div>
                 <div>
-                    <h3 className="text-2xl font-bold text-slate-900">Пояснения</h3>
-                    <p className="text-slate-600 text-sm">Расшифровка финансовых терминов и показателей</p>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-text-primary">Пояснения</h3>
+                    <p className="text-slate-600 dark:text-text-secondary text-sm">Расшифровка финансовых терминов и показателей</p>
                 </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {explanations.map((explanation, index) => (
-                    <div key={index} className="flex items-start gap-3 p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl">
+                    <div key={index} className="flex items-start gap-3 p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-surface-accent dark:to-surface rounded-xl">
                         <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                         </div>
-                        <p className="text-slate-700 text-sm leading-relaxed">{explanation}</p>
+                        <p className="text-slate-700 dark:text-text-secondary text-sm leading-relaxed">{explanation}</p>
                     </div>
                 ))}
             </div>
@@ -128,10 +129,10 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     );
 
     const ExecutiveSummary = () => (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8">
+        <div className="bg-white/80 dark:bg-surface/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 dark:border-border/50 p-8">
             <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">Ключевые показатели</h2>
-                <p className="text-slate-600">Основные финансовые метрики за выбранный период</p>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-text-primary mb-2">Ключевые показатели</h2>
+                <p className="text-slate-600 dark:text-text-secondary">Основные финансовые метрики за выбранный период</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

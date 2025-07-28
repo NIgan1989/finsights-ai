@@ -7,9 +7,10 @@ import { subscriptionService } from '../../services/subscriptionService';
 interface DataUploadProps {
     onFileUploaded: (file: File) => void;
     isProcessing: boolean;
+    isCompact?: boolean;
 }
 
-const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing }) => {
+const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing, isCompact = false }) => {
     const [error, setError] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -83,18 +84,18 @@ const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing })
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
+        <div className={isCompact ? "p-6" : "min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden"}>
             {/* Background decorative elements */}
-            <div className="absolute inset-0">
+            {!isCompact && <div className="absolute inset-0">
                 <div className="absolute top-20 left-20 w-72 h-72 bg-blue-400/30 rounded-full blur-3xl"></div>
                 <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl"></div>
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-300/10 rounded-full blur-3xl"></div>
-            </div>
+            </div>}
 
-            <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-6">
+            <div className={isCompact ? "" : "relative z-10 flex flex-col items-center justify-center min-h-screen p-6"}>
                 <div className="text-center max-w-4xl w-full">
                     {/* Header Section */}
-                    <div className="mb-12">
+                    {!isCompact && <div className="mb-12">
                         <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6">
                             Добро пожаловать в FinSights AI
                         </h1>
@@ -102,7 +103,7 @@ const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing })
                             Ваш персональный финансовый ассистент с искусственным интеллектом. 
                             Начните с загрузки банковской выписки и получите детальный анализ ваших финансов.
                         </p>
-                    </div>
+                    </div>}
 
                     {/* Upload Section */}
                     {!selectedFile ? (
@@ -213,7 +214,7 @@ const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing })
                     )}
 
                     {/* Information Section */}
-                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/50">
+                    {!isCompact && <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/50">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
                                 <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -280,7 +281,7 @@ const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing })
                                 Мы не сохраняем и не передаем ваши личные данные третьим лицам.
                             </p>
                         </div>
-                    </div>
+                    </div>}
                 </div>
             </div>
         </div>

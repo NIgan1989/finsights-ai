@@ -39,7 +39,7 @@ export class SubscriptionService {
   
   // Список администраторов с пожизненной подпиской
   private readonly lifetimeAdmins = [
-    'Dulat280489@gmail.com'
+    'dulat280489@gmail.com'
   ];
 
   static getInstance(): SubscriptionService {
@@ -50,7 +50,9 @@ export class SubscriptionService {
   }
 
   private isLifetimeAdmin(userId: string): boolean {
-    return this.lifetimeAdmins.includes(userId.toLowerCase());
+    const normalizedUserId = userId.toLowerCase().trim();
+    const isAdmin = this.lifetimeAdmins.includes(normalizedUserId);
+    return isAdmin;
   }
 
   async fetchSubscriptionInfo(userIdOrEmail: string): Promise<SubscriptionInfo> {
@@ -116,6 +118,11 @@ export class SubscriptionService {
 
   getSubscriptionInfo(): SubscriptionInfo | null {
     return this.subscriptionInfo;
+  }
+
+  // Метод для синхронизации subscriptionInfo из UserContext
+  setSubscriptionInfo(info: SubscriptionInfo): void {
+    this.subscriptionInfo = info;
   }
 
   checkProfileLimit(currentProfiles: number): LimitCheckResult {
