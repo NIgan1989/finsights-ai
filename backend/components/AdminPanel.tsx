@@ -438,7 +438,7 @@ const AdminPanel: React.FC = () => {
           <form onSubmit={handleAdminAuth} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-text-primary mb-2">
-                User ID (email или googleId)
+                User ID (email или user ID)
               </label>
               <input
                 type="text"
@@ -549,4 +549,4 @@ const AdminPanel: React.FC = () => {
   );
 };
 
-export default AdminPanel; 
+export default AdminPanel;

@@ -127,14 +127,14 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600"></div>
       
       {/* Header с логотипом */}
-      <div className="p-6 border-b border-slate-200/50">
+      <div className="p-4 border-b border-slate-200/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">F</span>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">F</span>
             </div>
             <div>
-              <h1 className={`text-xl font-bold ${themeClasses.textPrimary}`}>FinSights AI</h1>
+              <h1 className={`text-lg font-bold ${themeClasses.textPrimary}`}>FinSights AI</h1>
               <p className={`text-xs ${themeClasses.textMuted}`}>Финансовый ассистент</p>
             </div>
           </div>
@@ -150,20 +150,20 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
       </div>
 
       {/* Профиль пользователя */}
-      <div className="p-4 border-b border-slate-200/50">
-        <div className={`p-4 rounded-xl border ${themeClasses.bgCard} backdrop-blur-sm`}>
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">
+      <div className="profile-card-compact border-b border-slate-200/50">
+        <div className={`p-3 rounded-lg border ${themeClasses.bgCard} backdrop-blur-sm`}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="profile-avatar-compact bg-gradient-to-br from-blue-500 to-indigo-600 rounded-md flex items-center justify-center">
+              <span className="text-white font-bold text-xs">
                 {displayName ? displayName[0] : (email ? email[0] : '?')}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`font-medium truncate ${themeClasses.textPrimary}`}>
+              <p className={`font-medium truncate text-sm ${themeClasses.textPrimary}`}>
                 {displayName || 'Пользователь'}
               </p>
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 text-xs rounded-full ${
+              <div className="flex items-center gap-1">
+                <span className={`px-1.5 py-0.5 text-xs rounded-md ${
                   status === 'pro' || isLifetimeAdmin
                     ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                     : isGuest
@@ -179,7 +179,7 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
       </div>
 
       {/* Навигационное меню */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-3 space-y-1">
         {menu.map((item) => {
           const isActive = activeView === item.view;
           const isProItem = item.isPro === true;
@@ -191,28 +191,28 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
               key={item.view}
               onClick={() => handleMenuClick(item.view, item.isPro)}
               disabled={isDisabled}
-              className={`w-full text-left p-3 rounded-xl transition-all duration-200 group relative ${
+              className={`w-full text-left sidebar-item-compact rounded-lg transition-all duration-200 group relative ${
                 isActive
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
                   : isDisabled
                   ? `${themeClasses.textMuted} opacity-50 cursor-not-allowed`
-                  : `${themeClasses.textButton} ${themeClasses.bgCardHover} hover:scale-[1.02] hover:shadow-md`
+                  : `${themeClasses.textButton} ${themeClasses.bgCardHover} hover:scale-[1.01] hover:shadow-sm`
               }`}
             >
-              <div className="flex items-center gap-3">
-                <span className={`text-lg ${isActive ? 'text-white' : isDisabled ? themeClasses.textMuted : themeClasses.textSecondary}`}>
+              <div className="flex items-center gap-2">
+                <span className={`sidebar-icon-compact ${isActive ? 'text-white' : isDisabled ? themeClasses.textMuted : themeClasses.textSecondary}`}>
                   {item.icon}
                 </span>
                 <div className="flex-1">
-                  <span className={`font-medium ${isActive ? 'text-white' : themeClasses.textPrimary}`}>
+                  <span className={`sidebar-text-compact font-medium ${isActive ? 'text-white' : themeClasses.textPrimary}`}>
                     {item.name}
                   </span>
-                  <p className={`text-xs ${isActive ? 'text-white/80' : themeClasses.textMuted}`}>
+                  <p className={`sidebar-description-compact ${isActive ? 'text-white/80' : themeClasses.textMuted}`}>
                     {item.description}
                   </p>
                 </div>
                 {item.isPro && (
-                  <FaCrown className={`text-sm ${isActive ? 'text-yellow-300' : 'text-yellow-500'}`} />
+                  <FaCrown className={`text-xs ${isActive ? 'text-yellow-300' : 'text-yellow-500'}`} />
                 )}
               </div>
             </button>
@@ -221,23 +221,23 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
       </nav>
 
       {/* Нижние действия */}
-      <div className="p-4 border-t border-slate-200/50 space-y-3">
+      <div className="p-3 border-t border-slate-200/50 space-y-2">
         {hasData && (
           <button
             onClick={onResetData}
-            className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] ${themeClasses.bgButton} ${themeClasses.textButton}`}
+            className={`w-full flex items-center gap-2 sidebar-item-compact rounded-lg border transition-all duration-200 hover:scale-[1.01] ${themeClasses.bgButton} ${themeClasses.textButton}`}
           >
-            <FaUpload />
-            <span className="font-medium">Загрузить новые данные</span>
+            <FaUpload className="sidebar-icon-compact" />
+            <span className="sidebar-text-compact font-medium">Загрузить новые данные</span>
           </button>
         )}
         
         <button
-                          onClick={toggleTheme}
-          className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] ${themeClasses.bgButton} ${themeClasses.textButton}`}
+          onClick={toggleTheme}
+          className={`w-full flex items-center gap-2 sidebar-item-compact rounded-lg border transition-all duration-200 hover:scale-[1.01] ${themeClasses.bgButton} ${themeClasses.textButton}`}
         >
-          {theme === 'light' ? <FaMoon /> : <FaSun />}
-          <span className="font-medium">{theme === 'light' ? 'Темная тема' : 'Светлая тема'}</span>
+          {theme === 'light' ? <FaMoon className="sidebar-icon-compact" /> : <FaSun className="sidebar-icon-compact" />}
+          <span className="sidebar-text-compact font-medium">{theme === 'light' ? 'Темная тема' : 'Светлая тема'}</span>
         </button>
       </div>
     </div>
@@ -246,7 +246,7 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className={`hidden lg:flex w-72 ${themeClasses.sidebar} shadow-2xl fixed left-0 top-0 h-full z-30 overflow-hidden`}>
+      <aside className={`hidden lg:flex sidebar-compact ${themeClasses.sidebar} shadow-2xl fixed left-0 top-0 h-full z-30 overflow-hidden`}>
         <SidebarContent />
       </aside>
 

@@ -91,6 +91,86 @@ const determineCategory = (description: string, counterparty: string = '', opera
     return 'Прочее';
 };
 
+// Функция для автокатегоризации долгов при импорте
+export const detectDebtCategory = (description: string, counterparty: string, amount: number): { isDebt: boolean; category: string; type: 'income' | 'expense' } => {
+    const text = `${description} ${counterparty}`.toLowerCase();
+    
+    // Ключевые слова для определения долгов
+    const debtKeywords = {
+        // Выдача займов (дебиторская задолженность)
+        loanGiven: ['займ выдан', 'выдача займа', 'кредит выдан', 'долг выдан', 'заем выдан'],
+        // Получение кредитов (кредиторская задолженность)
+        loanReceived: ['кредит получен', 'займ получен', 'заем получен', 'кредитование'],
+        // Возврат долгов
+        debtRepayment: ['возврат долга', 'возврат займа', 'погашение долга', 'возврат кредита'],
+        // Погашение кредитов
+        creditRepayment: ['погашение кредита', 'оплата кредита', 'выплата кредита']
+    };
+    
+    // Проверяем выдачу займов
+    for (const keyword of debtKeywords.loanGiven) {
+        if (text.includes(keyword)) {
+            return {
+                isDebt: true,
+                category: 'Выдача займа',
+                type: 'expense'
+            };
+        }
+    }
+    
+    // Проверяем получение кредитов
+    for (const keyword of debtKeywords.loanReceived) {
+        if (text.includes(keyword)) {
+            return {
+                isDebt: true,
+                category: 'Получение кредита',
+                type: 'income'
+            };
+        }
+    }
+    
+    // Проверяем возврат долгов
+    for (const keyword of debtKeywords.debtRepayment) {
+        if (text.includes(keyword)) {
+            return {
+                isDebt: true,
+                category: 'Возврат долга',
+                type: 'income'
+            };
+        }
+    }
+    
+    // Проверяем погашение кредитов
+    for (const keyword of debtKeywords.creditRepayment) {
+        if (text.includes(keyword)) {
+            return {
+                isDebt: true,
+                category: 'Погашение кредита',
+                type: 'expense'
+            };
+        }
+    }
+    
+    // Дополнительная логика на основе суммы и контрагента
+    // Если сумма большая и контрагент - физическое лицо, возможно это займ
+    if (amount > 100000 && counterparty && !counterparty.toLowerCase().includes('банк')) {
+        // Проверяем, есть ли в описании слова, указывающие на займ
+        if (text.includes('займ') || text.includes('кредит') || text.includes('долг')) {
+            return {
+                isDebt: true,
+                category: amount > 0 ? 'Выдача займа' : 'Получение кредита',
+                type: amount > 0 ? 'expense' : 'income'
+            };
+        }
+    }
+    
+    return {
+        isDebt: false,
+        category: '',
+        type: 'expense'
+    };
+};
+
 // --- Вспомогательная функция для выделения контрагента ---
 function extractCounterparty(description: string, operation: string = ""): string {
     const text = `${description} ${operation}`.toLowerCase();
@@ -413,24 +493,38 @@ export const processAndCategorizeTransactions = async (file: File, _profile: Bus
         // Отладка: Выводим извлеченные транзакции в консоль
         console.log('Extracted Transactions:', transactions);
 
-        // Категоризация транзакций
+        // Категоризация транзакций с автокатегоризацией долгов
         const finalTransactions: Transaction[] = transactions.map(tx => {
-            const defaultCategory = determineCategory(tx.description, tx.counterparty);
+            // Сначала проверяем, является ли транзакция долгом
+            const debtInfo = detectDebtCategory(tx.description, tx.counterparty || '', tx.amount);
             
-            // Определяем тип транзакции
+            let category: string;
+            let type: 'income' | 'expense';
             let transactionType: 'operating' | 'investing' | 'financing' = 'operating';
             let isCapitalized = false;
             
-            if (defaultCategory === 'Оборудование') {
-                transactionType = 'investing';
-                isCapitalized = true;
-            } else if (['Получение кредита', 'Погашение кредита', 'Выплата дивидендов', 'Взнос учредителя'].includes(defaultCategory)) {
+            if (debtInfo.isDebt) {
+                // Если это долг, используем категорию из detectDebtCategory
+                category = debtInfo.category;
+                type = debtInfo.type;
                 transactionType = 'financing';
+            } else {
+                // Иначе используем стандартную категоризацию
+                category = determineCategory(tx.description, tx.counterparty);
+                type = tx.type;
+                
+                if (category === 'Оборудование') {
+                    transactionType = 'investing';
+                    isCapitalized = true;
+                } else if (['Получение кредита', 'Погашение кредита', 'Выплата дивидендов', 'Взнос учредителя', 'Выдача займа', 'Возврат долга'].includes(category)) {
+                    transactionType = 'financing';
+                }
             }
 
             return {
                 ...tx,
-                category: defaultCategory,
+                category,
+                type,
                 counterparty: tx.counterparty || '',
                 transactionType,
                 isCapitalized,

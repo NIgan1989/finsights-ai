@@ -1,26 +1,10 @@
 import React, { useState } from 'react';
+import templates, { TemplateData } from '../../templates/templateData';
 
 interface TemplateGalleryProps {
   onTemplateSelected: (templateId: string) => void;
   onCustomGenerate: () => void;
   onClose: () => void;
-}
-
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  category: string;
-  verified: boolean;
-  complexity: 'simple' | 'medium' | 'advanced';
-  timeframe: string;
-  features: string[];
-  preview: {
-    revenue: string;
-    expenses: string;
-    profit: string;
-  };
 }
 
 const TemplateGallery: React.FC<TemplateGalleryProps> = ({ 
@@ -30,253 +14,28 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const templates: Template[] = [
-    {
-      id: 'coffee-shop',
-      name: 'Кофейня / Кафе',
-      description: 'Полная модель для кафе с посещаемостью, средним чеком и сезонностью',
-      icon: '☕',
-      category: 'food',
-      verified: true,
-      complexity: 'simple',
-      timeframe: '5 лет',
-      features: ['Расчет посещаемости', 'Себестоимость продуктов', 'Аренда и персонал', 'Сезонные колебания'],
-      preview: {
-        revenue: '24.3M тенге/год',
-        expenses: '19.2M тенге/год',
-        profit: '5.1M тенге/год'
-      }
-    },
-    {
-      id: 'saas-startup',
-      name: 'SaaS / Подписки',
-      description: 'Модель для подписочного бизнеса с метриками LTV, CAC, Churn',
-      icon: '💻',
-      category: 'tech',
-      verified: true,
-      complexity: 'medium',
-      timeframe: '7 лет',
-      features: ['MRR/ARR прогнозы', 'Churn анализ', 'Unit Economics', 'Масштабирование'],
-      preview: {
-        revenue: '45.2M тенге/год',
-        expenses: '32.1M тенге/год',
-        profit: '13.1M тенге/год'
-      }
-    },
-    {
-      id: 'retail-store',
-      name: 'Розничный магазин',
-      description: 'Универсальная модель для магазина с товарооборотом и инвентарем',
-      icon: '🛍️',
-      category: 'retail',
-      verified: true,
-      complexity: 'medium',
-      timeframe: '5 лет',
-      features: ['Управление запасами', 'Товарооборот', 'Наценки по категориям', 'Сезонность продаж'],
-      preview: {
-        revenue: '67.8M тенге/год',
-        expenses: '54.2M тенге/год',
-        profit: '13.6M тенге/год'
-      }
-    },
-    {
-      id: 'manufacturing',
-      name: 'Производство',
-      description: 'Модель производственного предприятия с CAPEX и операционными циклами',
-      icon: '🏭',
-      category: 'production',
-      verified: true,
-      complexity: 'advanced',
-      timeframe: '10 лет',
-      features: ['Производственные мощности', 'Капитальные вложения', 'Себестоимость единицы', 'Оборотный капитал'],
-      preview: {
-        revenue: '156.4M тенге/год',
-        expenses: '128.7M тенге/год',
-        profit: '27.7M тенге/год'
-      }
-    },
-    {
-      id: 'ecommerce',
-      name: 'Интернет-магазин',
-      description: 'E-commerce модель с маркетинговыми воронками и конверсиями',
-      icon: '🛒',
-      category: 'tech',
-      verified: true,
-      complexity: 'medium',
-      timeframe: '5 лет',
-      features: ['Веб-трафик и конверсия', 'Digital маркетинг', 'Логистика', 'Возвраты и отмены'],
-      preview: {
-        revenue: '89.3M тенге/год',
-        expenses: '71.4M тенге/год',
-        profit: '17.9M тенге/год'
-      }
-    },
-    {
-      id: 'consulting',
-      name: 'Консалтинг / Услуги',
-      description: 'Модель для сервисного бизнеса с почасовой оплатой и проектами',
-      icon: '🤝',
-      category: 'services',
-      verified: true,
-      complexity: 'simple',
-      timeframe: '3 года',
-      features: ['Загруженность специалистов', 'Почасовые ставки', 'Проектное планирование', 'Масштабирование команды'],
-      preview: {
-        revenue: '34.7M тенге/год',
-        expenses: '26.2M тенге/год',
-        profit: '8.5M тенге/год'
-      }
-    },
-    {
-      id: 'real-estate',
-      name: 'Аренда недвижимости',
-      description: 'Модель управления арендной недвижимостью с доходностью',
-      icon: '🏠',
-      category: 'real-estate',
-      verified: true,
-      complexity: 'medium',
-      timeframe: '15 лет',
-      features: ['Арендные ставки', 'Заполняемость', 'Обслуживание', 'Капитальный ремонт'],
-      preview: {
-        revenue: '78.9M тенге/год',
-        expenses: '31.6M тенге/год',
-        profit: '47.3M тенге/год'
-      }
-    },
-    {
-      id: 'restaurant',
-      name: 'Ресторан',
-      description: 'Детализированная модель ресторана с кухней и обслуживанием',
-      icon: '🍽️',
-      category: 'food',
-      verified: true,
-      complexity: 'advanced',
-      timeframe: '7 лет',
-      features: ['Меню и FoodCost', 'Персонал кухни/зала', 'Алкогольная лицензия', 'Банкеты и мероприятия'],
-      preview: {
-        revenue: '125.6M тенге/год',
-        expenses: '98.3M тенге/год',
-        profit: '27.3M тенге/год'
-      }
-    },
-    // Новые шаблоны
-    {
-      id: 'medical-clinic',
-      name: 'Медицинская клиника',
-      description: 'Модель частной клиники с приемами пациентов и медицинскими услугами',
-      icon: '🏥',
-      category: 'healthcare',
-      verified: true,
-      complexity: 'medium',
-      timeframe: '5 лет',
-      features: ['Поток пациентов', 'Медицинское оборудование', 'Лицензирование', 'Страхование'],
-      preview: {
-        revenue: '50.0M тенге/год',
-        expenses: '38.5M тенге/год',
-        profit: '11.5M тенге/год'
-      }
-    },
-    {
-      id: 'education-courses',
-      name: 'Образовательные курсы',
-      description: 'Модель для образовательного центра или онлайн-курсов',
-      icon: '🎓',
-      category: 'education',
-      verified: true,
-      complexity: 'simple',
-      timeframe: '3 года',
-      features: ['Наборы студентов', 'Программы обучения', 'Сертификация', 'Онлайн платформа'],
-      preview: {
-        revenue: '21.6M тенге/год',
-        expenses: '16.8M тенге/год',
-        profit: '4.8M тенге/год'
-      }
-    },
-    {
-      id: 'logistics-delivery',
-      name: 'Логистика и доставка',
-      description: 'Модель службы доставки с автопарком и складскими операциями',
-      icon: '🚚',
-      category: 'logistics',
-      verified: true,
-      complexity: 'advanced',
-      timeframe: '7 лет',
-      features: ['Автопарк', 'Маршрутизация', 'Складские операции', 'Топливные расходы'],
-      preview: {
-        revenue: '52.6M тенге/год',
-        expenses: '43.8M тенге/год',
-        profit: '8.8M тенге/год'
-      }
-    },
-    {
-      id: 'tourism-hotel',
-      name: 'Отель / Гостиница',
-      description: 'Модель гостиничного бизнеса с номерным фондом и сервисами',
-      icon: '🏨',
-      category: 'tourism',
-      verified: true,
-      complexity: 'advanced',
-      timeframe: '10 лет',
-      features: ['Заполняемость номеров', 'Сезонность', 'Дополнительные услуги', 'Рейтинги'],
-      preview: {
-        revenue: '109.5M тенге/год',
-        expenses: '87.6M тенге/год',
-        profit: '21.9M тенге/год'
-      }
-    },
-    {
-      id: 'auto-service',
-      name: 'Автосервис',
-      description: 'Модель станции технического обслуживания автомобилей',
-      icon: '🔧',
-      category: 'automotive',
-      verified: true,
-      complexity: 'medium',
-      timeframe: '5 лет',
-      features: ['Ремонтные работы', 'Запчасти', 'Диагностика', 'Специализация'],
-      preview: {
-        revenue: '90.0M тенге/год',
-        expenses: '72.0M тенге/год',
-        profit: '18.0M тенге/год'
-      }
-    },
-    {
-      id: 'beauty-salon',
-      name: 'Салон красоты',
-      description: 'Модель салона красоты с различными услугами и мастерами',
-      icon: '💄',
-      category: 'beauty',
-      verified: true,
-      complexity: 'simple',
-      timeframe: '3 года',
-      features: ['Услуги мастеров', 'Косметика', 'Абонементы', 'Программы лояльности'],
-      preview: {
-        revenue: '64.8M тенге/год',
-        expenses: '51.8M тенге/год',
-        profit: '13.0M тенге/год'
-      }
-    }
-  ];
+  // Используем только реализованные шаблоны
+  const implementedTemplates = templates.filter(t => t.implemented);
 
   const categories = [
-    { id: 'all', name: 'Все категории', count: templates.length },
-    { id: 'food', name: '🍽️ Общепит', count: templates.filter(t => t.category === 'food').length },
-    { id: 'tech', name: '💻 Технологии', count: templates.filter(t => t.category === 'tech').length },
-    { id: 'retail', name: '🛍️ Ритейл', count: templates.filter(t => t.category === 'retail').length },
-    { id: 'services', name: '🤝 Услуги', count: templates.filter(t => t.category === 'services').length },
-    { id: 'production', name: '🏭 Производство', count: templates.filter(t => t.category === 'production').length },
-    { id: 'real-estate', name: '🏠 Недвижимость', count: templates.filter(t => t.category === 'real-estate').length },
-    { id: 'healthcare', name: '🏥 Медицина', count: templates.filter(t => t.category === 'healthcare').length },
-    { id: 'education', name: '🎓 Образование', count: templates.filter(t => t.category === 'education').length },
-    { id: 'logistics', name: '🚚 Логистика', count: templates.filter(t => t.category === 'logistics').length },
-    { id: 'tourism', name: '🏨 Туризм', count: templates.filter(t => t.category === 'tourism').length },
-    { id: 'automotive', name: '🔧 Автосервис', count: templates.filter(t => t.category === 'automotive').length },
-    { id: 'beauty', name: '💄 Красота', count: templates.filter(t => t.category === 'beauty').length }
+    { id: 'all', name: 'Все категории', count: implementedTemplates.length },
+    { id: 'food', name: '🍽️ Общепит', count: implementedTemplates.filter(t => t.category === 'food').length },
+    { id: 'tech', name: '💻 Технологии', count: implementedTemplates.filter(t => t.category === 'tech').length },
+    { id: 'retail', name: '🛍️ Ритейл', count: implementedTemplates.filter(t => t.category === 'retail').length },
+    { id: 'services', name: '🤝 Услуги', count: implementedTemplates.filter(t => t.category === 'services').length },
+    { id: 'production', name: '🏭 Производство', count: implementedTemplates.filter(t => t.category === 'production').length },
+    { id: 'real-estate', name: '🏠 Недвижимость', count: implementedTemplates.filter(t => t.category === 'real-estate').length },
+    { id: 'healthcare', name: '🏥 Медицина', count: implementedTemplates.filter(t => t.category === 'healthcare').length },
+    { id: 'education', name: '🎓 Образование', count: implementedTemplates.filter(t => t.category === 'education').length },
+    { id: 'logistics', name: '🚚 Логистика', count: implementedTemplates.filter(t => t.category === 'logistics').length },
+    { id: 'tourism', name: '🏨 Туризм', count: implementedTemplates.filter(t => t.category === 'tourism').length },
+    { id: 'automotive', name: '🔧 Автосервис', count: implementedTemplates.filter(t => t.category === 'automotive').length },
+    { id: 'beauty', name: '💄 Красота', count: implementedTemplates.filter(t => t.category === 'beauty').length }
   ];
 
   const filteredTemplates = selectedCategory === 'all' 
-    ? templates 
-    : templates.filter(t => t.category === selectedCategory);
+    ? implementedTemplates 
+    : implementedTemplates.filter(t => t.category === selectedCategory);
 
   const getComplexityColor = (complexity: string) => {
     switch (complexity) {
@@ -442,4 +201,4 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({
   );
 };
 
-export default TemplateGallery; 
+export default TemplateGallery;

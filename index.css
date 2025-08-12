@@ -1,51 +1,942 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap') layer(base);
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap') layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/* === CSS Variables === */
+:root {
+  /* Spacing System (8px grid) */
+  --spacing-0: 0;
+  --spacing-1: 0.125rem; /* 2px */
+  --spacing-2: 0.25rem;  /* 4px */
+  --spacing-3: 0.375rem; /* 6px */
+  --spacing-4: 0.5rem;   /* 8px */
+  --spacing-6: 0.75rem;  /* 12px */
+  --spacing-8: 1rem;     /* 16px */
+  --spacing-10: 1.25rem; /* 20px */
+  --spacing-12: 1.5rem;  /* 24px */
+  --spacing-16: 2rem;    /* 32px */
+  --spacing-20: 2.5rem;  /* 40px */
+  --spacing-24: 3rem;    /* 48px */
+  --spacing-32: 4rem;    /* 64px */
+  
+  /* Компактная типографическая шкала */
+  --text-2xs: 0.625rem;  /* 10px */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.375rem;  /* 22px - уменьшено с 24px */
+  --text-3xl: 1.625rem;  /* 26px - уменьшено с 30px */
+  --text-4xl: 1.875rem;  /* 30px - уменьшено с 36px */
+  --text-5xl: 2.25rem;   /* 36px - уменьшено с 48px */
+  --text-6xl: 2.75rem;   /* 44px - уменьшено с 60px */
+  
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+  
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  
+  /* Colors */
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-accent: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --surface-elevated: #ffffff;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
+  --text-accent: #3b82f6;
+  
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --border-focus: #3b82f6;
+  
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --shadow-glow-blue: 0 0 20px rgb(59 130 246 / 0.15);
+  --shadow-glow-green: 0 0 20px rgb(34 197 94 / 0.15);
+  --shadow-glow-purple: 0 0 20px rgb(168 85 247 / 0.15);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  --transition-slow: 500ms ease;
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  --gradient-warm: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  --gradient-sunset: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --gradient-ocean: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-emerald: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  --gradient-rose: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  
+  /* Font families */
+  --font-family-display: 'Inter', system-ui, sans-serif;
+}
+
+/* === Профессиональные утилитарные классы === */
+@layer utilities {
+  /* === 8px Grid Spacing System === */
+  .p-0 { padding: var(--spacing-0); }
+  .p-1 { padding: var(--spacing-1); }
+  .p-2 { padding: var(--spacing-2); }
+  .p-3 { padding: var(--spacing-3); }
+  .p-4 { padding: var(--spacing-4); }
+  .p-6 { padding: var(--spacing-6); }
+  .p-8 { padding: var(--spacing-8); }
+  .p-10 { padding: var(--spacing-10); }
+  .p-12 { padding: var(--spacing-12); }
+  .p-16 { padding: var(--spacing-16); }
+  .p-20 { padding: var(--spacing-20); }
+  .p-24 { padding: var(--spacing-24); }
+  .p-32 { padding: var(--spacing-32); }
+  
+  .px-4 { padding-left: var(--spacing-4); padding-right: var(--spacing-4); }
+  .px-6 { padding-left: var(--spacing-6); padding-right: var(--spacing-6); }
+  .px-8 { padding-left: var(--spacing-8); padding-right: var(--spacing-8); }
+  .py-4 { padding-top: var(--spacing-4); padding-bottom: var(--spacing-4); }
+  .py-6 { padding-top: var(--spacing-6); padding-bottom: var(--spacing-6); }
+  .py-8 { padding-top: var(--spacing-8); padding-bottom: var(--spacing-8); }
+  
+  .m-0 { margin: var(--spacing-0); }
+  .m-4 { margin: var(--spacing-4); }
+  .m-8 { margin: var(--spacing-8); }
+  .mb-4 { margin-bottom: var(--spacing-4); }
+  .mb-6 { margin-bottom: var(--spacing-6); }
+  .mb-8 { margin-bottom: var(--spacing-8); }
+  .mt-4 { margin-top: var(--spacing-4); }
+  .mt-8 { margin-top: var(--spacing-8); }
+  
+  .gap-4 { gap: var(--spacing-4); }
+  .gap-6 { gap: var(--spacing-6); }
+  .gap-8 { gap: var(--spacing-8); }
+  .gap-12 { gap: var(--spacing-12); }
+  .gap-16 { gap: var(--spacing-16); }
+  
+  /* === Типографические утилиты === */
+  .text-2xs { font-size: var(--text-2xs); line-height: var(--leading-snug); }
+  .text-xs { font-size: var(--text-xs); line-height: var(--leading-snug); }
+  .text-sm { font-size: var(--text-sm); line-height: var(--leading-snug); }
+  .text-base { font-size: var(--text-base); line-height: var(--leading-normal); }
+  .text-lg { font-size: var(--text-lg); line-height: var(--leading-normal); }
+  .text-xl { font-size: var(--text-xl); line-height: var(--leading-tight); }
+  .text-2xl { font-size: var(--text-2xl); line-height: var(--leading-tight); }
+  .text-3xl { font-size: var(--text-3xl); line-height: var(--leading-tight); }
+  .text-4xl { font-size: var(--text-4xl); line-height: var(--leading-tight); }
+  .text-5xl { font-size: var(--text-5xl); line-height: var(--leading-none); }
+  .text-6xl { font-size: var(--text-6xl); line-height: var(--leading-none); }
+  
+  .font-light { font-weight: var(--font-weight-light); }
+  .font-normal { font-weight: var(--font-weight-normal); }
+  .font-medium { font-weight: var(--font-weight-medium); }
+  .font-semibold { font-weight: var(--font-weight-semibold); }
+  .font-bold { font-weight: var(--font-weight-bold); }
+  .font-extrabold { font-weight: var(--font-weight-extrabold); }
+  
+  .tracking-tight { letter-spacing: var(--letter-spacing-tight); }
+  .tracking-normal { letter-spacing: var(--letter-spacing-normal); }
+  .tracking-wide { letter-spacing: var(--letter-spacing-wide); }
+  .tracking-wider { letter-spacing: var(--letter-spacing-wider); }
+  .tracking-widest { letter-spacing: var(--letter-spacing-widest); }
+  
+  /* Цветовые утилиты */
+  .bg-background { background-color: var(--background); }
+  .bg-surface { background-color: rgb(255 255 255); }
+  .bg-surface-accent { background-color: rgb(248 250 252); }
+  .bg-surface-hover { background-color: rgb(241 245 249); }
+  .bg-surface-elevated { background-color: rgb(255 255 255); }
+  
+  .text-primary { color: var(--text-primary); }
+  .text-secondary { color: var(--text-secondary); }
+  .text-muted { color: var(--text-muted); }
+  .text-inverse { color: var(--text-inverse); }
+  .text-accent { color: var(--text-accent); }
+  
+  .border-custom { border-color: var(--border); }
+  .border-custom-hover { border-color: var(--border-hover); }
+  .border-custom-focus { border-color: var(--border-focus); }
+  
+  /* === Современные профессиональные карточки дашборда === */
+  .dashboard-card {
+    @apply bg-white border border-gray-200 rounded-2xl p-8 shadow-xl;
+    @apply hover:shadow-2xl hover:border-blue-300;
+    @apply transition-all duration-300;
+    backdrop-filter: blur(16px) saturate(180%);
+    background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dashboard-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .dashboard-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59,130,246,0.02) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+  }
+  
+  .dashboard-card:hover {
+    @apply shadow-2xl border-blue-300;
+    @apply transition-all duration-300;
+    transform: translateY(-6px) scale(1.01);
+  }
+  
+  .dashboard-card:hover::before {
+    opacity: 1;
+  }
+  
+  .dashboard-card:hover::after {
+    opacity: 1;
+  }
+  
+  .dashboard-card-compact {
+    @apply bg-white border border-gray-200 rounded-xl p-6 shadow-lg;
+    @apply hover:shadow-xl hover:border-blue-300;
+    @apply transition-all duration-300;
+    backdrop-filter: blur(12px) saturate(150%);
+    background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.96));
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dashboard-card-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .dashboard-card-compact::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59,130,246,0.015) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+  }
+  
+  .dashboard-card-compact:hover {
+    @apply shadow-xl border-blue-300;
+    @apply transition-all duration-300;
+    transform: translateY(-4px) scale(1.005);
+  }
+  
+  .dashboard-card-compact:hover::before {
+    opacity: 1;
+  }
+  
+  .dashboard-card-compact:hover::after {
+    opacity: 1;
+  }
+  
+  .dashboard-card-minimal {
+    @apply bg-white border border-gray-200 rounded-lg p-4 shadow-md;
+    @apply hover:shadow-lg hover:border-blue-300;
+    @apply transition-all duration-300;
+    backdrop-filter: blur(8px) saturate(120%);
+    background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.94));
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dashboard-card-minimal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .dashboard-card-minimal::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59,130,246,0.01) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+  }
+  
+  .dashboard-card-minimal:hover {
+    transform: translateY(-2px) scale(1.002);
+  }
+  
+  .dashboard-card-minimal:hover::before {
+    opacity: 1;
+  }
+  
+  .dashboard-card-minimal:hover::after {
+    opacity: 1;
+  }
+  
+  /* === Современные метрические карточки === */
+  .metric-card {
+    @apply bg-white border border-gray-200 rounded-xl p-6 shadow-lg;
+    @apply hover:shadow-xl hover:border-blue-300;
+    @apply transition-all duration-300;
+    @apply relative overflow-hidden;
+    backdrop-filter: blur(12px);
+    background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.95));
+  }
+  
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .metric-card:hover {
+    transform: translateY(-4px);
+  }
+  
+  .metric-card:hover::before {
+    opacity: 1;
+  }
+  
+  .metric-card-header {
+    @apply flex items-center justify-between mb-3;
+  }
+  
+  .metric-card-title {
+    @apply text-sm font-medium text-slate-600 uppercase tracking-wide;
+    @apply leading-tight;
+  }
+  
+  .metric-card-value {
+    @apply text-2xl font-bold text-slate-900;
+    @apply leading-none;
+  }
+  
+  .metric-card-change {
+    @apply text-sm font-medium;
+    @apply flex items-center gap-1 mt-2;
+  }
+  
+  .metric-card-change.positive {
+    @apply text-green-600;
+  }
+  
+  .metric-card-change.negative {
+    @apply text-red-600;
+  }
+  
+  .metric-card-change.neutral {
+    @apply text-slate-500;
+  }
+  
+  /* === Современные карточки графиков === */
+  .chart-card {
+    @apply bg-white border border-gray-200 rounded-2xl p-8 shadow-xl;
+    @apply hover:shadow-2xl hover:border-blue-300;
+    @apply transition-all duration-300;
+    @apply min-h-[360px];
+    backdrop-filter: blur(16px) saturate(180%);
+    background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .chart-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #10b981, #059669);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .chart-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59,130,246,0.03) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+  }
+  
+  .chart-card:hover {
+    transform: translateY(-6px) scale(1.01);
+  }
+  
+  .chart-card:hover::before {
+    opacity: 1;
+  }
+  
+  .chart-card:hover::after {
+    opacity: 1;
+  }
+  
+  .chart-card-header {
+    @apply flex items-center justify-between mb-6;
+    @apply border-b border-gray-200 pb-4;
+  }
+  
+  .chart-card-title {
+    @apply text-lg font-semibold text-slate-900;
+    @apply leading-tight;
+  }
+  
+  .chart-card-subtitle {
+    @apply text-sm text-slate-500 mt-1;
+    @apply leading-normal;
+  }
+  
+  /* === Ультра-компактная система отступов для дашборда === */
+  .dashboard-grid {
+    @apply grid gap-3;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  .dashboard-grid-compact {
+    @apply grid gap-2;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  
+  .dashboard-grid-dense {
+    @apply grid gap-1;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .dashboard-section {
+    @apply space-y-4;
+    padding: clamp(0.75rem, 3vw, 1.5rem);
+  }
+  
+  .dashboard-section-compact {
+    @apply space-y-3;
+    padding: clamp(0.5rem, 2vw, 1rem);
+  }
+  
+  .dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 clamp(0.75rem, 3vw, 1.5rem);
+  }
+  
+  /* === Компактная типографическая иерархия === */
+  .dashboard-heading-1 {
+    font-size: var(--text-3xl);  /* Уменьшено с text-4xl */
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.025em;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, #1e293b, #334155);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--spacing-4);  /* Уменьшено с spacing-6 */
+  }
+
+  .dashboard-heading-2 {
+    font-size: var(--text-2xl);  /* Уменьшено с text-3xl */
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-3);  /* Уменьшено с spacing-4 */
+  }
+
+  .dashboard-heading-3 {
+    font-size: var(--text-xl);  /* Уменьшено с text-2xl */
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-snug);
+    letter-spacing: -0.015em;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-3);  /* Уменьшено с spacing-4 */
+  }
+
+  .dashboard-heading-4 {
+    font-size: var(--text-lg);  /* Уменьшено с text-xl */
+    font-weight: var(--font-weight-medium);
+    line-height: var(--leading-snug);
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-2);  /* Уменьшено с spacing-3 */
+  }
+
+  .dashboard-heading-5 {
+    font-size: var(--text-base);  /* Уменьшено с text-lg */
+    font-weight: var(--font-weight-medium);
+    line-height: var(--leading-snug);
+    letter-spacing: -0.005em;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-2);  /* Уменьшено с spacing-3 */
+  }
+
+  .dashboard-body {
+    font-size: var(--text-sm);  /* Уменьшено с text-base */
+    font-weight: var(--font-weight-normal);
+    line-height: var(--leading-relaxed);
+    color: var(--text-secondary);
+    font-feature-settings: 'kern' 1, 'liga' 1;
+    margin-bottom: var(--spacing-3);  /* Уменьшено с spacing-4 */
+  }
+  
+  .dashboard-body-large {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--leading-relaxed);
+    color: var(--text-secondary);
+    font-feature-settings: 'kern' 1, 'liga' 1;
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .dashboard-body-small {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--leading-normal);
+    color: var(--text-muted);
+    font-feature-settings: 'kern' 1;
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .dashboard-caption {
+    @apply text-xs text-slate-500;
+    @apply leading-normal uppercase tracking-wide;
+  }
+  
+  /* Градиентные фоны */
+  .bg-gradient-primary { background: var(--gradient-primary); }
+  .bg-gradient-success { background: var(--gradient-success); }
+  .bg-gradient-warm { background: var(--gradient-warm); }
+  .bg-gradient-sunset { background: var(--gradient-sunset); }
+  .bg-gradient-ocean { background: var(--gradient-ocean); }
+  .bg-gradient-purple { background: var(--gradient-purple); }
+  .bg-gradient-emerald { background: var(--gradient-emerald); }
+  .bg-gradient-rose { background: var(--gradient-rose); }
+  
+  /* Тени */
+  .shadow-xs { box-shadow: var(--shadow-xs); }
+  .shadow-sm { box-shadow: var(--shadow-sm);
+}
+
+
+  .shadow-md { box-shadow: var(--shadow-md); }
+  .shadow-lg { box-shadow: var(--shadow-lg); }
+  .shadow-xl { box-shadow: var(--shadow-xl); }
+  .shadow-2xl { box-shadow: var(--shadow-2xl); }
+  .shadow-inner { box-shadow: var(--shadow-inner); }
+  .shadow-glow-blue { box-shadow: var(--shadow-glow-blue); }
+  .shadow-glow-green { box-shadow: var(--shadow-glow-green); }
+  .shadow-glow-purple { box-shadow: var(--shadow-glow-purple); }
+  
+  /* Hover states */
+  .hover\:bg-surface-hover:hover { background-color: rgb(241 245 249); }
+  .hover\:border-border-hover:hover { border-color: var(--border-hover); }
+  .hover\:shadow-lg:hover { box-shadow: var(--shadow-lg); }
+  .hover\:shadow-xl:hover { box-shadow: var(--shadow-xl); }
+  .hover\:shadow-glow-blue:hover { box-shadow: var(--shadow-glow-blue); }
+  
+  /* Типографика */
+  .font-display { font-family: var(--font-family-display); }
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+  
+  /* Анимации */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  /* Backdrop blur улучшения */
+  .backdrop-blur-glass {
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+  }
+  
+  .backdrop-blur-strong {
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+  }
+  
+  /* === Компоненты карточек дашборда === */
+  .dashboard-card {
+    @apply bg-white border border-gray-200 rounded-xl p-8 shadow-lg;
+    @apply hover:border-blue-300 hover:shadow-xl;
+    @apply transition-all duration-300;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dashboard-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .stat-card {
+    @apply bg-white border border-gray-200 rounded-xl p-6 shadow-lg;
+    @apply hover:shadow-xl hover:border-blue-300;
+    @apply transition-all duration-300;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .stat-card:hover::before {
+    opacity: 1;
+  }
+  
+  .stat-card-compact {
+    @apply bg-white border border-gray-200 rounded-lg p-4 shadow-md;
+    @apply hover:shadow-lg hover:border-blue-300;
+    @apply transition-all duration-300;
+    backdrop-filter: blur(8px);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .stat-card-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .stat-card-compact:hover {
+    transform: translateY(-1px);
+  }
+  
+  .stat-card-compact:hover::before {
+    opacity: 1;
+  }
+  
+  .stat-card-ultra-compact {
+    @apply bg-white border border-gray-200 rounded-lg p-3 shadow-md;
+    @apply hover:shadow-lg hover:border-blue-300;
+    @apply transition-all duration-300;
+    backdrop-filter: blur(6px);
+    position: relative;
+    overflow: hidden;
+    min-height: 5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .stat-card-ultra-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .stat-card-ultra-compact:hover {
+    transform: translateY(-1px);
+  }
+  
+  .stat-card-ultra-compact:hover::before {
+    opacity: 1;
+  }
+  
+  .metric-card {
+     background: rgba(255, 255, 255, 0.95);
+     border: 1px solid var(--border-light);
+     border-radius: var(--radius-xl);
+     padding: var(--spacing-8);
+     box-shadow: var(--shadow-sm);
+     transition: all var(--transition-base);
+     backdrop-filter: blur(12px);
+     position: relative;
+     overflow: hidden;
+     min-height: 95px;
+     display: flex;
+     flex-direction: column;
+     justify-content: space-between;
+   }
+  
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-hover);
+  }
+  
+  .metric-card:hover::before {
+    opacity: 1;
+  }
+  
+  /* === Ультра-компактные стили содержимого карточек === */
+    .metric-card-title {
+      font-size: var(--text-2xs);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-muted);
+      margin-bottom: var(--spacing-1);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      line-height: 1.1;
+    }
+    
+    .metric-card-value {
+      font-size: var(--text-lg);  /* Уменьшено с text-xl */
+      font-weight: var(--font-weight-bold);
+      color: var(--text-primary);
+      line-height: var(--leading-tight);
+      margin-bottom: var(--spacing-1);
+    }
+    
+    .metric-card-change {
+      font-size: var(--text-2xs);
+      font-weight: var(--font-weight-medium);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-1);
+      line-height: 1.1;
+    }
+  
+  .chart-card {
+     background: rgba(255, 255, 255, 0.95);
+     border: 1px solid var(--border-light);
+     border-radius: var(--radius-xl);
+     padding: var(--spacing-8);
+     box-shadow: var(--shadow-sm);
+     transition: all var(--transition-base);
+     backdrop-filter: blur(12px);
+     position: relative;
+     overflow: hidden;
+     min-height: 240px;
+   }
+   
+   .chart-card:hover {
+     transform: translateY(-2px);
+     box-shadow: var(--shadow-md);
+     border-color: var(--border-hover);
+   }
+   
+   .chart-card-title {
+     font-size: var(--text-sm);
+     font-weight: var(--font-weight-semibold);
+     color: var(--text-primary);
+     margin-bottom: var(--spacing-1);
+   }
+   
+   .chart-card-subtitle {
+     font-size: var(--text-xs);
+     color: var(--text-muted);
+     margin-bottom: var(--spacing-4);
+   }
+  
+  /* === Типографические компоненты === */
+  .heading-dashboard {
+    @apply text-4xl font-extrabold leading-tight tracking-tight text-slate-900 mb-8;
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .heading-section {
+    @apply text-2xl font-bold leading-tight text-slate-900 mb-6;
+    letter-spacing: -0.025em;
+  }
+  
+  .heading-card {
+    @apply text-xl font-semibold leading-tight text-slate-900 mb-4;
+    letter-spacing: -0.02em;
+  }
+  
+  .heading-compact {
+    @apply text-sm font-semibold leading-snug text-slate-600 uppercase tracking-wide mb-2;
+    font-feature-settings: 'ss01', 'ss02';
+  }
+  
+  .heading-ultra-compact {
+    @apply text-xs font-medium leading-snug text-slate-500 uppercase tracking-wider mb-1;
+    font-feature-settings: 'ss01', 'ss02';
+  }
+  
+  .metric-value {
+    @apply text-4xl font-bold leading-none;
+    letter-spacing: -0.03em;
+    font-feature-settings: 'tnum', 'lnum';
+    font-variant-numeric: tabular-nums;
+  }
+  
+  .metric-value-large {
+    @apply text-5xl font-extrabold leading-none;
+    letter-spacing: -0.04em;
+    font-feature-settings: 'tnum', 'lnum';
+    font-variant-numeric: tabular-nums;
+  }
+  
+  .metric-label {
+    @apply text-sm font-medium text-slate-600 uppercase tracking-wide;
+    font-feature-settings: 'ss01', 'ss02';
+  }
+  
+  .text-ultra-compact {
+    @apply text-xs leading-snug;
+    font-feature-settings: 'kern', 'liga';
+  }
+}
 
 /* 🎨 Современная дизайн-система FinSights AI */
 
 :root {
-  /* === Цветовая палитра === */
-  /* Primary Colors - Синий градиент */
-  --primary-50: #eff6ff;
-  --primary-100: #dbeafe;
-  --primary-200: #bfdbfe;
-  --primary-300: #93c5fd;
-  --primary-400: #60a5fa;
-  --primary-500: #3b82f6;
-  --primary-600: #2563eb;
-  --primary-700: #1d4ed8;
-  --primary-800: #1e40af;
-  --primary-900: #1e3a8a;
+  /* === Профессиональная цветовая палитра === */
+  /* Primary Colors - Современный синий градиент */
+  --primary-50: #f0f9ff;
+  --primary-100: #e0f2fe;
+  --primary-200: #bae6fd;
+  --primary-300: #7dd3fc;
+  --primary-400: #38bdf8;
+  --primary-500: #0ea5e9;
+  --primary-600: #0284c7;
+  --primary-700: #0369a1;
+  --primary-800: #075985;
+  --primary-900: #0c4a6e;
+  --primary-950: #082f49;
 
-  /* Success Colors - Зеленый */
-  --success-50: #f0fdf4;
-  --success-100: #dcfce7;
-  --success-200: #bbf7d0;
-  --success-300: #86efac;
-  --success-400: #4ade80;
-  --success-500: #22c55e;
-  --success-600: #16a34a;
+  /* Success Colors - Современный зеленый */
+  --success-50: #ecfdf5;
+  --success-100: #d1fae5;
+  --success-200: #a7f3d0;
+  --success-300: #6ee7b7;
+  --success-400: #34d399;
+  --success-500: #10b981;
+  --success-600: #059669;
   --success-700: #15803d;
   --success-800: #166534;
   --success-900: #14532d;
 
-  /* Warning Colors - Янтарный */
-  --warning-50: #fffbeb;
-  --warning-100: #fef3c7;
-  --warning-200: #fde68a;
-  --warning-300: #fcd34d;
-  --warning-400: #fbbf24;
-  --warning-500: #f59e0b;
-  --warning-600: #d97706;
-  --warning-700: #b45309;
-  --warning-800: #92400e;
-  --warning-900: #78350f;
+  /* Warning Colors - Современный янтарный */
+  --warning-50: #fefce8;
+  --warning-100: #fef9c3;
+  --warning-200: #fef08a;
+  --warning-300: #fde047;
+  --warning-400: #facc15;
+  --warning-500: #eab308;
+  --warning-600: #ca8a04;
+  --warning-700: #a16207;
+  --warning-800: #854d0e;
+  --warning-900: #713f12;
 
-  /* Error Colors - Красный */
+  /* Error Colors - Современный красный */
   --error-50: #fef2f2;
   --error-100: #fee2e2;
   --error-200: #fecaca;
@@ -56,40 +947,45 @@
   --error-700: #b91c1c;
   --error-800: #991b1b;
   --error-900: #7f1d1d;
+  --error-950: #450a0a;
 
-  /* Neutral Colors - Серые */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+  /* Neutral Colors - Профессиональные серые */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  --gray-950: #020617;
 
-  /* === Градиенты === */
-  --gradient-primary: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%);
-  --gradient-success: linear-gradient(135deg, var(--success-600) 0%, var(--success-500) 100%);
-  --gradient-warm: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-sunset: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --gradient-ocean: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  /* === Современные градиенты === */
+  --gradient-primary: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 50%, var(--primary-400) 100%);
+  --gradient-success: linear-gradient(135deg, var(--success-600) 0%, var(--success-500) 50%, var(--success-400) 100%);
+  --gradient-warm: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --gradient-sunset: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+  --gradient-ocean: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #10b981 100%);
+  --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%);
+  --gradient-emerald: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+  --gradient-rose: linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #fb7185 100%);
 
-  /* === Тени (неоморфизм) === */
-  --shadow-neumorphism: 
-    20px 20px 60px rgba(0, 0, 0, 0.1),
-    -20px -20px 60px rgba(255, 255, 255, 0.8);
-  --shadow-neumorphism-inset: 
-    inset 8px 8px 16px rgba(0, 0, 0, 0.1),
-    inset -8px -8px 16px rgba(255, 255, 255, 0.8);
-  --shadow-card: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-elevated: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --shadow-glow: 
-    0 0 20px rgba(59, 130, 246, 0.3);
+  /* === Профессиональные тени === */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  --shadow-glow-blue: 0 0 20px rgba(14, 165, 233, 0.3);
+  --shadow-glow-green: 0 0 20px rgba(16, 185, 129, 0.3);
+  --shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
+  --shadow-card: var(--shadow-lg);
+  --shadow-elevated: var(--shadow-2xl);
+  --shadow-glow: var(--shadow-glow-blue);
 
   /* === Анимации === */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -104,31 +1000,91 @@
   --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
-  /* === Типографика === */
-  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  /* === 8px Grid System === */
+  --spacing-0: 0;
+  --spacing-1: 0.125rem; /* 2px */
+  --spacing-2: 0.25rem;  /* 4px */
+  --spacing-3: 0.375rem; /* 6px */
+  --spacing-4: 0.5rem;   /* 8px - базовая единица */
+  --spacing-6: 0.75rem;  /* 12px */
+  --spacing-8: 1rem;     /* 16px */
+  --spacing-10: 1.25rem; /* 20px */
+  --spacing-12: 1.5rem;  /* 24px */
+  --spacing-16: 2rem;    /* 32px */
+  --spacing-20: 2.5rem;  /* 40px */
+  --spacing-24: 3rem;    /* 48px */
+  --spacing-32: 4rem;    /* 64px */
+  --spacing-40: 5rem;    /* 80px */
+  --spacing-48: 6rem;    /* 96px */
+  --spacing-64: 8rem;    /* 128px */
+
+  /* === Профессиональная типографика === */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  --font-family-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Размеры шрифтов - компактные для дашбордов */
+  --text-2xs: 0.625rem; /* 10px - мелкие метки */
+  --text-xs: 0.75rem;   /* 12px - вспомогательный текст */
+  --text-sm: 0.875rem;  /* 14px - основной текст UI */
+  --text-base: 1rem;    /* 16px - основной текст контента */
+  --text-lg: 1.125rem;  /* 18px - крупный текст */
+  --text-xl: 1.25rem;   /* 20px - заголовки карточек */
+  --text-2xl: 1.375rem; /* 22px - заголовки секций (уменьшено) */
+  --text-3xl: 1.625rem; /* 26px - заголовки страниц (уменьшено) */
+  --text-4xl: 1.875rem; /* 30px - крупные числа (уменьшено) */
+  --text-5xl: 2.25rem;  /* 36px - главные метрики (уменьшено) */
+  --text-6xl: 2.75rem;  /* 44px - hero числа (уменьшено) */
+  
+  /* Высота строк - оптимизированы для читабельности */
+  --leading-none: 1;
+  --leading-tight: 1.2;    /* для заголовков */
+  --leading-snug: 1.375;   /* для UI текста */
+  --leading-normal: 1.5;   /* для основного текста */
+  --leading-relaxed: 1.625; /* для длинного текста */
+  --leading-loose: 2;
+  
+  /* Веса шрифтов */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  
+  /* Межбуквенные интервалы */
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
 }
 
-/* === Светлая тема === */
+/* === Профессиональная светлая тема === */
 [data-theme="light"] {
-  --background: var(--gray-50);
+  --background: #ffffff;
   --surface: #ffffff;
-  --surface-accent: var(--gray-100);
-  --surface-hover: var(--gray-50);
+  --surface-accent: var(--gray-50);
+  --surface-hover: var(--gray-100);
+  --surface-elevated: #ffffff;
   --border: var(--gray-200);
   --border-hover: var(--gray-300);
+  --border-focus: var(--primary-500);
   
   --text-primary: var(--gray-900);
-  --text-secondary: var(--gray-600);
+  --text-secondary: var(--gray-700);
   --text-muted: var(--gray-500);
   --text-inverse: #ffffff;
+  --text-accent: var(--primary-600);
   
   --primary: var(--primary-600);
   --primary-foreground: #ffffff;
   --primary-hover: var(--primary-700);
+  --primary-light: var(--primary-50);
   
   --success: var(--success-600);
   --success-foreground: #ffffff;
+  --success-light: var(--success-50);
   
   --warning: var(--warning-500);
   --warning-foreground: #ffffff;
@@ -137,32 +1093,255 @@
   --destructive-foreground: #ffffff;
 }
 
-/* === Темная тема === */
+/* === Современная темная тема 2024 === */
 [data-theme="dark"] {
-  --background: #0a0a0b;
-  --surface: #161618;
-  --surface-accent: #1e1e20;
-  --surface-hover: #2a2a2d;
-  --border: #2a2a2d;
-  --border-hover: #3a3a3d;
+  /* Современная темная палитра с улучшенным контрастом */
+  --background: #0c0f1a;
+  --surface: #151922;
+  --surface-accent: #1e2330;
+  --surface-hover: #2a3441;
+  --surface-elevated: #1a1f2e;
+  --border: #2d3748;
+  --border-hover: #4a5568;
+  --border-focus: #60a5fa;
   
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-muted: #9ca3af;
-  --text-inverse: var(--gray-900);
+  /* Оптимизированная типографическая иерархия для темной темы */
+  --text-primary: #f8fafc;    /* Очень яркий белый для заголовков */
+  --text-secondary: #e2e8f0;  /* Яркий серый для основного текста */
+  --text-muted: #94a3b8;      /* Средний серый для вторичного текста */
+  --text-inverse: #0f172a;
+  --text-accent: #60a5fa;
+  --text-success: #34d399;    /* Более яркий зеленый */
+  --text-warning: #fbbf24;    /* Более яркий желтый */
+  --text-error: #f87171;      /* Более яркий красный */
   
-  --primary: var(--primary-500);
+  /* Современные акцентные цвета */
+  --primary: #3b82f6;
   --primary-foreground: #ffffff;
-  --primary-hover: var(--primary-400);
+  --primary-hover: #2563eb;
+  --primary-light: #1e3a8a;
   
-  --success: var(--success-500);
+  --success: #10b981;
   --success-foreground: #ffffff;
+  --success-light: #064e3b;
   
-  --warning: var(--warning-400);
-  --warning-foreground: var(--gray-900);
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
+  --warning-light: #78350f;
   
-  --destructive: var(--error-500);
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
+  --destructive-light: #7f1d1d;
+  
+  /* Современные градиенты для темной темы */
+  --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  --gradient-success: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --gradient-error: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  --gradient-emerald: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --gradient-rose: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  
+  /* Улучшенные тени для темной темы */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+}
+
+/* === Современные стили карточек для темной темы === */
+[data-theme="dark"] .dashboard-card,
+[data-theme="dark"] .dashboard-card-compact,
+[data-theme="dark"] .dashboard-card-minimal,
+[data-theme="dark"] .metric-card,
+[data-theme="dark"] .chart-card {
+  background: linear-gradient(145deg, rgba(26,31,46,0.95), rgba(30,35,48,0.98));
+  border-color: var(--border);
+  backdrop-filter: blur(16px) saturate(180%);
+}
+
+[data-theme="dark"] .dashboard-card:hover,
+[data-theme="dark"] .dashboard-card-compact:hover,
+[data-theme="dark"] .dashboard-card-minimal:hover,
+[data-theme="dark"] .metric-card:hover,
+[data-theme="dark"] .chart-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .dashboard-card::after,
+[data-theme="dark"] .dashboard-card-compact::after,
+[data-theme="dark"] .dashboard-card-minimal::after,
+[data-theme="dark"] .metric-card::after,
+[data-theme="dark"] .chart-card::after {
+  background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);
+}
+
+/* === Улучшенная типографика для темной темы с оптимальным контрастом === */
+[data-theme="dark"] .dashboard-heading-1 {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .dashboard-heading-2,
+[data-theme="dark"] .dashboard-heading-3,
+[data-theme="dark"] .dashboard-heading-4,
+[data-theme="dark"] .dashboard-heading-5 {
+  color: var(--text-primary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .dashboard-body,
+[data-theme="dark"] .dashboard-body-large {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .dashboard-body-small {
+  color: var(--text-muted);
+}
+
+/* === Улучшенные цвета текста для карточек в темной теме === */
+[data-theme="dark"] .metric-card-title,
+[data-theme="dark"] .chart-card-title {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-bold);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .metric-card-value {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-extrabold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .metric-card-change.positive {
+  color: var(--text-success);
+  font-weight: var(--font-weight-semibold);
+}
+
+[data-theme="dark"] .metric-card-change.negative {
+  color: var(--text-error);
+  font-weight: var(--font-weight-semibold);
+}
+
+[data-theme="dark"] .metric-card-change.neutral {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+[data-theme="dark"] .chart-card-subtitle {
+  color: var(--text-secondary);
+}
+
+/* === Улучшенные адаптивные стили === */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-5);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+    padding: var(--spacing-4);
+  }
+  
+  .dashboard-grid-compact {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-3);
+  }
+  
+  .dashboard-grid-dense {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-2);
+  }
+  
+  .dashboard-card,
+  .dashboard-card-compact,
+  .dashboard-card-minimal {
+    padding: var(--spacing-6);
+  }
+  
+  .chart-card {
+    padding: var(--spacing-6);
+    min-height: 280px;
+  }
+  
+  .metric-card {
+    padding: var(--spacing-6);
+    min-height: 120px;
+  }
+  
+  .metric-card-value {
+    font-size: var(--text-2xl);
+  }
+  
+  .chart-card-title {
+    font-size: var(--text-base);
+  }
+  
+  .dashboard-heading-1 {
+    font-size: var(--text-4xl);
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .dashboard-heading-2 {
+    font-size: var(--text-3xl);
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .dashboard-heading-3 {
+    font-size: var(--text-2xl);
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .dashboard-body {
+    font-size: var(--text-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-section {
+    padding: var(--spacing-3);
+  }
+  
+  .dashboard-section-compact {
+    padding: var(--spacing-2);
+  }
+  
+  .dashboard-container {
+    padding: 0 var(--spacing-3);
+  }
+  
+  .dashboard-card,
+  .dashboard-card-compact,
+  .dashboard-card-minimal,
+  .metric-card {
+    padding: var(--spacing-5);
+  }
+  
+  .chart-card {
+    padding: var(--spacing-5);
+    min-height: 240px;
+  }
+  
+  .dashboard-heading-1 {
+    font-size: var(--text-3xl);
+  }
+  
+  .dashboard-heading-2 {
+    font-size: var(--text-2xl);
+  }
+  
+  .metric-card-value {
+    font-size: var(--text-xl);
+  }
 }
 
 /* === Базовые стили === */
@@ -181,11 +1360,20 @@ body {
   padding: 0;
   background-color: var(--background);
   color: var(--text-primary);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: var(--leading-normal);
+  font-family: var(--font-family-sans);
   transition: background-color var(--transition-normal), color var(--transition-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--background);
+  color: var(--text-primary);
 }
 
 /* === Скрытие полос прокрутки === */
@@ -418,6 +1606,8 @@ p {
   animation: scaleIn 0.2s ease-out;
 }
 
+
+
 /* Анимации */
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -445,6 +1635,8 @@ p {
     transform: scale(1); 
   }
 }
+
+
 
 /* Градиенты для текста */
 .gradient-text {
@@ -505,23 +1697,36 @@ p {
   100% { background-position: -200% 0; }
 }
 
-/* Адаптивность */
+/* === Оптимизированные размеры для компактности === */
+body {
+  font-size: 14px; /* Уменьшено с 16px */
+}
+
+/* Компактные заголовки */
+h1 { font-size: 1.875rem; font-weight: 700; } /* Уменьшено с 2.5rem */
+h2 { font-size: 1.5rem; font-weight: 600; } /* Уменьшено с 2rem */
+h3 { font-size: 1.25rem; } /* Уменьшено с 1.5rem */
+h4 { font-size: 1.125rem; } /* Уменьшено с 1.25rem */
+h5 { font-size: 1rem; } /* Уменьшено с 1.125rem */
+h6 { font-size: 0.875rem; } /* Уменьшено с 1rem */
+
+/* === Адаптивность === */
 @media (max-width: 768px) {
   body {
     font-size: 13px;
   }
   
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.75rem; }
-  h3 { font-size: 1.375rem; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.375rem; }
+  h3 { font-size: 1.25rem; }
   
   .btn {
-    padding: 0.625rem 1.25rem;
-    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
   }
   
   .card-body {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 }
 
@@ -560,11 +1765,625 @@ p {
 /* Печать */
 @media print {
   * {
-    color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   
   .no-print {
     display: none !important;
   }
-} 
+}
+
+/* Keyframes для анимаций */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(14, 165, 233, 0.4);
+  }
+}
+
+/* Утилиты для улучшения читаемости текста */
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.text-shadow {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.text-shadow-lg {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.drop-shadow-sm {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+}
+
+/* === Улучшенная система размеров компонентов === */
+
+/* Размеры контейнеров */
+.container-xs { max-width: 20rem; } /* 320px */
+.container-sm { max-width: 24rem; } /* 384px */
+.container-md { max-width: 28rem; } /* 448px */
+.container-lg { max-width: 32rem; } /* 512px */
+.container-xl { max-width: 36rem; } /* 576px */
+.container-2xl { max-width: 42rem; } /* 672px */
+.container-3xl { max-width: 48rem; } /* 768px */
+.container-4xl { max-width: 56rem; } /* 896px */
+.container-5xl { max-width: 64rem; } /* 1024px */
+.container-6xl { max-width: 72rem; } /* 1152px */
+.container-7xl { max-width: 80rem; } /* 1280px */
+
+/* Улучшенные стили для карточек с правильными пропорциями */
+.card-modern {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal);
+  padding: 2rem;
+  min-height: 12rem;
+}
+
+.card-modern:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-3px);
+}
+
+/* Размеры карточек */
+.card-compact {
+  padding: 1.5rem;
+  min-height: 8rem;
+}
+
+.card-comfortable {
+  padding: 2.5rem;
+  min-height: 14rem;
+}
+
+.card-spacious {
+  padding: 3rem;
+  min-height: 16rem;
+}
+
+/* Статистические карточки */
+.stat-card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem;
+  min-height: 5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-hover);
+}
+
+/* Карточки графиков */
+.chart-card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  padding: 2rem;
+  min-height: 24rem;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal);
+}
+
+.chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--border-hover);
+}
+
+/* === Улучшенная система размеров кнопок === */
+
+/* Базовые размеры кнопок */
+.btn-xs {
+  padding: 0.375rem 0.75rem;
+  font-size: var(--text-xs);
+  border-radius: var(--radius-md);
+  min-height: 1.75rem;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
+  min-height: 2rem;
+}
+
+.btn-md {
+  padding: 0.75rem 1.5rem;
+  font-size: var(--text-base);
+  border-radius: var(--radius-lg);
+  min-height: 2.5rem;
+}
+
+.btn-lg {
+  padding: 1rem 2rem;
+  font-size: var(--text-lg);
+  border-radius: var(--radius-lg);
+  min-height: 3rem;
+}
+
+.btn-xl {
+  padding: 1.25rem 2.5rem;
+  font-size: var(--text-xl);
+  border-radius: var(--radius-xl);
+  min-height: 3.5rem;
+}
+
+/* Улучшенные кнопки */
+.btn-primary {
+  background: var(--gradient-primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 0.875rem 1.75rem;
+  font-weight: 600;
+  font-size: var(--text-base);
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-md);
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-primary:hover {
+  box-shadow: var(--shadow-lg), var(--shadow-glow-blue);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.875rem 1.75rem;
+  font-weight: 500;
+  font-size: var(--text-base);
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* === Улучшенная система размеров для полей ввода === */
+
+.input-xs {
+  padding: 0.375rem 0.75rem;
+  font-size: var(--text-xs);
+  border-radius: var(--radius-md);
+  min-height: 1.75rem;
+}
+
+.input-sm {
+  padding: 0.5rem 0.875rem;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
+  min-height: 2rem;
+}
+
+.input-md {
+  padding: 0.75rem 1rem;
+  font-size: var(--text-base);
+  border-radius: var(--radius-lg);
+  min-height: 2.5rem;
+}
+
+.input-lg {
+  padding: 1rem 1.25rem;
+  font-size: var(--text-lg);
+  border-radius: var(--radius-lg);
+  min-height: 3rem;
+}
+
+.input-xl {
+  padding: 1.25rem 1.5rem;
+  font-size: var(--text-xl);
+  border-radius: var(--radius-xl);
+  min-height: 3.5rem;
+}
+
+/* Улучшенные поля ввода */
+.input-modern {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.875rem 1.125rem;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  transition: all var(--transition-normal);
+  min-height: 2.75rem;
+  width: 100%;
+}
+
+.input-modern:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+/* === Ультра-компактная система отступов === */
+
+/* Отступы для секций - максимально уменьшены */
+.section-padding-xs { padding: 0.5rem; }
+.section-padding-sm { padding: 0.75rem; }
+.section-padding-md { padding: 1rem; }
+.section-padding-lg { padding: 1.25rem; }
+.section-padding-xl { padding: 1.5rem; }
+.section-padding-2xl { padding: 2rem; }
+
+/* Отступы между элементами - максимально уменьшены */
+.gap-xs { gap: 0.25rem; }
+.gap-sm { gap: 0.375rem; }
+.gap-md { gap: 0.5rem; }
+.gap-lg { gap: 0.75rem; }
+.gap-xl { gap: 1rem; }
+.gap-2xl { gap: 1.25rem; }
+.gap-3xl { gap: 1.5rem; }
+
+/* === Ультра-компактная типографика === */
+
+/* Заголовки с максимально уменьшенными размерами */
+.heading-xs {
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.heading-sm {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.heading-md {
+  font-size: 1rem; /* 16px */
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.heading-lg {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.heading-xl {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.heading-2xl {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+/* Текст с ультра-компактными размерами */
+.text-body-xs {
+  font-size: 0.6875rem; /* 11px */
+  line-height: 1.2;
+}
+
+.text-body-sm {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1.2;
+}
+
+.text-body-md {
+  font-size: 0.8125rem; /* 13px */
+  line-height: 1.25;
+}
+
+.text-body-lg {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25;
+}
+
+/* === Ультра-компактные стили для сайдбара === */
+.sidebar-compact {
+  width: 14rem; /* Еще больше уменьшено с 16rem */
+}
+
+.sidebar-item-compact {
+  padding: 0.375rem 0.5rem; /* Еще больше уменьшено */
+  font-size: 0.8125rem; /* 13px */
+  line-height: 1.2;
+}
+
+.sidebar-icon-compact {
+  width: 0.875rem; /* 14px */
+  height: 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.sidebar-text-compact {
+  font-size: 0.8125rem; /* 13px */
+  line-height: 1.2;
+}
+
+.sidebar-description-compact {
+  font-size: 0.6875rem; /* 11px */
+  line-height: 1;
+  margin-top: 0.0625rem;
+}
+
+.profile-card-compact {
+  padding: 0.5rem;
+  margin: 0.375rem;
+}
+
+.profile-avatar-compact {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.6875rem;
+}
+
+/* === Ультра-компактные стили для дашборда === */
+.dashboard-compact {
+  padding: 0.75rem;
+  gap: 0.75rem;
+}
+
+.dashboard-header-compact {
+  padding: 0.5rem;
+}
+
+.dashboard-card-compact {
+  padding: 0.5rem;
+  font-size: 0.8125rem; /* 13px */
+}
+
+.dashboard-chart-compact {
+  height: 10rem;
+}
+
+.card-compact {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.stat-card-compact {
+  padding: 0.5rem;
+  min-height: auto;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  transition: all var(--transition-fast);
+}
+
+.stat-card-compact:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-hover);
+}
+
+.chart-card-compact {
+  padding: 0.5rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  min-height: 14rem;
+}
+
+.chart-card-compact:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-hover);
+}
+
+.chart-card-compact .chart-container {
+  height: 8rem;
+}
+
+.chart-compact {
+  height: 180px; /* Еще больше уменьшено */
+}
+
+/* === Ультра-компактная сетка === */
+.grid-compact {
+  gap: 0.5rem;
+}
+
+.grid-cols-compact {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+/* === Дополнительные ультра-компактные стили === */
+
+/* Компактные кнопки */
+.btn-ultra-compact {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+  min-height: 1.5rem;
+}
+
+/* Компактные поля ввода */
+.input-ultra-compact {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+  min-height: 1.75rem;
+}
+
+/* Компактные таблицы */
+.table-compact {
+  font-size: 0.75rem;
+}
+
+.table-compact th,
+.table-compact td {
+  padding: 0.25rem 0.5rem;
+}
+
+/* Компактные модальные окна */
+.modal-compact {
+  padding: 1rem;
+  max-width: 90vw;
+}
+
+.modal-compact .modal-header {
+  padding: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.modal-compact .modal-body {
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+/* Компактные вкладки */
+.tabs-compact {
+  font-size: 0.75rem;
+}
+
+.tabs-compact .tab {
+  padding: 0.375rem 0.75rem;
+}
+
+/* Компактные уведомления */
+.notification-compact {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+}
+
+/* Компактные индикаторы прогресса */
+.progress-compact {
+  height: 0.375rem;
+}
+
+/* Компактные бейджи */
+.badge-compact {
+  padding: 0.125rem 0.375rem;
+  font-size: 0.6875rem;
+  border-radius: 0.25rem;
+}
+
+/* Компактные тултипы */
+.tooltip-compact {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  border-radius: 0.25rem;
+}
+
+/* === УЛЬТРА-КОМПАКТНЫЕ СТИЛИ ДЛЯ МИНИМАЛЬНОГО РАЗМЕРА === */
+
+/* Ультра-компактные карточки статистики */
+.stat-card-ultra-compact {
+  padding: 0.25rem;
+  min-height: 2.5rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+  transition: all var(--transition-fast);
+}
+
+.stat-card-ultra-compact:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-hover);
+}
+
+/* Ультра-компактные карточки графиков */
+.chart-card-ultra-compact {
+  padding: 0.375rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  transition: all var(--transition-fast);
+  min-height: 12rem;
+}
+
+.chart-card-ultra-compact:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-hover);
+}
+
+.chart-card-ultra-compact .chart-container {
+  height: 10rem;
+}
+
+/* Ультра-компактная сетка для карточек */
+.grid-ultra-compact {
+  gap: 0.375rem;
+}
+
+/* Ультра-компактные размеры шрифтов */
+.text-ultra-compact {
+  font-size: 0.625rem;
+  line-height: 1.1;
+}
+
+.heading-ultra-compact {
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  font-weight: 600;
+}

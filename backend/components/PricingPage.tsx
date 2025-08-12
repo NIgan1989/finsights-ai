@@ -70,8 +70,8 @@ const PricingPage: React.FC = () => {
     
     if (plan === 'PRO') {
       if (!token) {
-        console.log('[PricingPage] No token, redirecting to Google auth...');
-        window.location.href = 'http://localhost:3001/auth/google';
+        console.log('[PricingPage] No token, redirecting to login...');
+        window.location.href = '/';
       } else if (status !== 'pro') {
         console.log('[PricingPage] User has token but not PRO, showing alert...');
         // В будущем: переход к оплате
@@ -81,7 +81,7 @@ const PricingPage: React.FC = () => {
       }
     } else {
       console.log('[PricingPage] Free plan selected');
-      const targetUrl = token ? '/dashboard' : 'http://localhost:3001/auth/google';
+      const targetUrl = token ? '/dashboard' : '/';
       console.log('[PricingPage] Redirecting to:', targetUrl);
       window.location.href = targetUrl;
     }
@@ -163,7 +163,7 @@ const PricingPage: React.FC = () => {
               <ul className="space-y-4 mb-8">
                 {plan.features.map((feature, featureIndex) => (
                   <li key={featureIndex} className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shrink-0">
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -275,4 +275,4 @@ const PricingPage: React.FC = () => {
   );
 };
 
-export default PricingPage; 
+export default PricingPage;

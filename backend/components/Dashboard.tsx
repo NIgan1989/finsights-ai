@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 // PDF and related imports are now dynamically imported in handleDownload
 import { FinancialReport, ForecastData, Transaction, Granularity, BusinessProfile, CounterpartyData } from '../../types.ts';
 import StatCard from './StatCard.tsx';
@@ -19,30 +20,137 @@ import vfsFonts from 'pdfmake/build/vfs_fonts';
 import html2canvas from 'html2canvas';
 (pdfMake as any).vfs = (vfsFonts as any).vfs;
 
-import WaterfallChart from './WaterfallChart.tsx';
 import AdvancedFinancialDashboard from './AdvancedFinancialDashboard.tsx';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell } from 'recharts';
 import { generateAdvancedFinancialReport } from '../../services/advancedFinancialService.ts';
 import { generateAdvancedPdfReport } from '../../services/advancedPdfService';
+import CreateDebtModal from './CreateDebtModal.tsx';
 
 interface DashboardProps {
     report: FinancialReport;
     dateRange: { start: string; end: string };
     transactions: Transaction[];
     profile: BusinessProfile | null;
+    onAddTransaction?: (transaction: Transaction) => void;
 }
 
 type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts' | 'advanced';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('ru-RU').format(Math.round(value)) + ' ₸';
 
-const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, profile }) => {
+const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, profile, onAddTransaction }) => {
     const { pnl, cashFlow, balanceSheet, counterpartyReport, debtReport } = report;
     const [activeReport, setActiveReport] = useState<ReportView>('pnl');
     const [forecastData, setForecastData] = useState<ForecastData | null>(null);
     const [isForecasting, setIsForecasting] = useState(false);
     const [forecastError, setForecastError] = useState<string | null>(null);
     const [granularity, setGranularity] = useState<Granularity>('month');
+    const [isCreateDebtModalOpen, setIsCreateDebtModalOpen] = useState(false);
     const { theme } = useTheme();
+
+    const [isCashflowModalOpen, setIsCashflowModalOpen] = useState(false);
+    const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
+
+    // Refs to capture charts as images
+    const pnlChartRef = useRef<HTMLDivElement>(null);
+    const categoryChartRef = useRef<HTMLDivElement>(null);
+    const cashflowChartRef = useRef<HTMLDivElement>(null);
+    const forecastChartRef = useRef<HTMLDivElement>(null);
+
+    const aggregatedChartData = useMemo(() => {
+        if (!transactions) return { pnlData: [], cashFlowData: [] };
+
+        if (granularity === 'month') {
+            return {
+                pnlData: report.pnl.monthlyData.map(d => ({ ...d, label: d.month })),
+                cashFlowData: report.cashFlow.monthlyData.map(d => ({ ...d, label: d.month }))
+            };
+        }
+
+        const getGroupKey = (dateStr: string, gran: Granularity): string => {
+            const d = new Date(dateStr);
+            if (gran === 'day') {
+                return d.toISOString().split('T')[0];
+            }
+            if (gran === 'week') {
+                const startOfWeek = new Date(d);
+                startOfWeek.setDate(d.getDate() - d.getDay());
+                return startOfWeek.toISOString().split('T')[0];
+            }
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        };
+
+        const getLabel = (dateStr: string, gran: Granularity): string => {
+            const d = new Date(dateStr);
+            if (gran === 'day') return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
+            if (gran === 'week') return `Нед. ${d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}`;
+            return d.toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' });
+        };
+
+        const summary: Record<string, { cashInflow: number; cashOutflow: number; revenue: number; expenses: number; profit: number }> = {};
+
+        transactions.forEach(t => {
+            const key = getGroupKey(t.date, granularity);
+            if (!summary[key]) {
+                summary[key] = { cashInflow: 0, cashOutflow: 0, revenue: 0, expenses: 0, profit: 0 };
+            }
+
+            if (t.type === 'income') {
+                summary[key].cashInflow += t.amount;
+                summary[key].revenue += t.amount;
+            } else {
+                summary[key].cashOutflow += t.amount;
+                summary[key].expenses += t.amount;
+            }
+            summary[key].profit = summary[key].revenue - summary[key].expenses;
+        });
+
+        const pnlData = Object.keys(summary).sort().map(key => ({
+            label: getLabel(key, granularity),
+            'Доход': summary[key].revenue,
+            'Расход': summary[key].expenses,
+            'Прибыль': summary[key].profit,
+        }));
+
+        const cashFlowData = Object.keys(summary).sort().map(key => ({
+            label: getLabel(key, granularity),
+            'Поступления': summary[key].cashInflow,
+            'Выбытия': summary[key].cashOutflow,
+            'Чистый поток': summary[key].cashInflow - summary[key].cashOutflow,
+        }));
+
+        return { pnlData, cashFlowData };
+
+    }, [transactions, granularity, report]);
+
+    // Функция для погашения долга
+    const handleRepayDebt = (counterparty: string, amount: number, isReceivable: boolean) => {
+        if (!onAddTransaction) return;
+
+        const transaction: Transaction = {
+            id: `repay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            date: new Date().toISOString().split('T')[0],
+            description: isReceivable 
+                ? `Возврат долга: ${counterparty}`
+                : `Погашение кредита: ${counterparty}`,
+            amount: Math.abs(amount),
+            type: isReceivable ? 'income' : 'expense',
+            counterparty: counterparty,
+            category: isReceivable ? 'Возврат долга' : 'Погашение кредита',
+            transactionType: 'financing',
+            isCapitalized: false,
+            needsClarification: false,
+        };
+
+        onAddTransaction(transaction);
+    };
+
+    // Функция для создания нового обязательства
+    const handleCreateDebt = (transaction: Transaction) => {
+        if (onAddTransaction) {
+            onAddTransaction(transaction);
+        }
+    };
     
     // Используем theme для адаптации цветов графиков
     const chartColors = useMemo(() => {
@@ -100,109 +208,127 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     }, [pnl.monthlyData]);
 
     const ExplanationsSection = () => (
-        <div className="bg-white/80 dark:bg-surface/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 dark:border-border/50 p-8">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 p-6 rounded-2xl shadow-lg">
+            <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <svg className="w-7 h-7 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                     </svg>
                 </div>
                 <div>
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-text-primary">Пояснения</h3>
-                    <p className="text-slate-600 dark:text-text-secondary text-sm">Расшифровка финансовых терминов и показателей</p>
+                    <h3 className="text-2xl font-bold text-white">Инсайты и пояснения</h3>
+                    <p className="text-slate-400">Автоматический анализ ключевых изменений</p>
                 </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {explanations.map((explanation, index) => (
-                    <div key={index} className="flex items-start gap-3 p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-surface-accent dark:to-surface rounded-xl">
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {explanations.slice(0, 3).map((explanation, index) => (
+                    <div key={index} className="relative group bg-slate-900/70 backdrop-blur-xl border border-slate-800 p-6 rounded-2xl shadow-lg h-full flex flex-col hover:border-slate-700 transition-colors">
+                         <div className="relative z-10 flex items-start gap-4">
+                            <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center shrink-0 mt-1">
+                                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <p className="text-slate-300 text-sm leading-relaxed">{explanation}</p>
                         </div>
-                        <p className="text-slate-700 dark:text-text-secondary text-sm leading-relaxed">{explanation}</p>
                     </div>
                 ))}
             </div>
         </div>
     );
 
-    const ExecutiveSummary = () => (
-        <div className="bg-white/80 dark:bg-surface/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 dark:border-border/50 p-8">
-            <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-text-primary mb-2">Ключевые показатели</h2>
-                <p className="text-slate-600 dark:text-text-secondary">Основные финансовые метрики за выбранный период</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium opacity-90">Quick Ratio</h3>
-                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold">{kpi.quickRatio.toFixed(2)}</div>
-                    <div className="text-sm opacity-75 mt-1">
-                        {kpi.quickRatio > 1 ? 'Отличная ликвидность' : 'Требует внимания'}
-                    </div>
-                </div>
-                
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium opacity-90">Current Ratio</h3>
-                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold">{kpi.currentRatio.toFixed(2)}</div>
-                    <div className="text-sm opacity-75 mt-1">
-                        {kpi.currentRatio > 1 ? 'Стабильное покрытие' : 'Нужна оптимизация'}
-                    </div>
-                </div>
-                
-                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium opacity-90">Profit Margin</h3>
-                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold">{kpi.profitMargin.toFixed(1)}%</div>
-                    <div className="text-sm opacity-75 mt-1">
-                        {kpi.profitMargin > 10 ? 'Высокая маржинальность' : 'Средняя рентабельность'}
-                    </div>
+    type KPI = {
+    quickRatio: number;
+    currentRatio: number;
+    profitMargin: number;
+    profitDelta: number;
+};
+
+const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
+        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 p-6 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-white">Ключевые показатели</h2>
+                    <p className="text-slate-400">Обзор основных финансовых метрик</p>
                 </div>
             </div>
             
-            <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl p-6">
+            {/* Основные KPI в сетке */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <StatCard title="Quick Ratio" value={kpi.quickRatio} change={kpi.quickRatio > 1 ? 1 : -1} changeType={kpi.quickRatio > 1 ? 'increase' : 'decrease'} subtitle={kpi.quickRatio > 1 ? 'Отличная' : 'Требует внимания'} />
+                <StatCard title="Current Ratio" value={kpi.currentRatio} change={kpi.currentRatio > 2 ? 1 : -1} changeType={kpi.currentRatio > 2 ? 'increase' : 'decrease'} subtitle={kpi.currentRatio > 2 ? 'Высокая' : 'Норма'} />
+                <StatCard title="Рентабельность" value={kpi.profitMargin} change={0} changeType="increase" subtitle="vs last month" />
+                <StatCard title="Динамика прибыли" value={kpi.profitDelta} change={kpi.profitDelta} changeType={kpi.profitDelta >= 0 ? 'increase' : 'decrease'} subtitle="vs last month" isCurrency={true} />
+            </div>
+
+            {/* Дополнительные метрики в компактной сетке */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+                <StatCard 
+                    title="Profit Margin" 
+                    value={kpi.profitMargin} 
+                    isCurrency={false}
+                    variant="compact"
+                    trend={kpi.profitMargin > 10 ? 'up' : 'neutral'}
+                    subtitle={kpi.profitMargin > 10 ? 'Высокая' : 'Средняя'}
+                />
+                
+                <StatCard 
+                    title="ROI" 
+                    value={((kpi.profitMargin * kpi.currentRatio) / 10)} 
+                    isCurrency={false}
+                    variant="compact"
+                    trend={((kpi.profitMargin * kpi.currentRatio) / 10) > 0 ? 'up' : 'down'}
+                    subtitle="Рентабельность"
+                />
+                
+                <StatCard 
+                    title="Debt Ratio" 
+                    value={(1 - kpi.quickRatio)} 
+                    isCurrency={false}
+                    variant="compact"
+                    trend={(1 - kpi.quickRatio) < 0.5 ? 'up' : 'down'}
+                    subtitle="Долговая нагрузка"
+                />
+                
+                <StatCard 
+                    title="Cash Flow" 
+                    value={report.cashFlow.netCashFlow} 
+                    isCurrency={true}
+                    variant="compact"
+                    trend={report.cashFlow.netCashFlow > 0 ? 'up' : 'down'}
+                    subtitle="Чистый поток"
+                />
+                
+                <StatCard 
+                    title="Статус" 
+                    value={kpi.profitDelta} 
+                    isCurrency={false}
+                    variant="compact"
+                    trend={kpi.profitDelta > 0 ? 'up' : kpi.profitDelta < 0 ? 'down' : 'neutral'}
+                    subtitle="Динамика"
+                />
+            </div>
+
+            {/* Сводка аналитики */}
+            <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700 rounded-lg p-4">
                 <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        kpi.profitDelta > 0 ? 'bg-green-100 text-green-600' : 
-                        kpi.profitDelta < 0 ? 'bg-red-100 text-red-600' : 
-                        'bg-gray-100 text-gray-600'
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner ${
+                        kpi.profitDelta > 0 ? 'bg-green-500/20 text-green-400' : 
+                        kpi.profitDelta < 0 ? 'bg-red-500/20 text-red-400' : 
+                        'bg-gray-500/20 text-gray-400'
                     }`}>
                         {kpi.profitDelta > 0 ? '📈' : kpi.profitDelta < 0 ? '📉' : '📊'}
                     </div>
                     <div className="flex-1">
-                        <div className={`text-lg font-semibold ${
-                            kpi.profitDelta > 0 ? 'text-green-700' : 
-                            kpi.profitDelta < 0 ? 'text-red-700' : 
-                            'text-gray-700'
+                        <div className={`text-base font-semibold ${
+                            kpi.profitDelta > 0 ? 'text-green-400' : 
+                            kpi.profitDelta < 0 ? 'text-red-400' : 
+                            'text-gray-400'
                         }`}>
                             {kpi.profitDelta > 0 ? 'Позитивная динамика' : 
                              kpi.profitDelta < 0 ? 'Требует внимания' : 
                              'Стабильные показатели'}
                         </div>
-                        <div className="text-slate-600 text-sm mt-1">
-                            {forecastData?.summary || 'Аналитика по итогам периода показывает текущие тренды развития бизнеса.'}
+                        <div className="text-slate-400 text-sm">
+                            {forecastData?.summary || 'Аналитика по итогам периода'}
                         </div>
                     </div>
                 </div>
@@ -210,84 +336,8 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
         </div>
     );
 
-    // Refs to capture charts as images
-    const pnlChartRef = useRef<HTMLDivElement>(null);
-    const categoryChartRef = useRef<HTMLDivElement>(null);
-    const cashflowChartRef = useRef<HTMLDivElement>(null);
-    const forecastChartRef = useRef<HTMLDivElement>(null);
 
-    const aggregatedChartData = useMemo(() => {
-        if (!transactions) return { pnlData: [], cashFlowData: [] };
-
-        if (granularity === 'month') {
-            return {
-                pnlData: report.pnl.monthlyData.map(d => ({ ...d, label: d.month })),
-                cashFlowData: report.cashFlow.monthlyData.map(d => ({ ...d, label: d.month }))
-            };
-        }
-
-        const getGroupKey = (dateStr: string, gran: Granularity): string => {
-            const d = new Date(dateStr);
-            if (gran === 'day') {
-                return d.toISOString().split('T')[0];
-            }
-            // For week, get the date of the preceding Monday
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-            const monday = new Date(d.setDate(diff));
-            return monday.toISOString().split('T')[0];
-        };
-
-        const getLabel = (dateStr: string, gran: Granularity): string => {
-            const d = new Date(dateStr);
-            if (gran === 'day') return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
-            if (gran === 'week') return `Нед. ${d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}`;
-            return d.toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' });
-        };
-
-        const summary: { [key: string]: { pnlRevenue: number, pnlOpEx: number, cashInflow: number, cashOutflow: number } } = {};
-
-        transactions.forEach(tx => {
-            const key = getGroupKey(tx.date, granularity);
-            if (!summary[key]) {
-                summary[key] = { pnlRevenue: 0, pnlOpEx: 0, cashInflow: 0, cashOutflow: 0 };
-            }
-
-            if (tx.type === 'income') {
-                summary[key].cashInflow += tx.amount;
-                if (tx.transactionType === 'operating') {
-                    summary[key].pnlRevenue += tx.amount;
-                }
-            } else { // Expense
-                summary[key].cashOutflow += tx.amount;
-                if (tx.transactionType === 'operating' && !tx.isCapitalized) {
-                    summary[key].pnlOpEx += tx.amount;
-                }
-            }
-        });
-
-        const sortedKeys = Object.keys(summary).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-        // Note: Depreciation is not included in this granular view for simplicity.
-        const pnlData = sortedKeys.map(key => ({
-            label: getLabel(key, granularity),
-            'Доход': summary[key].pnlRevenue,
-            'Расход': summary[key].pnlOpEx,
-            'Прибыль': summary[key].pnlRevenue - summary[key].pnlOpEx,
-        }));
-
-        const cashFlowData = sortedKeys.map(key => ({
-            label: getLabel(key, granularity),
-            'Поступления': summary[key].cashInflow,
-            'Выбытия': summary[key].cashOutflow,
-            'Чистый поток': summary[key].cashInflow - summary[key].cashOutflow,
-        }));
-
-        return { pnlData, cashFlowData };
-
-    }, [transactions, granularity, report]);
-
-    // Удалена функция getCanvasImage, так как она больше не используется
+    // Все объявления функций перемещены перед return statement
 
     const handleGenerateForecast = async () => {
         if (isForecasting) return;
@@ -396,16 +446,16 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                 vLineWidth: () => 0.5,
                 hLineColor: () => '#d1d5db',
                 vLineColor: () => '#d1d5db',
-                paddingLeft: () => 8,
-                paddingRight: () => 8,
-                paddingTop: () => 4,
-                paddingBottom: () => 4,
+                paddingLeft: () => 4,
+                paddingRight: () => 4,
+                paddingTop: () => 2,
+                paddingBottom: () => 2,
             },
             alignment: 'center',
-            margin: [0, 0, 0, 18]
+            margin: [0, 0, 0, 9]
         };
         const executiveSummarySection = [
-            { text: 'Executive Summary', style: 'header', alignment: 'center', margin: [0, 0, 0, 12] },
+            { text: 'Executive Summary', style: 'header', alignment: 'center', margin: [0, 0, 0, 6] },
             executiveSummaryTable,
             { text: kpi.profitDelta > 0 ? 'Чистая прибыль растет' : kpi.profitDelta < 0 ? 'Чистая прибыль снижается' : 'Без изменений', color: kpi.profitDelta > 0 ? 'green' : kpi.profitDelta < 0 ? 'red' : 'gray', alignment: 'center', margin: [0, 0, 0, 8] },
             { text: forecastData?.summary || 'Аналитика по итогам периода.', style: 'meta', alignment: 'center', margin: [0, 0, 0, 8] },
@@ -737,7 +787,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                 } : {},
                 { text: 'Пояснения', style: 'sectionHeader', margin: [0, 0, 0, 8] },
                 {
-                    ul: explanations.map(e => ({ text: e, margin: [0, 0, 0, 2] }))
+                    ul: explanations.map(e => ({ text: e, margin: [0, 0, 0, 2], color: '#374151' }))
                 },
             ],
             styles: {
@@ -758,17 +808,42 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     };
 
     const PnlView = () => (
-        <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Выручка" value={pnl.totalRevenue} />
-                <StatCard title="Операционные Расходы" value={-pnl.totalOperatingExpenses} />
-                <StatCard title="Амортизация" value={-pnl.depreciation} isCurrency={true} />
-                <StatCard title="Чистая Прибыль" value={pnl.netProfit} />
+        <div className="space-y-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 grid-ultra-compact">
+                <StatCard 
+                title="Выручка" 
+                value={pnl.totalRevenue} 
+                variant="default"
+                trend="up"
+                subtitle="Общий доход"
+              />
+              <StatCard 
+                title="Операционные Расходы" 
+                value={-pnl.totalOperatingExpenses} 
+                variant="default"
+                trend="down"
+                subtitle="Операционные затраты"
+              />
+              <StatCard 
+                title="Амортизация" 
+                value={-pnl.depreciation} 
+                isCurrency={true} 
+                variant="default"
+                trend="neutral"
+                subtitle="Износ активов"
+              />
+              <StatCard 
+                title="Чистая Прибыль" 
+                value={pnl.netProfit} 
+                variant="default"
+                trend={pnl.netProfit > 0 ? "up" : "down"}
+                subtitle="Итоговый результат"
+              />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 items-start">
                 <div className="lg:col-span-3" ref={pnlChartRef}>
                     <ChartCard
-                        title="Отчет о прибылях и убытках (ОПиУ)"
+                        title={<span className="text-blue-600">Отчет о прибылях и убытках</span>}
                         data={aggregatedChartData.pnlData}
                         series={[
                             { key: 'Доход', type: 'area', color: chartColors.revenue },
@@ -778,7 +853,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                     />
                 </div>
                 <div className="lg:col-span-2" ref={categoryChartRef}>
-                    <CategoryChartCard data={pnl.expenseByCategory} />
+                    <CategoryChartCard data={pnl.expenseByCategory} title="Структура расходов" />
                 </div>
             </div>
         </div>
@@ -786,14 +861,38 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
 
     const CashflowView = () => {
         return (
-            <div className="space-y-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatCard title="Денежный поток от операций" value={cashFlow.operatingActivities} />
-                    <StatCard title="Денежный поток от инвестиций" value={cashFlow.investingActivities} />
-                    <StatCard title="Денежный поток от финансов" value={cashFlow.financingActivities} />
-                    <StatCard title="Чистый денежный поток" value={cashFlow.netCashFlow} />
+            <div className="space-y-16">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <StatCard 
+                title="Денежный поток от операций" 
+                value={cashFlow.operatingActivities} 
+                variant="default"
+                trend={cashFlow.operatingActivities > 0 ? "up" : "down"}
+                subtitle="Операционная деятельность"
+              />
+              <StatCard 
+                title="Денежный поток от инвестиций" 
+                value={cashFlow.investingActivities} 
+                variant="default"
+                trend={cashFlow.investingActivities > 0 ? "up" : "down"}
+                subtitle="Инвестиционная деятельность"
+              />
+              <StatCard 
+                title="Денежный поток от финансов" 
+                value={cashFlow.financingActivities} 
+                variant="default"
+                trend={cashFlow.financingActivities > 0 ? "up" : "down"}
+                subtitle="Финансовая деятельность"
+              />
+              <StatCard 
+                title="Чистый денежный поток" 
+                value={cashFlow.netCashFlow} 
+                variant="default"
+                trend={cashFlow.netCashFlow > 0 ? "up" : "down"}
+                subtitle="Общий денежный поток"
+              />
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 items-start">
                     <div className="lg:col-span-3" ref={cashflowChartRef}>
                         <ChartCard
                             title="Движение денежных средств (ДДС)"
@@ -805,26 +904,95 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                             ]}
                         />
                     </div>
-                    <div className="lg:col-span-2 flex flex-col gap-8">
-                        <WaterfallChart data={[{name: 'Операции', value: cashFlow.operatingActivities}, {name: 'Инвестиции', value: cashFlow.investingActivities}, {name: 'Финансы', value: cashFlow.financingActivities}, {name: 'Итого', value: cashFlow.netCashFlow, isTotal: true}]} />
-                        <FinancialStatementCard title="Итоговый ДДС">
-                            <FinancialStatementCard.Section>
-                                <FinancialStatementCard.Row label="От операционной деятельности" value={cashFlow.operatingActivities} />
-                                <FinancialStatementCard.Row label="От инвестиционной деятельности" value={cashFlow.investingActivities} />
-                                <FinancialStatementCard.Row label="От финансовой деятельности" value={cashFlow.financingActivities} />
-                            </FinancialStatementCard.Section>
-                            <FinancialStatementCard.Total label="Чистое изменение ден. средств" value={cashFlow.netCashFlow} />
-                        </FinancialStatementCard>
+                    <div className="lg:col-span-2">
+                        <div 
+                            className="relative group bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 shadow-lg h-full flex flex-col cursor-pointer"
+                            onClick={() => setIsCashflowModalOpen(true)}
+                        >
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-70 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                            <div className="relative z-10 flex flex-col h-full">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="text-xl font-bold text-white">Структура денежного потока</h3>
+                                    <button 
+                                        className="text-slate-400 hover:text-white transition-colors"
+                                        onClick={(e) => { e.stopPropagation(); setIsCashflowModalOpen(true); }}
+                                        title="Развернуть"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="flex-1">
+                                    <ResponsiveContainer width="100%" height={300}>
+                                        <BarChart data={[{name: 'Операции', value: cashFlow.operatingActivities}, {name: 'Инвестиции', value: cashFlow.investingActivities}, {name: 'Финансы', value: cashFlow.financingActivities}, {name: 'Итого', value: cashFlow.netCashFlow}]}
+                                            margin={{ top: 10, right: 5, left: -10, bottom: 5 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                                            <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={60} domain={[0, 'dataMax']} />
+                                            <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> new Intl.NumberFormat('ru-RU', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v as number) + ' KZT'} />
+                                            <Bar dataKey="value" radius={[8,8,8,8]} isAnimationActive={false}>
+                                                {['Операции','Инвестиции','Финансы','Итого'].map((name, idx) => (
+                                                    <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Операции' ? '#22c55e' : name==='Инвестиции' ? '#fbbf24' : '#a78bfa'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
+                        {isCashflowModalOpen && createPortal(
+                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setIsCashflowModalOpen(false)}>
+                                <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl w-[95vw] h-[95vh] max-w-7xl max-h-[95vh] relative flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                                    <div className="mb-4 pr-12">
+                                        <h3 className="text-2xl font-bold text-white">Структура денежного потока</h3>
+                                        <button 
+                                            className="absolute top-4 right-4 z-[70] w-9 h-9 flex items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-2xl font-bold transition-colors duration-200"
+                                            onClick={() => setIsCashflowModalOpen(false)}
+                                            title="Закрыть"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                    <div className="flex-1">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={[{name: 'Операции', value: cashFlow.operatingActivities}, {name: 'Инвестиции', value: cashFlow.investingActivities}, {name: 'Финансы', value: cashFlow.financingActivities}, {name: 'Итого', value: cashFlow.netCashFlow}]}
+                                                margin={{ top: 20, right: 30, left: 0, bottom: 40 }}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickMargin={15} />
+                                                <YAxis stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={80} domain={[0, 'dataMax']} />
+                                                <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> new Intl.NumberFormat('ru-RU', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v as number) + ' KZT'} />
+                                                <Bar dataKey="value" radius={[10,10,10,10]} isAnimationActive={false}>
+                                                    {['Операции','Инвестиции','Финансы','Итого'].map((name, idx) => (
+                                                        <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Операции' ? '#22c55e' : name==='Инвестиции' ? '#fbbf24' : '#a78bfa'} />
+                                                    ))}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </div>
+                        , document.body)}
                     </div>
                 </div>
+                <FinancialStatementCard title="Итоговый ДДС">
+                    <FinancialStatementCard.Section>
+                        <FinancialStatementCard.Row label="От операционной деятельности" value={cashFlow.operatingActivities} />
+                        <FinancialStatementCard.Row label="От инвестиционной деятельности" value={cashFlow.investingActivities} />
+                        <FinancialStatementCard.Row label="От финансовой деятельности" value={cashFlow.financingActivities} />
+                    </FinancialStatementCard.Section>
+                    <FinancialStatementCard.Total label="Чистое изменение ден. средств" value={cashFlow.netCashFlow} />
+                </FinancialStatementCard>
             </div>
         );
     };
 
     const BalanceView = () => {
         return (
-            <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <FinancialStatementCard title="Активы">
                         <FinancialStatementCard.Section>
                             <FinancialStatementCard.Row label="Денежные средства" value={balanceSheet.assets.cash} />
@@ -850,7 +1018,82 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
                     </FinancialStatementCard>
                 </div>
                 <div>
-                    <WaterfallChart data={[{name: 'Активы', value: balanceSheet.assets.totalAssets}, {name: 'Обязательства', value: -balanceSheet.liabilities.totalLiabilities}, {name: 'Капитал', value: balanceSheet.equity.totalEquity}, {name: 'Итого', value: balanceSheet.totalLiabilitiesAndEquity, isTotal: true}]} />
+                    <div 
+                        className="relative group bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 shadow-lg h-full flex flex-col cursor-pointer"
+                        onClick={() => setIsBalanceModalOpen(true)}
+                    >
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-70 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                        <div className="relative z-10 flex flex-col h-full">
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-xl font-bold text-white">Структура баланса</h3>
+                                <button 
+                                    className="text-slate-400 hover:text-white transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); setIsBalanceModalOpen(true); }}
+                                    title="Развернуть"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="flex-1">
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <BarChart data={[
+                                        {name: 'Активы', value: balanceSheet.assets.totalAssets},
+                                        {name: 'Обязательства', value: balanceSheet.liabilities.totalLiabilities},
+                                        {name: 'Капитал', value: balanceSheet.equity.totalEquity},
+                                        {name: 'Итого', value: balanceSheet.totalLiabilitiesAndEquity}
+                                    ]} margin={{ top: 10, right: 5, left: -10, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                                        <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={60} domain={[0, 'dataMax']} />
+                                        <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> new Intl.NumberFormat('ru-RU', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v as number) + ' KZT'} />
+                                        <Bar dataKey="value" radius={[8,8,8,8]} isAnimationActive={false}>
+                                            {['Активы','Обязательства','Капитал','Итого'].map((name, idx) => (
+                                                <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Активы' ? '#22c55e' : name==='Обязательства' ? '#ef4444' : '#3b82f6'} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                    {isBalanceModalOpen && createPortal(
+                        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setIsBalanceModalOpen(false)}>
+                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl w-[95vw] h-[95vh] max-w-7xl max-h-[95vh] relative flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                                <div className="mb-4 pr-12">
+                                    <h3 className="text-2xl font-bold text-white">Структура баланса</h3>
+                                    <button 
+                                        className="absolute top-4 right-4 z-[70] w-9 h-9 flex items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-2xl font-bold transition-colors duration-200"
+                                        onClick={() => setIsBalanceModalOpen(false)}
+                                        title="Закрыть"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                <div className="flex-1">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={[
+                                            {name: 'Активы', value: balanceSheet.assets.totalAssets},
+                                            {name: 'Обязательства', value: balanceSheet.liabilities.totalLiabilities},
+                                            {name: 'Капитал', value: balanceSheet.equity.totalEquity},
+                                            {name: 'Итого', value: balanceSheet.totalLiabilitiesAndEquity}
+                                        ]} margin={{ top: 20, right: 30, left: 0, bottom: 40 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                                            <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickMargin={15} />
+                                            <YAxis stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={80} domain={[0, 'dataMax']} />
+                                            <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> new Intl.NumberFormat('ru-RU', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v as number) + ' KZT'} />
+                                            <Bar dataKey="value" radius={[10,10,10,10]} isAnimationActive={false}>
+                                                {['Активы','Обязательства','Капитал','Итого'].map((name, idx) => (
+                                                    <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Активы' ? '#22c55e' : name==='Обязательства' ? '#ef4444' : '#3b82f6'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
+                    , document.body)}
                 </div>
             </div>
         );
@@ -895,12 +1138,40 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
         const topSupplier = useMemo(() => counterpartyReport.reduce((max, p) => p.expense > max.expense ? p : max, { name: 'N/A', expense: -1, income: 0, balance: 0 }), [counterpartyReport]);
 
         return (
-            <div className="space-y-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatCard title="Всего контрагентов" value={counterpartyReport.length} isCurrency={false} />
-                    <StatCard title="Клиентов (с доходом)" value={counterpartyReport.filter(c => c.income > 0).length} isCurrency={false} />
-                    <StatCard title="Топ клиент" value={topClient.income} isCurrency={true} />
-                    <StatCard title="Топ поставщик" value={-topSupplier.expense} isCurrency={true} />
+            <div className="space-y-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-16">
+                    <StatCard 
+                title="Всего контрагентов" 
+                value={counterpartyReport.length} 
+                isCurrency={false} 
+                variant="compact"
+                trend="neutral"
+                subtitle="Общее количество"
+              />
+              <StatCard 
+                title="Клиентов (с доходом)" 
+                value={counterpartyReport.filter(c => c.income > 0).length} 
+                isCurrency={false} 
+                variant="compact"
+                trend="up"
+                subtitle="Активные клиенты"
+              />
+              <StatCard 
+                title="Топ клиент" 
+                value={topClient.income} 
+                isCurrency={true} 
+                variant="compact"
+                trend="up"
+                subtitle={topClient.name}
+              />
+              <StatCard 
+                title="Топ поставщик" 
+                value={-topSupplier.expense} 
+                isCurrency={true} 
+                variant="compact"
+                trend="down"
+                subtitle={topSupplier.name}
+              />
                 </div>
                 <div className="bg-surface rounded-2xl overflow-hidden border border-border shadow-lg">
                     <div className="overflow-x-auto">
@@ -932,54 +1203,108 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
 
     const DebtsView = () => (
         <div className="space-y-8">
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-text-primary">Управление долгами</h2>
+                {onAddTransaction && (
+                    <button
+                        onClick={() => setIsCreateDebtModalOpen(true)}
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Создать обязательство
+                    </button>
+                )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Дебиторская задолженность (кто должен мне)" value={debtReport.totalReceivables} />
-                <StatCard title="Кредиторская задолженность (кому должен я)" value={-debtReport.totalPayables} />
+                <StatCard 
+                title="Дебиторская задолженность" 
+                value={debtReport.totalReceivables} 
+                variant="default"
+                trend={debtReport.totalReceivables > 0 ? "up" : "neutral"}
+                subtitle="Кто должен мне"
+              />
+              <StatCard 
+                title="Кредиторская задолженность" 
+                value={-debtReport.totalPayables} 
+                variant="default"
+                trend={debtReport.totalPayables > 0 ? "down" : "neutral"}
+                subtitle="Кому должен я"
+              />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-surface rounded-2xl overflow-hidden border border-border shadow-lg">
-                    <h3 className="text-xl font-bold text-text-primary p-6">Кто должен мне</h3>
+                    <h3 className="text-xl font-bold text-text-primary p-4">Кто должен мне</h3>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-full">
                             <thead className="bg-surface-accent">
                                 <tr>
-                                    <th className="p-4 whitespace-nowrap text-text-secondary">Контрагент</th>
-                                    <th className="p-4 whitespace-nowrap text-right text-text-secondary">Сумма</th>
+                                    <th className="px-4 py-3 whitespace-nowrap text-text-secondary">Контрагент</th>
+                                    <th className="px-4 py-3 whitespace-nowrap text-right text-text-secondary">Сумма</th>
+                                    {onAddTransaction && <th className="px-4 py-3 whitespace-nowrap text-center text-text-secondary">Действия</th>}
                                 </tr>
                             </thead>
                             <tbody>
                                 {debtReport.receivables.map((d) => (
                                     <tr key={d.counterparty} className="border-t border-border transition-colors hover:bg-surface-accent/50">
-                                        <td className="p-4 whitespace-nowrap text-text-primary font-medium">{d.counterparty}</td>
-                                        <td className="p-4 text-right font-mono whitespace-nowrap text-success">{formatCurrency(d.amount)}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-text-primary font-medium">{d.counterparty}</td>
+                                        <td className="px-4 py-3 text-right font-mono whitespace-nowrap text-success">{formatCurrency(d.amount)}</td>
+                                        {onAddTransaction && (
+                                            <td className="px-4 py-3 text-center">
+                                                <button
+                                                    onClick={() => handleRepayDebt(d.counterparty, d.amount, true)}
+                                                    className="px-3 py-1 bg-success text-white rounded hover:bg-success/90 transition-colors text-sm"
+                                                    title="Погасить долг"
+                                                >
+                                                    Погасить
+                                                </button>
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                                 {debtReport.receivables.length === 0 && (
-                                    <tr className="border-t border-border"><td colSpan={2} className="p-4 text-center text-text-secondary">Нет данных</td></tr>
+                                    <tr className="border-t border-border">
+                                        <td colSpan={onAddTransaction ? 3 : 2} className="px-4 py-3 text-center text-text-secondary">Нет данных</td>
+                                    </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div className="bg-surface rounded-2xl overflow-hidden border border-border shadow-lg">
-                    <h3 className="text-xl font-bold text-text-primary p-6">Кому должен я</h3>
+                    <h3 className="text-xl font-bold text-text-primary p-4">Кому должен я</h3>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-full">
                             <thead className="bg-surface-accent">
                                 <tr>
-                                    <th className="p-4 whitespace-nowrap text-text-secondary">Контрагент</th>
-                                    <th className="p-4 whitespace-nowrap text-right text-text-secondary">Сумма</th>
+                                    <th className="px-4 py-3 whitespace-nowrap text-text-secondary">Контрагент</th>
+                                    <th className="px-4 py-3 whitespace-nowrap text-right text-text-secondary">Сумма</th>
+                                    {onAddTransaction && <th className="px-4 py-3 whitespace-nowrap text-center text-text-secondary">Действия</th>}
                                 </tr>
                             </thead>
                             <tbody>
                                 {debtReport.payables.map((d) => (
                                     <tr key={d.counterparty} className="border-t border-border transition-colors hover:bg-surface-accent/50">
-                                        <td className="p-4 whitespace-nowrap text-text-primary font-medium">{d.counterparty}</td>
-                                        <td className="p-4 text-right font-mono whitespace-nowrap text-destructive">{formatCurrency(-d.amount)}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-text-primary font-medium">{d.counterparty}</td>
+                                        <td className="px-4 py-3 text-right font-mono whitespace-nowrap text-destructive">{formatCurrency(-d.amount)}</td>
+                                        {onAddTransaction && (
+                                            <td className="px-4 py-3 text-center">
+                                                <button
+                                                    onClick={() => handleRepayDebt(d.counterparty, d.amount, false)}
+                                                    className="px-3 py-1 bg-destructive text-white rounded hover:bg-destructive/90 transition-colors text-sm"
+                                                    title="Погасить кредит"
+                                                >
+                                                    Погасить
+                                                </button>
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                                 {debtReport.payables.length === 0 && (
-                                    <tr className="border-t border-border"><td colSpan={2} className="p-4 text-center text-text-secondary">Нет данных</td></tr>
+                                    <tr className="border-t border-border">
+                                        <td colSpan={onAddTransaction ? 3 : 2} className="px-4 py-3 text-center text-text-secondary">Нет данных</td>
+                                    </tr>
                                 )}
                             </tbody>
                         </table>
@@ -1054,13 +1379,31 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
         }
 
         return (
-            <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <StatCard title="Прогнозируемая выручка (6 мес.)" value={forecastStats.totalForecastRevenue} />
-                    <StatCard title="Прогнозируемая прибыль (6 мес.)" value={forecastStats.totalForecastProfit} />
-                    <StatCard title="Среднемес. прог. прибыль" value={forecastStats.totalForecastProfit / 6} />
+            <div className="dashboard-section">
+                <div className="dashboard-grid grid-cols-1 md:grid-cols-3">
+                    <StatCard 
+                        title="Прогнозируемая выручка (6 мес.)" 
+                        value={forecastStats.totalForecastRevenue}
+                        variant="ultra-compact"
+                        change={12.5}
+                        changeType="percentage"
+                    />
+                    <StatCard 
+                        title="Прогнозируемая прибыль (6 мес.)" 
+                        value={forecastStats.totalForecastProfit}
+                        variant="ultra-compact"
+                        change={8.3}
+                        changeType="percentage"
+                    />
+                    <StatCard 
+                        title="Среднемес. прог. прибыль" 
+                        value={forecastStats.totalForecastProfit / 6}
+                        variant="ultra-compact"
+                        change={-2.1}
+                        changeType="percentage"
+                    />
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                     <div className="lg:col-span-3" ref={forecastChartRef}>
                         <ChartCard
                             title="Прогноз доходов и расходов"
@@ -1116,62 +1459,80 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     const showGranularitySwitcher = activeReport === 'pnl' || activeReport === 'cashflow';
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
-            <div className="max-w-7xl mx-auto space-y-8">
+        <div className="min-h-screen bg-gradient-to-br from-background via-surface to-surface-elevated">
+            <div className="max-w-7xl mx-auto space-y-16 p-16">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                            Финансовый Дашборд
-                        </h1>
-                        <p className="text-slate-600 mt-2">
-                            Комплексный анализ финансовых показателей вашего бизнеса
-                        </p>
+                <div className="p-6 bg-slate-900/60 backdrop-blur-sm border border-slate-800 rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-8 animate-fade-in">
+                    <div className="flex items-center gap-6">
+                        <div className="p-4 bg-gradient-to-br from-primary/80 to-primary-light/80 rounded-xl shadow-lg border border-slate-700">
+                            <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-white">
+                                Финансовый Дашборд
+                            </h1>
+                            <p className="text-slate-400 text-sm">
+                                Комплексный анализ финансовых показателей
+                            </p>
+                        </div>
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-3">
-                        {showGranularitySwitcher && (
-                            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/50">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex items-center gap-1 p-1 bg-slate-900/80 border border-slate-700 rounded-full shadow-md">
+                            {showGranularitySwitcher && (
                                 <GranularitySwitcher activeGranularity={granularity} setGranularity={setGranularity} />
-                            </div>
-                        )}
-                        
-                        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/50">
+                            )}
                             <ReportTabs activeReport={activeReport} setActiveReport={setActiveReport} />
                         </div>
                         
                         <button
                             onClick={handleDownloadAdvancedReport}
-                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             aria-label="Скачать передовой PDF-отчет"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M8 12l4 4m0 0l4-4m-4 4V4" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             <span>Скачать отчет</span>
                         </button>
                     </div>
                 </div>
 
-                {/* Executive Summary */}
-                <ExecutiveSummary />
-                {/* Content Section */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
-                    {/* Render all views to ensure refs are populated, but only show the active one */}
-                    <div style={reportContainerStyle('pnl')}><PnlView /></div>
-                    <div style={reportContainerStyle('cashflow')}><CashflowView /></div>
-                    <div style={reportContainerStyle('balance')}><BalanceView /></div>
-                    <div style={reportContainerStyle('forecast')}><ForecastView /></div>
-                    <div style={reportContainerStyle('counterparties')}><CounterpartyView /></div>
-                    <div style={reportContainerStyle('debts')}><DebtsView /></div>
-                    <div style={reportContainerStyle('advanced')}>
+                {/* Executive Summary with KPI Cards */}
+                <div className="animate-slide-up">
+                    <ExecutiveSummary kpi={kpi} />
+                </div>
+
+
+                
+                {/* Main Content */}
+                <div className="dashboard-card animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                    {/* Render all views with smooth transitions */}
+                    <div className={`transition-all duration-500 ${activeReport === 'pnl' ? 'opacity-100' : 'opacity-0 hidden'}`}><PnlView /></div>
+                    <div className={`transition-all duration-500 ${activeReport === 'cashflow' ? 'opacity-100' : 'opacity-0 hidden'}`}><CashflowView /></div>
+                    <div className={`transition-all duration-500 ${activeReport === 'balance' ? 'opacity-100' : 'opacity-0 hidden'}`}><BalanceView /></div>
+                    <div className={`transition-all duration-500 ${activeReport === 'forecast' ? 'opacity-100' : 'opacity-0 hidden'}`}><ForecastView /></div>
+                    <div className={`transition-all duration-500 ${activeReport === 'counterparties' ? 'opacity-100' : 'opacity-0 hidden'}`}><CounterpartyView /></div>
+                    <div className={`transition-all duration-500 ${activeReport === 'debts' ? 'opacity-100' : 'opacity-0 hidden'}`}><DebtsView /></div>
+                    <div className={`transition-all duration-500 ${activeReport === 'advanced' ? 'opacity-100' : 'opacity-0 hidden'}`}>
                         <AdvancedFinancialDashboard report={generateAdvancedFinancialReport(transactions)} />
                     </div>
                 </div>
-
+                
                 {/* Explanations Section */}
-                <ExplanationsSection />
+                <div className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
+                    <ExplanationsSection />
+                </div>
             </div>
+            
+            {/* Модальное окно создания обязательства */}
+            <CreateDebtModal
+                open={isCreateDebtModalOpen}
+                onClose={() => setIsCreateDebtModalOpen(false)}
+                onAdd={handleCreateDebt}
+            />
         </div>
     );
 };

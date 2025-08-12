@@ -24,18 +24,11 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Проверяем сохраненную тему в localStorage
     const savedTheme = localStorage.getItem('theme') as Theme;
     if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
       return savedTheme;
     }
-    
-    // Проверяем системную тему
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    
-    return 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
   const setTheme = (newTheme: Theme) => {
@@ -49,22 +42,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement;
-    
-    // Удаляем старые классы
-    root.classList.remove('light', 'dark');
-    
-    // Добавляем новый класс
-    root.classList.add(theme);
-    
-    // Устанавливаем атрибут data-theme для CSS переменных
+    root.classList.toggle('dark', theme === 'dark');
     root.setAttribute('data-theme', theme);
-    
-    // Обновляем цветовую схему
-    if (theme === 'dark') {
-      root.style.colorScheme = 'dark';
-    } else {
-      root.style.colorScheme = 'light';
-    }
+    root.style.colorScheme = theme;
   }, [theme]);
 
   const value: ThemeContextType = {
@@ -78,4 +58,4 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       {children}
     </ThemeContext.Provider>
   );
-}; 
+};

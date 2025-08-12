@@ -18,6 +18,7 @@ interface EditableCellProps {
   onDragStart?: (row: number, col: number) => void;
   onDragOver?: (row: number, col: number) => void;
   onDrop?: (row: number, col: number) => void;
+  showFormulas?: boolean;
 }
 
 const EditableCell: React.FC<EditableCellProps> = ({
@@ -37,7 +38,8 @@ const EditableCell: React.FC<EditableCellProps> = ({
   isDragging = false,
   onDragStart,
   onDragOver,
-  onDrop
+  onDrop,
+  showFormulas = false
 }) => {
   const [inputValue, setInputValue] = useState(String(value || ''));
   const [isHovered, setIsHovered] = useState(false);
@@ -133,8 +135,102 @@ const EditableCell: React.FC<EditableCellProps> = ({
     }
   };
 
+  // Валидация и форматирование данных перед сохранением
+  const validateAndFormatValue = (value: string): { isValid: boolean; formattedValue: string; errorMessage?: string } => {
+    const trimmedValue = value.trim();
+    
+    // Пустые значения разрешены
+    if (!trimmedValue) {
+      return { isValid: true, formattedValue: '' };
+    }
+    
+    // Формулы должны начинаться с =
+    if (trimmedValue.startsWith('=')) {
+      // Базовая валидация формул
+      const formula = trimmedValue.slice(1);
+      if (!formula) {
+        return { isValid: false, formattedValue: trimmedValue, errorMessage: 'Пустая формула' };
+      }
+      
+      // Проверка на недопустимые символы в формулах
+      const dangerousPatterns = /[;{}\[\]"'`\\]|eval|function|script|alert|document|window/i;
+      if (dangerousPatterns.test(formula)) {
+        return { isValid: false, formattedValue: trimmedValue, errorMessage: 'Недопустимые символы в формуле' };
+      }
+      
+      return { isValid: true, formattedValue: trimmedValue };
+    }
+    
+    // Проверка числовых значений
+    const numericValue = parseFloat(trimmedValue.replace(/[^\d.-]/g, ''));
+    if (!isNaN(numericValue) && colIndex > 0) {
+      // Проверка разумных пределов для финансовых данных
+      const maxValue = 1e12; // 1 триллион
+      const minValue = -1e12;
+      
+      if (numericValue > maxValue || numericValue < minValue) {
+        return { 
+          isValid: false, 
+          formattedValue: trimmedValue, 
+          errorMessage: `Значение должно быть между ${minValue.toLocaleString()} и ${maxValue.toLocaleString()}` 
+        };
+      }
+      
+      // Проверка на специфические типы ячеек
+      const actualCellType = detectCellType();
+      if (actualCellType === 'revenue' && numericValue < 0) {
+        return { 
+          isValid: false, 
+          formattedValue: trimmedValue, 
+          errorMessage: 'Выручка не может быть отрицательной' 
+        };
+      }
+      
+      if (actualCellType === 'expense' && numericValue < 0) {
+        return { 
+          isValid: false, 
+          formattedValue: trimmedValue, 
+          errorMessage: 'Расходы должны быть положительными' 
+        };
+      }
+    }
+    
+    // Проверка текстовых значений
+    if (colIndex === 0 && trimmedValue.length > 100) {
+      return { 
+        isValid: false, 
+        formattedValue: trimmedValue, 
+        errorMessage: 'Название слишком длинное (максимум 100 символов)' 
+      };
+    }
+    
+    // Проверка на недопустимые символы в текстовых полях
+    const invalidChars = /[<>"'&]/;
+    if (invalidChars.test(trimmedValue)) {
+      return { 
+        isValid: false, 
+        formattedValue: trimmedValue, 
+        errorMessage: 'Недопустимые символы: < > " \' &' 
+      };
+    }
+    
+    return { isValid: true, formattedValue: trimmedValue };
+  };
+
   const handleSave = () => {
-    onSave(rowIndex, colIndex, inputValue);
+    const validation = validateAndFormatValue(inputValue);
+    
+    if (!validation.isValid) {
+      // Показываем ошибку пользователю
+      alert(`Ошибка валидации: ${validation.errorMessage}`);
+      // Возвращаем фокус на поле ввода
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+      return;
+    }
+    
+    onSave(rowIndex, colIndex, validation.formattedValue);
   };
 
   const handleBlur = () => {
@@ -148,19 +244,36 @@ const EditableCell: React.FC<EditableCellProps> = ({
     
     const strVal = String(val);
     
-    // Формулы показываем как есть при редактировании
+    // Формулы показываем как есть при редактировании или когда включен показ формул
     if (strVal.startsWith('=')) {
+      if (isEditing || showFormulas) {
+        return strVal;
+      }
+      // Если формула, но не в режиме редактирования - показываем результат
+      // Результат должен приходить уже вычисленным из родительского компонента
+      return strVal; // Возвращаем как есть, вычисления должны происходить выше
+    }
+    
+    // Для заголовков и первой колонки всегда показываем как есть (включая единицы измерения)
+    if (isHeader || colIndex === 0) {
       return strVal;
     }
     
-    // Числовое форматирование
-    const numVal = parseFloat(strVal);
-    if (!isNaN(numVal) && !isHeader && colIndex > 0) {
-      // Проценты
-      if (strVal.includes('%')) {
-        return strVal;
-      }
-      
+    // Если строка содержит единицы измерения, показываем как есть
+    if (strVal.includes('тенге') || strVal.includes('человек') || strVal.includes('шт') || 
+        strVal.includes('часов') || strVal.includes('дней') || strVal.includes('%') ||
+        strVal.includes('мес') || strVal.includes('год')) {
+      return strVal;
+    }
+    
+    // Обработка ошибок формул
+    if (strVal.startsWith('#')) {
+      return strVal;
+    }
+    
+    // Числовое форматирование только для чистых чисел
+    const numVal = parseFloat(strVal.replace(/[^\d.-]/g, ''));
+    if (!isNaN(numVal) && colIndex > 0) {
       // Большие числа с разделителями
       if (Math.abs(numVal) >= 1000) {
         return new Intl.NumberFormat('ru-RU', {
@@ -169,10 +282,12 @@ const EditableCell: React.FC<EditableCellProps> = ({
         }).format(numVal);
       }
       
-      // Обычные числа
+      // Обычные числа с десятичными знаками
       if (numVal % 1 !== 0) {
         return numVal.toFixed(2);
       }
+      
+      return numVal.toString();
     }
     
     return strVal;
@@ -329,4 +444,4 @@ const EditableCell: React.FC<EditableCellProps> = ({
   );
 };
 
-export default EditableCell; 
+export default EditableCell;

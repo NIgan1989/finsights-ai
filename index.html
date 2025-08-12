@@ -105,7 +105,6 @@
     .dark .via-blue-50 { background-image: linear-gradient(to right, hsl(var(--color-surface)), hsl(var(--color-surface-accent))); }
     .dark .to-indigo-50 { background-image: linear-gradient(to right, hsl(var(--color-surface-accent)), hsl(var(--color-surface))); }
   </style>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script type="importmap">
 {
   "imports": {
@@ -123,31 +122,7 @@
   }
 }
 </script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            primary: {
-              DEFAULT: 'hsl(var(--color-primary))',
-              hover: 'hsl(var(--color-primary-hover))',
-              foreground: 'hsl(var(--color-primary-foreground))',
-            },
-            background: 'hsl(var(--color-background))',
-            surface: 'hsl(var(--color-surface))',
-            'surface-accent': 'hsl(var(--color-surface-accent))',
-            border: 'hsl(var(--color-border))',
-            'text-primary': 'hsl(var(--color-text-primary))',
-            'text-secondary': 'hsl(var(--color-text-secondary))',
-            'text-disabled': 'hsl(var(--color-text-disabled))',
-            destructive: 'hsl(var(--color-destructive))',
-            success: 'hsl(var(--color-success))',
-          }
-        }
-      }
-    }
-  </script>
+
 </head>
 
 <body>

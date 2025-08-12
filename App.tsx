@@ -82,7 +82,19 @@ const AppContent: React.FC = () => {
         return allProfiles.find(p => p.id === activeProfileId) || null;
     }, [allProfiles, activeProfileId]);
 
-
+    // Функция для добавления новой транзакции
+    const handleAddTransaction = useCallback((tx: Transaction) => {
+        console.log('Adding transaction:', tx);
+        const newTransactions = [...(allTransactions || []), tx];
+        setAllTransactions(newTransactions);
+        
+        // Обновляем отчет с новыми данными
+        const newReport = generateFinancialReport(newTransactions);
+        setCurrentReport(newReport);
+        
+        // Сохраняем данные пользователя
+        saveUserData('transactions', newTransactions);
+    }, [allTransactions, saveUserData]);
 
     type AppState = 'upload' | 'processing' | 'dashboard';
 
@@ -393,7 +405,7 @@ const AppContent: React.FC = () => {
                 return (
                     <div className="min-h-screen bg-background text-text-primary">
                         <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={false} onResetData={openUploadModal} />
-                        <main className="lg:ml-72 min-h-screen">
+                        <main className="lg:ml-56 min-h-screen">
                             {activeView === 'profile' && (
                                 <Profile
                                     allProfiles={allProfiles}
@@ -457,7 +469,7 @@ const AppContent: React.FC = () => {
                 return (
                     <div className="min-h-screen bg-background text-text-primary">
                         <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={true} onResetData={openUploadModal} />
-                        <main className="lg:ml-72 min-h-screen">
+                        <main className="lg:ml-56 min-h-screen">
                             {error && (
                                 <div className="m-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
                                     {error}
@@ -472,6 +484,7 @@ const AppContent: React.FC = () => {
                                             report={effectiveReport}
                                             dateRange={effectiveDateRange}
                                             profile={activeProfile}
+                                            onAddTransaction={handleAddTransaction}
                                         />
                                     </Suspense>
                                 ) : (
@@ -523,8 +536,32 @@ const AppContent: React.FC = () => {
                                             console.log('Update transaction:', originalTx, updates, applyToAll);
                                         }}
                                         onAddTransaction={(tx) => {
-                                            // TODO: Implement add transaction logic
-                                            console.log('Add transaction:', tx);
+                                            console.log('Adding transaction:', tx);
+                                            const newTransactions = [...(allTransactions || []), tx];
+                                            setAllTransactions(newTransactions);
+                                            
+                                            // Обновляем отчет с новыми данными
+                                            const newReport = generateFinancialReport(newTransactions);
+                                            setCurrentReport(newReport);
+                                            
+                                            // Сохраняем данные пользователя
+                                            saveUserData('transactions', newTransactions);
+                                        }}
+                                        onDeleteTransaction={(tx) => {
+                                            console.log('Deleting transaction:', tx);
+                                            const newTransactions = (allTransactions || []).filter(t => 
+                                                t.date !== tx.date || 
+                                                t.amount !== tx.amount || 
+                                                t.description !== tx.description
+                                            );
+                                            setAllTransactions(newTransactions);
+                                            
+                                            // Обновляем отчет с новыми данными
+                                            const newReport = generateFinancialReport(newTransactions);
+                                            setCurrentReport(newReport);
+                                            
+                                            // Сохраняем данные пользователя
+                                            saveUserData('transactions', newTransactions);
                                         }}
 
                                     />
@@ -603,13 +640,11 @@ const AppContent: React.FC = () => {
     );
 };
 
-// Основной компонент App с UserProvider и ThemeProvider
+// Основной компонент App с UserProvider
 const App: React.FC = () => {
   return (
     <UserProvider>
-      <ThemeProvider>
-        <AppContent />
-      </ThemeProvider>
+      <AppContent />
     </UserProvider>
   );
 };

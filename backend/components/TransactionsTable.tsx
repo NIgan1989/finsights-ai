@@ -8,118 +8,119 @@ interface TransactionsTableProps {
     transactions: Transaction[];
     onUpdateTransaction: (originalTx: Transaction, updates: Partial<Pick<Transaction, 'description' | 'category' | 'counterparty'>>, applyToAll: boolean) => void;
     onAddTransaction: (tx: Transaction) => void;
+    onDeleteTransaction: (tx: Transaction) => void;
 }
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('ru-RU').format(amount) + ' ₸';
 
 const darkCategoryColorMap: { [key: string]: string } = {
     // Operating
-    'Зарплата': 'bg-yellow-500/20 text-yellow-300',
-    'Аренда': 'bg-red-500/20 text-red-300',
-    'Закупка товаров': 'bg-purple-500/20 text-purple-300',
-    'Реклама и маркетинг': 'bg-pink-500/20 text-pink-300',
-    'Коммунальные услуги': 'bg-sky-500/20 text-sky-300',
-    'Связь и интернет': 'bg-indigo-500/20 text-indigo-300',
-    'Транспортные расходы': 'bg-emerald-500/20 text-emerald-300',
-    'Ремонт и обслуживание': 'bg-amber-500/20 text-amber-300',
-    'Канцтовары': 'bg-lime-500/20 text-lime-300',
-    'Представительские расходы': 'bg-violet-500/20 text-violet-300',
-    'Командировочные расходы': 'bg-blue-500/20 text-blue-300',
-    'Подписки на сервисы': 'bg-teal-500/20 text-teal-300',
-    'Страхование': 'bg-cyan-500/20 text-cyan-300',
-    'Банковские комиссии': 'bg-gray-400/20 text-gray-300',
-    'Налоги': 'bg-orange-600/20 text-orange-400',
-    'Штрафы и пени': 'bg-red-700/20 text-red-500',
+    'Зарплата': 'bg-yellow-500/30 text-yellow-200',
+    'Аренда': 'bg-red-500/30 text-red-200',
+    'Закупка товаров': 'bg-purple-500/30 text-purple-200',
+    'Реклама и маркетинг': 'bg-pink-500/30 text-pink-200',
+    'Коммунальные услуги': 'bg-sky-500/30 text-sky-200',
+    'Связь и интернет': 'bg-indigo-500/30 text-indigo-200',
+    'Транспортные расходы': 'bg-emerald-500/30 text-emerald-200',
+    'Ремонт и обслуживание': 'bg-amber-500/30 text-amber-200',
+    'Канцтовары': 'bg-lime-500/30 text-lime-200',
+    'Представительские расходы': 'bg-violet-500/30 text-violet-200',
+    'Командировочные расходы': 'bg-blue-500/30 text-blue-200',
+    'Подписки на сервисы': 'bg-teal-500/30 text-teal-200',
+    'Страхование': 'bg-cyan-500/30 text-cyan-200',
+    'Банковские комиссии': 'bg-gray-400/30 text-gray-200',
+    'Налоги': 'bg-orange-600/30 text-orange-300',
+    'Штрафы и пени': 'bg-red-700/30 text-red-400',
 
     // CAPEX
-    'Оборудование': 'bg-rose-500/20 text-rose-300',
+    'Оборудование': 'bg-rose-500/30 text-rose-200',
 
     // Financing
-    'Проценты по кредитам': 'bg-orange-500/20 text-orange-300',
-    'Погашение кредита': 'bg-fuchsia-500/20 text-fuchsia-300',
-    'Выдача займа': 'bg-pink-600/20 text-pink-400',
-    'Лизинговые платежи': 'bg-pink-600/20 text-pink-400',
-    'Выплата дивидендов': 'bg-fuchsia-600/20 text-fuchsia-400',
-    'Накопления и сбережения': 'bg-sky-400/20 text-sky-300',
-    'Личные траты': 'bg-rose-600/20 text-rose-400',
+    'Проценты по кредитам': 'bg-orange-500/30 text-orange-200',
+    'Погашение кредита': 'bg-fuchsia-500/30 text-fuchsia-200',
+    'Выдача займа': 'bg-pink-600/30 text-pink-300',
+    'Лизинговые платежи': 'bg-pink-600/30 text-pink-300',
+    'Выплата дивидендов': 'bg-fuchsia-600/30 text-fuchsia-300',
+    'Накопления и сбережения': 'bg-sky-400/30 text-sky-200',
+    'Личные траты': 'bg-rose-600/30 text-rose-300',
 
     // Income
-    'Операционный доход': 'bg-green-500/20 text-green-300',
-    'Получение кредита': 'bg-green-600/20 text-green-400',
-    'Взнос учредителя': 'bg-teal-500/20 text-teal-300',
-    'Возврат долга': 'bg-emerald-600/20 text-emerald-400',
-    'Прочие поступления': 'bg-emerald-600/20 text-emerald-400',
+    'Операционный доход': 'bg-green-500/30 text-green-200',
+    'Получение кредита': 'bg-green-600/30 text-green-300',
+    'Взнос учредителя': 'bg-teal-500/30 text-teal-200',
+    'Возврат долга': 'bg-emerald-600/30 text-emerald-300',
+    'Прочие поступления': 'bg-emerald-600/30 text-emerald-300',
 
     // Дополнительные категории
-    'Детский сад': 'bg-blue-500/20 text-blue-300',
-    'Аптека и здоровье': 'bg-green-500/20 text-green-300',
-    'Красота и здоровье': 'bg-pink-500/20 text-pink-300',
-    'Магазины': 'bg-purple-500/20 text-purple-300',
-    'Кафе и рестораны': 'bg-orange-500/20 text-orange-300',
-    'Развлечения': 'bg-indigo-500/20 text-indigo-300',
-    'Банкоматы': 'bg-cyan-500/20 text-cyan-300',
-    'Недвижимость': 'bg-red-600/20 text-red-400',
-    'Бизнес/Поставщики': 'bg-gray-600/20 text-gray-400',
-    'Переводы между своими счетами': 'bg-teal-500/20 text-teal-300',
-    'Переводы': 'bg-emerald-500/20 text-emerald-300',
+    'Детский сад': 'bg-blue-500/30 text-blue-200',
+    'Аптека и здоровье': 'bg-green-500/30 text-green-200',
+    'Красота и здоровье': 'bg-pink-500/30 text-pink-200',
+    'Магазины': 'bg-purple-500/30 text-purple-200',
+    'Кафе и рестораны': 'bg-orange-500/30 text-orange-200',
+    'Развлечения': 'bg-indigo-500/30 text-indigo-200',
+    'Банкоматы': 'bg-cyan-500/30 text-cyan-200',
+    'Недвижимость': 'bg-red-600/30 text-red-300',
+    'Бизнес/Поставщики': 'bg-gray-600/30 text-gray-300',
+    'Переводы между своими счетами': 'bg-teal-500/30 text-teal-200',
+    'Переводы': 'bg-emerald-500/30 text-emerald-200',
 
     // Default
-    'Прочее': 'bg-gray-500/20 text-gray-300',
+    'Прочее': 'bg-gray-500/30 text-gray-200',
 };
 
 const lightCategoryColorMap: { [key: string]: string } = {
     // Operating
-    'Зарплата': 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-    'Аренда': 'bg-red-100 text-red-800 border border-red-200',
-    'Закупка товаров': 'bg-purple-100 text-purple-800 border border-purple-200',
-    'Реклама и маркетинг': 'bg-pink-100 text-pink-800 border border-pink-200',
-    'Коммунальные услуги': 'bg-sky-100 text-sky-800 border border-sky-200',
-    'Связь и интернет': 'bg-indigo-100 text-indigo-800 border border-indigo-200',
-    'Транспортные расходы': 'bg-emerald-100 text-emerald-800 border border-emerald-200',
-    'Ремонт и обслуживание': 'bg-amber-100 text-amber-800 border border-amber-200',
-    'Канцтовары': 'bg-lime-100 text-lime-800 border border-lime-200',
-    'Представительские расходы': 'bg-violet-100 text-violet-800 border border-violet-200',
-    'Командировочные расходы': 'bg-blue-100 text-blue-800 border border-blue-200',
-    'Подписки на сервисы': 'bg-teal-100 text-teal-800 border border-teal-200',
-    'Страхование': 'bg-cyan-100 text-cyan-800 border border-cyan-200',
-    'Банковские комиссии': 'bg-gray-200 text-gray-800 border border-gray-300',
-    'Налоги': 'bg-orange-100 text-orange-800 border border-orange-200',
-    'Штрафы и пени': 'bg-red-200 text-red-900 border border-red-300',
+    'Зарплата': 'bg-yellow-50 text-yellow-900 border border-yellow-300',
+    'Аренда': 'bg-red-50 text-red-900 border border-red-300',
+    'Закупка товаров': 'bg-purple-50 text-purple-900 border border-purple-300',
+    'Реклама и маркетинг': 'bg-pink-50 text-pink-900 border border-pink-300',
+    'Коммунальные услуги': 'bg-sky-50 text-sky-900 border border-sky-300',
+    'Связь и интернет': 'bg-indigo-50 text-indigo-900 border border-indigo-300',
+    'Транспортные расходы': 'bg-emerald-50 text-emerald-900 border border-emerald-300',
+    'Ремонт и обслуживание': 'bg-amber-50 text-amber-900 border border-amber-300',
+    'Канцтовары': 'bg-lime-50 text-lime-900 border border-lime-300',
+    'Представительские расходы': 'bg-violet-50 text-violet-900 border border-violet-300',
+    'Командировочные расходы': 'bg-blue-50 text-blue-900 border border-blue-300',
+    'Подписки на сервисы': 'bg-teal-50 text-teal-900 border border-teal-300',
+    'Страхование': 'bg-cyan-50 text-cyan-900 border border-cyan-300',
+    'Банковские комиссии': 'bg-gray-50 text-gray-900 border border-gray-300',
+    'Налоги': 'bg-orange-50 text-orange-900 border border-orange-300',
+    'Штрафы и пени': 'bg-red-50 text-red-900 border border-red-300',
 
     // CAPEX
-    'Оборудование': 'bg-rose-100 text-rose-800 border border-rose-200',
+    'Оборудование': 'bg-rose-50 text-rose-900 border border-rose-300',
 
     // Financing
-    'Проценты по кредитам': 'bg-orange-100 text-orange-800 border border-orange-200',
-    'Погашение кредита': 'bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-200',
-    'Выдача займа': 'bg-pink-200 text-pink-900 border border-pink-300',
-    'Лизинговые платежи': 'bg-pink-200 text-pink-900 border border-pink-300',
-    'Выплата дивидендов': 'bg-fuchsia-200 text-fuchsia-900 border border-fuchsia-300',
-    'Накопления и сбережения': 'bg-sky-100 text-sky-800 border border-sky-200',
-    'Личные траты': 'bg-rose-200 text-rose-900 border border-rose-300',
+    'Проценты по кредитам': 'bg-orange-50 text-orange-900 border border-orange-300',
+    'Погашение кредита': 'bg-fuchsia-50 text-fuchsia-900 border border-fuchsia-300',
+    'Выдача займа': 'bg-pink-50 text-pink-900 border border-pink-300',
+    'Лизинговые платежи': 'bg-pink-50 text-pink-900 border border-pink-300',
+    'Выплата дивидендов': 'bg-fuchsia-50 text-fuchsia-900 border border-fuchsia-300',
+    'Накопления и сбережения': 'bg-sky-50 text-sky-900 border border-sky-300',
+    'Личные траты': 'bg-rose-50 text-rose-900 border border-rose-300',
 
     // Income
-    'Операционный доход': 'bg-green-100 text-green-800 border border-green-200',
-    'Получение кредита': 'bg-green-200 text-green-900 border border-green-300',
-    'Взнос учредителя': 'bg-teal-100 text-teal-800 border border-teal-200',
-    'Возврат долга': 'bg-emerald-100 text-emerald-800 border border-emerald-200',
-    'Прочие поступления': 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+    'Операционный доход': 'bg-green-50 text-green-900 border border-green-300',
+    'Получение кредита': 'bg-green-50 text-green-900 border border-green-300',
+    'Взнос учредителя': 'bg-teal-50 text-teal-900 border border-teal-300',
+    'Возврат долга': 'bg-emerald-50 text-emerald-900 border border-emerald-300',
+    'Прочие поступления': 'bg-emerald-50 text-emerald-900 border border-emerald-300',
 
     // Дополнительные категории
-    'Детский сад': 'bg-blue-100 text-blue-800 border border-blue-200',
-    'Аптека и здоровье': 'bg-green-100 text-green-800 border border-green-200',
-    'Красота и здоровье': 'bg-pink-100 text-pink-800 border border-pink-200',
-    'Магазины': 'bg-purple-100 text-purple-800 border border-purple-200',
-    'Кафе и рестораны': 'bg-orange-100 text-orange-800 border border-orange-200',
-    'Развлечения': 'bg-indigo-100 text-indigo-800 border border-indigo-200',
-    'Банкоматы': 'bg-cyan-100 text-cyan-800 border border-cyan-200',
-    'Недвижимость': 'bg-red-200 text-red-900 border border-red-300',
-    'Бизнес/Поставщики': 'bg-gray-300 text-gray-900 border border-gray-400',
-    'Переводы между своими счетами': 'bg-teal-100 text-teal-800 border border-teal-200',
-    'Переводы': 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+    'Детский сад': 'bg-blue-50 text-blue-900 border border-blue-300',
+    'Аптека и здоровье': 'bg-green-50 text-green-900 border border-green-300',
+    'Красота и здоровье': 'bg-pink-50 text-pink-900 border border-pink-300',
+    'Магазины': 'bg-purple-50 text-purple-900 border border-purple-300',
+    'Кафе и рестораны': 'bg-orange-50 text-orange-900 border border-orange-300',
+    'Развлечения': 'bg-indigo-50 text-indigo-900 border border-indigo-300',
+    'Банкоматы': 'bg-cyan-50 text-cyan-900 border border-cyan-300',
+    'Недвижимость': 'bg-red-50 text-red-900 border border-red-300',
+    'Бизнес/Поставщики': 'bg-gray-50 text-gray-900 border border-gray-300',
+    'Переводы между своими счетами': 'bg-teal-50 text-teal-900 border border-teal-300',
+    'Переводы': 'bg-emerald-50 text-emerald-900 border border-emerald-300',
 
     // Default
-    'Прочее': 'bg-gray-200 text-gray-800 border border-gray-300',
+    'Прочее': 'bg-gray-50 text-gray-900 border border-gray-300',
 };
 
 
@@ -242,7 +243,7 @@ const AddTransactionModal: React.FC<{
 }> = ({ open, onClose, onAdd }) => {
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
     const [description, setDescription] = useState('');
-    const [amount, setAmount] = useState<number>(0);
+    const [amount, setAmount] = useState<string>('');
     const [type, setType] = useState<'income' | 'expense'>('expense');
     const [category, setCategory] = useState('');
     const [counterparty, setCounterparty] = useState('');
@@ -253,19 +254,19 @@ const AddTransactionModal: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!description.trim() || !category.trim() || !date || !amount) return;
+        if (!description.trim() || !category.trim() || !date || !amount.trim()) return;
         onAdd({
             id: Date.now().toString() + Math.random().toString(36).slice(2),
             date,
             description,
-            amount: Math.abs(amount),
+            amount: Math.abs(Number(amount)),
             type,
             category,
             counterparty,
             transactionType,
             isCapitalized,
         });
-        setDescription(''); setAmount(0); setCategory(''); setCounterparty(''); setIsCapitalized(false);
+        setDescription(''); setAmount(''); setCategory(''); setCounterparty(''); setIsCapitalized(false);
         onClose();
     };
 
@@ -288,7 +289,7 @@ const AddTransactionModal: React.FC<{
                     </div>
                     <div>
                         <label className="block text-sm mb-1">Сумма</label>
-                        <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} className="w-full p-2 rounded-lg border border-border bg-background text-text-primary" required min="0.01" step="0.01" />
+                        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" className="w-full p-2 rounded-lg border border-border bg-background text-text-primary" required min="0.01" step="0.01" />
                     </div>
                     <div>
                         <label className="block text-sm mb-1">Категория</label>
@@ -328,7 +329,7 @@ const AddTransactionModal: React.FC<{
 };
 
 
-const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onUpdateTransaction, onAddTransaction }) => {
+const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onUpdateTransaction, onAddTransaction, onDeleteTransaction }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: keyof Transaction; direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'desc' });
     const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
@@ -397,8 +398,8 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 lg:p-6">
+            <div className="max-w-full mx-auto">
                 {/* Header Section */}
                 <div className="mb-8">
                     <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
@@ -456,12 +457,12 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                 <AddTransactionModal open={addModalOpen} onClose={() => setAddModalOpen(false)} onAdd={onAddTransaction} />
                 
                 {/* Transactions Table */}
-                <div className="bg-white/80 dark:bg-surface/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg border border-white/50 dark:border-border/50">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-full">
-                            <thead className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-surface-accent dark:to-surface">
+                <div className="bg-surface border border-border rounded-2xl shadow-lg overflow-hidden animate-fade-in">
+                    <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
+                        <table className="w-full text-left min-w-[600px] md:min-w-[800px]">
+                            <thead className="bg-surface border-b border-border sticky top-0 z-10">
                                 <tr>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('date')}>
+                                    <th className="p-3 md:p-4 cursor-pointer whitespace-nowrap text-text-secondary font-semibold tracking-wide uppercase text-xs hover:text-primary transition-colors" onClick={() => requestSort('date')}>
                                         <div className="flex items-center gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
@@ -469,7 +470,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                             <span className="text-sm md:text-base">Дата {getSortIndicator('date')}</span>
                                         </div>
                                     </th>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('description')}>
+                                    <th className="p-3 md:p-4 cursor-pointer whitespace-nowrap text-text-secondary font-semibold tracking-wide uppercase text-xs hover:text-primary transition-colors" onClick={() => requestSort('description')}>
                                         <div className="flex items-center gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
@@ -477,7 +478,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                             <span className="text-sm md:text-base">Описание {getSortIndicator('description')}</span>
                                         </div>
                                     </th>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors hidden sm:table-cell" onClick={() => requestSort('counterparty')}>
+                                    <th className="p-3 md:p-4 cursor-pointer whitespace-nowrap text-text-secondary font-semibold tracking-wide uppercase text-xs hover:text-primary transition-colors hidden sm:table-cell" onClick={() => requestSort('counterparty')}>
                                         <div className="flex items-center gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -485,7 +486,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                             <span className="text-sm md:text-base">Контрагент {getSortIndicator('counterparty')}</span>
                                         </div>
                                     </th>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-right text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('amount')}>
+                                    <th className="p-3 md:p-4 cursor-pointer whitespace-nowrap text-right text-text-secondary font-semibold tracking-wide uppercase text-xs hover:text-primary transition-colors" onClick={() => requestSort('amount')}>
                                         <div className="flex items-center justify-end gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
@@ -494,7 +495,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                             <span className="text-sm md:text-base">Сумма {getSortIndicator('amount')}</span>
                                         </div>
                                     </th>
-                                    <th className="p-4 md:p-6 cursor-pointer whitespace-nowrap text-slate-700 dark:text-text-primary font-semibold hover:text-blue-600 transition-colors" onClick={() => requestSort('category')}>
+                                    <th className="p-3 md:p-4 cursor-pointer whitespace-nowrap text-text-secondary font-semibold tracking-wide uppercase text-xs hover:text-primary transition-colors" onClick={() => requestSort('category')}>
                                         <div className="flex items-center gap-1 md:gap-2">
                                             <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
@@ -502,55 +503,126 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ transactions, onU
                                             <span className="text-sm md:text-base">Категория {getSortIndicator('category')}</span>
                                         </div>
                                     </th>
+                                    <th className="p-3 md:p-4 whitespace-nowrap text-text-secondary font-semibold tracking-wide uppercase text-xs">
+                                        <div className="flex items-center gap-1 md:gap-2">
+                                            <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 8a2 2 0 110 4 2 2 0 010-4zM10 16a2 2 0 110-4 2 2 0 010 4z" />
+                                            </svg>
+                                            <span className="text-sm md:text-base">Действия</span>
+                                        </div>
+                                    </th>
                                 </tr>
                             </thead>
                         <tbody>
                             {filteredTransactions.map(tx => (
                                 <React.Fragment key={tx.id}>
-                                    <tr className={`border-t border-slate-200 dark:border-border transition-colors hover:bg-slate-50/50 dark:hover:bg-surface-accent ${tx.needsClarification ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''} ${expandedRowId === tx.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-                                        <td className="p-4 md:p-6 whitespace-nowrap text-slate-600 dark:text-text-secondary text-sm">
-                                            {new Date(tx.date).toLocaleDateString('ru-RU')}
-                                        </td>
-                                        <td className="p-4 md:p-6 text-slate-900 dark:text-text-primary font-medium">
-                                            <div className="max-w-[200px] md:max-w-none truncate">
-                                                {tx.description}
+                                    <tr className={`border-t border-border transition-all duration-200 hover:bg-surface-elevated hover:shadow-sm group ${tx.needsClarification ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''} ${expandedRowId === tx.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                                        <td className="p-3 md:p-6 whitespace-nowrap">
+                                            <div className="flex items-center gap-2 md:gap-3">
+                                                <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                                    <svg className="w-4 h-4 md:w-5 md:h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs md:text-sm font-semibold text-text-primary">
+                                                        {new Date(tx.date).toLocaleDateString('ru-RU')}
+                                                    </div>
+                                                    <div className="text-xs text-text-secondary font-medium hidden md:block">
+                                                        {new Date(tx.date).toLocaleDateString('ru-RU', { weekday: 'long' })}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="p-4 md:p-6 text-slate-600 dark:text-text-secondary hidden sm:table-cell">
-                                            <div className="max-w-[150px] truncate">
-                                                {tx.counterparty}
+                                        <td className="p-3 md:p-6">
+                                            <div className="flex items-center gap-2 md:gap-3">
+                                                <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
+                                                    <svg className="w-4 h-4 md:w-5 md:h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-xs md:text-sm font-semibold text-text-primary truncate">
+                                                        {tx.description}
+                                                    </div>
+                                                    <div className="text-xs text-text-secondary mt-1 hidden md:block">
+                                                        {tx.transactionType === 'operating' ? 'Операционная' : tx.transactionType === 'investing' ? 'Инвестиционная' : 'Финансовая'}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className={`p-4 md:p-6 text-right font-mono whitespace-nowrap font-semibold ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                                            <div className="text-sm md:text-base">
-                                                {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                                        <td className="p-3 md:p-6 hidden sm:table-cell">
+                                            <div className="flex items-center gap-2 md:gap-3">
+                                                <div className="w-6 h-6 md:w-8 md:h-8 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+                                                    <svg className="w-3 h-3 md:w-4 md:h-4 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="text-xs md:text-sm font-medium text-text-primary truncate max-w-[80px] md:max-w-[120px]">
+                                                        {tx.counterparty || 'Не указан'}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="p-4 md:p-6 whitespace-nowrap">
-                                            {tx.needsClarification ? (
-                                                <button
-                                                    onClick={() => toggleRowExpansion(tx.id)}
-                                                    className="px-3 py-1.5 text-xs md:text-sm font-semibold rounded-xl bg-yellow-500 text-white hover:bg-yellow-600 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
-                                                >
-                                                    <span className="hidden sm:inline">Уточнить</span>
-                                                    <span className="sm:hidden">!</span>
-                                                    {expandedRowId === tx.id ? '▲' : '▼'}
-                                                </button>
-                                            ) : (
-                                                <span
-                                                    className={`px-2 md:px-3 py-1 text-xs font-medium rounded-xl ${getCategoryClass(tx.category, theme)} cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all block truncate max-w-[100px] sm:max-w-none text-center sm:text-left`}
-                                                    onClick={() => toggleRowExpansion(tx.id)}
-                                                    title={tx.category}
-                                                >
-                                                    <span className="hidden sm:inline">{tx.category}</span>
-                                                    <span className="sm:hidden">📂</span>
+                                        <td className="p-3 md:p-6 text-right whitespace-nowrap">
+                                            <div className={`inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-2 rounded-xl font-mono font-bold text-xs md:text-sm ${tx.type === 'income' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}>
+                                                <span className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${tx.type === 'income' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                                <span className="truncate max-w-[80px] md:max-w-none">
+                                                    {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                                                 </span>
-                                            )}
+                                            </div>
+                                        </td>
+                                        <td className="p-3 md:p-6 whitespace-nowrap">
+                                            <div className="flex items-center gap-1 md:gap-2">
+                                                {tx.needsClarification ? (
+                                                    <button
+                                                        onClick={() => toggleRowExpansion(tx.id)}
+                                                        className="px-2 md:px-4 py-1 md:py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-white hover:from-yellow-600 hover:to-amber-600 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-1 md:gap-2 w-full sm:w-auto justify-center"
+                                                    >
+                                                        <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <span className="hidden sm:inline">Уточнить</span>
+                                                        <span className="sm:hidden">!</span>
+                                                        {expandedRowId === tx.id ? '▲' : '▼'}
+                                                    </button>
+                                                ) : (
+                                                    <span
+                                                        className={`inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-2 text-xs font-semibold rounded-xl ${getCategoryClass(tx.category, theme)} cursor-pointer hover:ring-2 hover:ring-blue-500 hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5 max-w-[80px] md:max-w-[120px]`}
+                                                        onClick={() => toggleRowExpansion(tx.id)}
+                                                        title={tx.category}
+                                                    >
+                                                        <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-current opacity-70"></span>
+                                                        <span className="hidden sm:inline truncate">{tx.category}</span>
+                                                        <span className="sm:hidden">📂</span>
+                                                    </span>
+                                                )}
+                                                <button
+                                                    onClick={() => setExpandedRowId(expandedRowId === tx.id ? null : tx.id)}
+                                                    className="group p-1.5 md:p-2.5 text-blue-600 hover:text-white hover:bg-blue-600 rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg border border-blue-200 hover:border-blue-600"
+                                                    title="Редактировать транзакцию"
+                                                >
+                                                    <svg className="w-3 h-3 md:w-4 md:h-4 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => onDeleteTransaction(tx)}
+                                                    className="group p-1.5 md:p-2.5 text-red-600 hover:text-white hover:bg-red-600 rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg border border-red-200 hover:border-red-600"
+                                                    title="Удалить транзакцию"
+                                                >
+                                                    <svg className="w-3 h-3 md:w-4 md:h-4 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
+                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     {expandedRowId === tx.id && (
                                         <tr className="border-t border-border bg-surface-accent">
-                                            <td colSpan={5} className="p-0">
+                                            <td colSpan={6} className="p-0">
                                                 <ClarificationForm
                                                     transaction={tx}
                                                     similarTransactionsCount={similarTransactionsMap[tx.description] - 1}

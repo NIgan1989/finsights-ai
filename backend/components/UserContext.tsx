@@ -207,12 +207,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (saved) {
       try {
         const authData = JSON.parse(saved);
-        if (authData.token === 'google-oauth' || authData.token?.startsWith('google-')) {
-          console.log('[UserContext] Detected old token format, clearing localStorage');
-          localStorage.removeItem('finsights_auth');
-          setLoading(false);
-          return;
-        }
+        // Удалена проверка устаревших токенов Google OAuth
+        // Ранее: if (authData.token === 'google-oauth' || authData.token?.startsWith('google-')) {
+        //   ...
+        // }
       } catch (error) {
         console.log('[UserContext] Invalid localStorage data, clearing...');
         localStorage.removeItem('finsights_auth');
@@ -230,7 +228,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
     
     Promise.race([
-      fetch('http://localhost:3001/api/me', { credentials: 'include' }),
+      fetch('http://localhost:3001/api/auth/me', { credentials: 'include' }),
       timeoutPromise
     ])
       .then((res: unknown) => {
@@ -387,7 +385,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/login', {
+      const response = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -462,7 +460,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     console.log('[UserContext] Registration attempt for:', email);
     
     try {
-      const response = await fetch('http://localhost:3001/api/register', {
+      const response = await fetch('http://localhost:3001/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -557,7 +555,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     console.log('[UserContext] Logout attempt');
     
     try {
-      await fetch('http://localhost:3001/api/logout', {
+      await fetch('http://localhost:3001/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
@@ -618,4 +616,4 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       {children}
     </UserStateContext.Provider>
   );
-}; 
+};

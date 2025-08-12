@@ -6,19 +6,21 @@ import ModelGenerator from './ModelGenerator';
 import TemplateGallery from './TemplateGallery';
 import ContextMenu from './ContextMenu';
 import ResultsDashboard from './ResultsDashboard';
+import { getImplementedTemplates } from '../../templates/templateData';
 
+// Финальный интерфейс шаблона, используемый на странице
 interface FinancialTemplate {
   id: string;
   name: string;
-  category: string;
   description: string;
   icon: string;
-  verified: boolean;
-  industry: string;
-  complexity: 'simple' | 'medium' | 'advanced';
+  category: string;
+  complexity: string;
   timeframe: string;
   features: string[];
-  preview?: string;
+  implemented: boolean;
+  industry: string;
+  preview: string;
 }
 
 interface FinancialModel {
@@ -54,6 +56,7 @@ const FinancialPage: React.FC = () => {
   const [customBusiness, setCustomBusiness] = useState('');
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
   const [currentCell, setCurrentCell] = useState({ row: -1, col: -1, value: '' });
+  const [showFormulas, setShowFormulas] = useState<boolean>(false);
 
   // Состояния для улучшенного редактора
   const [contextMenu, setContextMenu] = useState<{
@@ -79,87 +82,23 @@ const FinancialPage: React.FC = () => {
     targetRow: null
   });
 
-  // Готовые шаблоны в стиле finmodelbuilder
-  const templates: FinancialTemplate[] = [
-    {
-      id: 'coffee-shop',
-      name: 'Кафе / Кофейня',
-      category: 'Ресторанный бизнес',
-      description: 'Быстрый старт для небольшого кафе. Прибыльность и рентабельность.',
-      icon: '☕',
-      verified: true,
-      industry: 'Food & Beverage',
-      complexity: 'simple',
-      timeframe: '3 года',
-      features: ['P&L отчет', 'Cash Flow', 'Unit Economics', 'Сезонность'],
-      preview: '/templates/coffee-shop-preview.png'
-    },
-    {
-      id: 'saas-startup',
-      name: 'SaaS Стартап',
-      category: 'Технологии',
-      description: '5-летний прогноз с подписочной моделью, LTV и CAC метрики.',
-      icon: '💻',
-      verified: true,
-      industry: 'Technology',
-      complexity: 'advanced',
-      timeframe: '5 лет',
-      features: ['Subscription Model', 'Churn Analysis', 'LTV/CAC', 'Fundraising'],
-      preview: '/templates/saas-preview.png'
-    },
-    {
-      id: 'ecommerce',
-      name: 'E-commerce',
-      category: 'Интернет-торговля',
-      description: 'Онлайн-магазин с учетом маркетинга, логистики и возвратов.',
-      icon: '🛒',
-      verified: true,
-      industry: 'E-commerce',
-      complexity: 'medium',
-      timeframe: '3 года',
-      features: ['Traffic & Conversion', 'Marketing ROI', 'Inventory', 'Returns'],
-      preview: '/templates/ecommerce-preview.png'
-    },
-    {
-      id: 'manufacturing',
-      name: 'Производство',
-      category: 'Промышленность',
-      description: 'Производственная компания с CAPEX, амортизацией и операционными циклами.',
-      icon: '🏭',
-      verified: true,
-      industry: 'Manufacturing',
-      complexity: 'advanced',
-      timeframe: '5 лет',
-      features: ['CAPEX Planning', 'Depreciation', 'Working Capital', 'Capacity Planning'],
-      preview: '/templates/manufacturing-preview.png'
-    },
-    {
-      id: 'retail-store',
-      name: 'Розничный магазин',
-      category: 'Розничная торговля',
-      description: 'Физический магазин с учетом аренды, персонала и товарооборота.',
-      icon: '🏪',
-      verified: true,
-      industry: 'Retail',
-      complexity: 'medium',
-      timeframe: '3 года',
-      features: ['Inventory Turnover', 'Foot Traffic', 'Seasonal Patterns', 'Staff Planning'],
-      preview: '/templates/retail-preview.png'
-    },
-    {
-      id: 'consulting',
-      name: 'Консалтинг',
-      category: 'Услуги',
-      description: 'Консалтинговое агентство с почасовой оплатой и проектным планированием.',
-      icon: '💼',
-      verified: true,
-      industry: 'Professional Services',
-      complexity: 'simple',
-      timeframe: '3 года',
-      features: ['Hourly Billing', 'Project Planning', 'Utilization Rate', 'Team Scaling'],
-      preview: '/templates/consulting-preview.png'
-    }
-  ];
+  // Используем только реализованные шаблоны из общего источника данных
+  // и адаптируем их для использования в FinancialPage
+  const implementedTemplatesList: FinancialTemplate[] = getImplementedTemplates().map(template => ({
+    ...template,
+    industry: template.category === 'food' ? 'Food & Beverage' :
+              template.category === 'tech' ? 'Technology' :
+              template.category === 'retail' ? 'Retail' :
+              template.category === 'production' ? 'Manufacturing' :
+              template.category === 'services' ? 'Professional Services' :
+              template.category === 'healthcare' ? 'Healthcare' :
+              template.category === 'education' ? 'Education' :
+              template.category === 'logistics' ? 'Logistics' :
+              template.category === 'tourism' ? 'Tourism' :
+              template.category === 'automotive' ? 'Automotive' :
+              template.category === 'beauty' ? 'Beauty' : 'Other',
+    preview: `/templates/${template.id}-preview.png`
+  }));
 
   // ИИ-генерация модели
   const generateAIModel = async (businessDescription: string) => {
@@ -202,7 +141,10 @@ const FinancialPage: React.FC = () => {
   const loadTemplate = async (template: FinancialTemplate) => {
     setIsGenerating(true);
     try {
-      const response = await fetch(`/api/templates/${template.id}`);
+      const response = await fetch(`/api/financial-model/templates/${template.id}`);
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки шаблона');
+      }
       const templateData = await response.json();
       
       const newModel: FinancialModel = {
@@ -217,9 +159,16 @@ const FinancialPage: React.FC = () => {
       };
       
       setCurrentModel(newModel);
+      if (newModel.sheets && newModel.sheets.length > 0) {
+        setActiveSheet(newModel.sheets[0].id);
+      } else {
+        setActiveSheet('assumptions');
+      }
+      setShowTemplateGallery(false);
       setCurrentStep('edit');
     } catch (error) {
       console.error('Error loading template:', error);
+      alert('❌ Ошибка загрузки шаблона: ' + (error instanceof Error ? error.message : 'Неизвестная ошибка'));
     } finally {
       setIsGenerating(false);
     }
@@ -234,7 +183,7 @@ const FinancialPage: React.FC = () => {
       const modelWithResults = {
         ...currentModel,
         sheets: [
-          ...currentModel.sheets,
+          ...(currentModel?.sheets || []),
           {
             id: 'results',
             name: 'Результаты и KPI',
@@ -286,7 +235,7 @@ const FinancialPage: React.FC = () => {
       const modelWithResults = {
         ...currentModel,
         sheets: [
-          ...currentModel.sheets,
+          ...(currentModel?.sheets || []),
           {
             id: 'results',
             name: 'Результаты и KPI',
@@ -332,7 +281,7 @@ const FinancialPage: React.FC = () => {
       const modelWithResults = {
         ...currentModel,
         sheets: [
-          ...currentModel.sheets,
+          ...(currentModel?.sheets || []),
           {
             id: 'results',
             name: 'Результаты и KPI',
@@ -371,19 +320,28 @@ const FinancialPage: React.FC = () => {
 
   // Генерация данных для листа результатов
   const generateResultsData = () => {
-    if (!currentModel?.sheets) return [];
+    if (!currentModel?.sheets) return [] as any[];
 
-    const revenueSheet = currentModel.sheets.find(s => s.type === 'revenue');
-    const expensesSheet = currentModel.sheets.find(s => s.type === 'expenses');
-    
-    const results = [
-      ['Итоговые показатели модели', '', '', '', ''],
-      ['Создано:', new Date().toLocaleDateString('ru-RU'), '', '', ''],
-      ['Модель:', currentModel.name || 'Без названия', '', '', ''],
-      ['Отрасль:', currentModel.industry || 'Общая', '', '', ''],
-      ['', '', '', '', ''],
-      ['ФИНАНСОВЫЕ ПОКАЗАТЕЛИ', 'Год 1', 'Год 2', 'Год 3', 'Год 4'],
-      ['', '', '', '', '']
+    const revenueSheet = currentModel?.sheets?.find(s => s.type === 'revenue');
+    const expensesSheet = currentModel?.sheets?.find(s => s.type === 'expenses');
+
+    // Определяем количество лет по количеству колонок (за вычетом колонки с названием показателя)
+    const revYears = (revenueSheet?.data?.[0]?.length || 1) - 1;
+    const expYears = (expensesSheet?.data?.[0]?.length || 1) - 1;
+    const yearCount = Math.max(revYears, expYears, 4); // Минимум 4 года, по умолчанию — как в данных
+    const yearLabels = Array.from({ length: yearCount }, (_, i) => `Год ${i + 1}`);
+
+    // Заготовка пустой строки нужной длины
+    const blankRow = Array(yearCount).fill('');
+
+    const results: any[] = [
+      ['Итоговые показатели модели', ...blankRow],
+      ['Создано:', new Date().toLocaleDateString('ru-RU'), ...blankRow.slice(1)],
+      ['Модель:', currentModel.name || 'Без названия', ...blankRow.slice(1)],
+      ['Отрасль:', currentModel.industry || 'Общая', ...blankRow.slice(1)],
+      ['', ...blankRow],
+      ['ФИНАНСОВЫЕ ПОКАЗАТЕЛИ', ...yearLabels],
+      ['', ...blankRow]
     ];
 
     // Добавляем суммарные данные по годам
@@ -393,7 +351,7 @@ const FinancialPage: React.FC = () => {
       const expensesTotals = ['Общие расходы'];
       const profitTotals = ['Чистая прибыль'];
       
-      for (let year = 1; year <= 4; year++) {
+      for (let year = 1; year <= yearCount; year++) {
         let revenueTotal = 0;
         let expensesTotal = 0;
         
@@ -426,17 +384,17 @@ const FinancialPage: React.FC = () => {
     }
 
     results.push(
-      ['', '', '', '', ''],
-      ['КЛЮЧЕВЫЕ МЕТРИКИ', '', '', '', ''],
-      ['Средняя маржинальность', '15%', '18%', '20%', '22%'],
-      ['Темп роста выручки', '0%', '15%', '18%', '12%'],
-      ['ROI (возврат инвестиций)', '8%', '12%', '16%', '20%'],
-      ['', '', '', '', ''],
-      ['РЕКОМЕНДАЦИИ', '', '', '', ''],
-      ['• Отслеживать ключевые показатели ежемесячно', '', '', '', ''],
-      ['• Обновлять прогнозы каждый квартал', '', '', '', ''],
-      ['• Анализировать отклонения план/факт', '', '', '', ''],
-      ['• Корректировать стратегию при необходимости', '', '', '', '']
+      ['', ...blankRow],
+      ['КЛЮЧЕВЫЕ МЕТРИКИ', ...blankRow],
+      ['Средняя маржинальность', ...blankRow.map(()=>'')],
+      ['Темп роста выручки', ...blankRow.map(()=>'')],
+      ['ROI (возврат инвестиций)', ...blankRow.map(()=>'')],
+      ['', ...blankRow],
+      ['РЕКОМЕНДАЦИИ', ...blankRow],
+      ['• Отслеживать ключевые показатели ежемесячно', ...blankRow],
+      ['• Обновлять прогнозы каждый квартал', ...blankRow],
+      ['• Анализировать отклонения план/факт', ...blankRow],
+      ['• Корректировать стратегию при необходимости', ...blankRow]
     );
 
     return results;
@@ -447,7 +405,7 @@ const FinancialPage: React.FC = () => {
     if (!currentModel) return;
 
     // Обновляем локально
-    const updatedSheets = currentModel.sheets.map(sheet => {
+    const updatedSheets = currentModel?.sheets?.map(sheet => {
       if (sheet.id === sheetId) {
         const newData = [...sheet.data];
         if (!newData[row]) newData[row] = [];
@@ -457,6 +415,7 @@ const FinancialPage: React.FC = () => {
       return sheet;
     });
 
+    if (!updatedSheets) return;
     setCurrentModel({ ...currentModel, sheets: updatedSheets });
 
     // Отправляем на сервер (опционально)
@@ -481,7 +440,7 @@ const FinancialPage: React.FC = () => {
   const handleAddRow = async (sheetId: string, rowData: string[]) => {
     if (!currentModel) return;
 
-    const updatedSheets = currentModel.sheets.map(sheet => {
+    const updatedSheets = currentModel?.sheets?.map(sheet => {
       if (sheet.id === sheetId) {
         const newData = [...sheet.data, rowData];
         return { ...sheet, data: newData };
@@ -489,6 +448,7 @@ const FinancialPage: React.FC = () => {
       return sheet;
     });
 
+    if (!updatedSheets) return;
     setCurrentModel({ ...currentModel, sheets: updatedSheets });
 
     try {
@@ -509,17 +469,21 @@ const FinancialPage: React.FC = () => {
   // Загрузка шаблона по ID
   const loadTemplateById = async (templateId: string) => {
     try {
-      const response = await fetch(`/api/templates/${templateId}`);
+      const response = await fetch(`/api/financial-model/templates/${templateId}`);
       if (!response.ok) {
         throw new Error('Ошибка загрузки шаблона');
       }
       
       const templateData = await response.json();
       
+      // Получаем название шаблона из списка шаблонов
+      const templateInfo = implementedTemplatesList.find(t => t.id === templateId);
+      const templateName = templateInfo?.name || templateData.name || templateId;
+      
       const model: FinancialModel = {
         id: `model_${Date.now()}`,
-        name: `Модель: ${templateData.sheets?.[0]?.name || templateId}`,
-        industry: templateId,
+        name: templateName,
+        industry: templateInfo?.industry || templateId,
         template: templateId,
         sheets: templateData.sheets || [],
         assumptions: templateData.assumptions || {},
@@ -527,8 +491,15 @@ const FinancialPage: React.FC = () => {
         lastModified: new Date().toISOString()
       };
       
+      console.log('Loaded template model:', model);
+      console.log('Template sheets:', model.sheets);
+      
       setCurrentModel(model);
-      setActiveSheet(model.sheets[0]?.id || 'assumptions');
+      if (model.sheets && model.sheets.length > 0) {
+        setActiveSheet(model.sheets[0].id);
+      } else {
+        setActiveSheet('assumptions');
+      }
       setShowTemplateGallery(false);
       
     } catch (error) {
@@ -557,7 +528,7 @@ const FinancialPage: React.FC = () => {
     event.preventDefault();
     if (!currentModel) return;
 
-    const sheet = currentModel.sheets.find(s => s.id === activeSheet);
+    const sheet = currentModel?.sheets?.find(s => s.id === activeSheet);
     if (!sheet) return;
 
     const cellValue = sheet.data[row]?.[col] || '';
@@ -575,7 +546,7 @@ const FinancialPage: React.FC = () => {
   const handleContextAction = async (action: string) => {
     if (!currentModel) return;
     
-    const sheet = currentModel.sheets.find(s => s.id === activeSheet);
+    const sheet = currentModel?.sheets?.find(s => s.id === activeSheet);
     if (!sheet) return;
 
     const { rowIndex, colIndex, cellValue } = contextMenu;
@@ -658,7 +629,7 @@ const FinancialPage: React.FC = () => {
   const insertRow = (sheetId: string, atIndex: number) => {
     if (!currentModel) return;
 
-    const updatedSheets = currentModel.sheets.map(sheet => {
+    const updatedSheets = currentModel?.sheets?.map(sheet => {
       if (sheet.id === sheetId) {
         const newData = [...sheet.data];
         const newRow = new Array(newData[0]?.length || 4).fill('');
@@ -676,7 +647,7 @@ const FinancialPage: React.FC = () => {
   const deleteRow = (sheetId: string, rowIndex: number) => {
     if (!currentModel || rowIndex <= 0) return;
 
-    const updatedSheets = currentModel.sheets.map(sheet => {
+    const updatedSheets = currentModel?.sheets?.map(sheet => {
       if (sheet.id === sheetId) {
         const newData = [...sheet.data];
         newData.splice(rowIndex, 1);
@@ -700,50 +671,7 @@ const FinancialPage: React.FC = () => {
     handleAddRow(sheetId, newRow);
   };
 
-  // Генерация новых чисел для модели
-  const generateNewNumbers = () => {
-    if (!currentModel) return;
 
-    const sheet = currentModel.sheets.find(s => s.id === activeSheet);
-    if (!sheet) return;
-
-    const updatedSheets = currentModel.sheets.map(s => {
-      if (s.id === activeSheet) {
-        const newData = [...s.data];
-        
-        // Генерируем новые числа для всех числовых ячеек
-        for (let row = 1; row < newData.length; row++) {
-          for (let col = 1; col < newData[row].length; col++) {
-            const cellValue = newData[row][col];
-            
-            // Проверяем, является ли ячейка числом и не формулой
-            if (typeof cellValue === 'number' || 
-                (typeof cellValue === 'string' && !isNaN(parseFloat(cellValue)) && !cellValue.startsWith('='))) {
-              
-              const currentValue = typeof cellValue === 'number' ? cellValue : parseFloat(cellValue);
-              
-              // Генерируем новое значение с отклонением ±20% от текущего
-              const variation = 0.2; // 20%
-              const minValue = currentValue * (1 - variation);
-              const maxValue = currentValue * (1 + variation);
-              const newValue = Math.round(minValue + Math.random() * (maxValue - minValue));
-              
-              newData[row][col] = newValue;
-            }
-          }
-        }
-        
-        return { ...s, data: newData };
-      }
-      return s;
-    });
-
-    setCurrentModel({ 
-      ...currentModel, 
-      sheets: updatedSheets,
-      lastModified: new Date().toISOString()
-    });
-  };
 
   // Drag and Drop обработчики
   const handleDragStart = (row: number, col: number) => {
@@ -766,7 +694,7 @@ const FinancialPage: React.FC = () => {
   const handleDrop = (row: number, col: number) => {
     if (!dragState.isDragging || !currentModel || dragState.draggedRow === null) return;
 
-    const sheet = currentModel.sheets.find(s => s.id === activeSheet);
+    const sheet = currentModel?.sheets?.find(s => s.id === activeSheet);
     if (!sheet) return;
 
     const newData = [...sheet.data];
@@ -779,7 +707,7 @@ const FinancialPage: React.FC = () => {
     const insertIndex = row > dragState.draggedRow ? row - 1 : row;
     newData.splice(insertIndex, 0, draggedRowData);
 
-    const updatedSheets = currentModel.sheets.map(s => 
+    const updatedSheets = currentModel?.sheets?.map(s => 
       s.id === activeSheet ? { ...s, data: newData } : s
     );
 
@@ -900,7 +828,7 @@ const FinancialPage: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {templates.slice(0, 6).map((template) => (
+                  {implementedTemplatesList.slice(0, 6).map((template) => (
                     <div
                       key={template.id}
                       className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition cursor-pointer"
@@ -962,8 +890,9 @@ const FinancialPage: React.FC = () => {
 
           {/* Main Content */}
           <div className="flex h-screen">
-            {/* Left Sidebar - Sheets */}
-            <div className="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto">
+            {/* Left Sidebar - Sheets - скрыта на странице результатов */}
+            {activeSheet !== 'results' && (
+              <div className="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto">
               <div className="p-4">
                 <div className="mb-4">
                   <h2 className="text-lg font-semibold text-gray-200 mb-3">ЛИСТЫ МОДЕЛИ</h2>
@@ -983,7 +912,29 @@ const FinancialPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {currentModel.sheets.map((sheet) => (
+                  {/* Кнопка результатов в боковой панели */}
+                  <button
+                    onClick={() => setActiveSheet('results')}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition ${
+                      activeSheet === 'results'
+                        ? 'bg-purple-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-lg">📊</span>
+                      <span className="font-medium">Результаты</span>
+                    </div>
+                    <span className="text-xs bg-gray-600 px-2 py-1 rounded">
+                      dashboard
+                    </span>
+                  </button>
+                  
+                  {/* Разделитель */}
+                  <div className="border-t border-gray-600 my-3"></div>
+                  
+                  {/* Листы модели */}
+                  {currentModel?.sheets?.filter(sheet => sheet.type !== 'results').map((sheet) => (
                     <button
                       key={sheet.id}
                       onClick={() => setActiveSheet(sheet.id)}
@@ -1010,37 +961,42 @@ const FinancialPage: React.FC = () => {
                 <div className="mt-8 p-4 bg-gray-700 rounded-lg">
                   <h3 className="text-sm font-semibold text-gray-200 mb-3">Статистика модели</h3>
                   <div className="space-y-2 text-xs text-gray-400">
-                    <div>Листов: {currentModel.sheets.length}</div>
+                    <div>Листов: {currentModel?.sheets?.length || 0}</div>
                     <div>Создана: {new Date(currentModel.createdAt).toLocaleString('ru-RU')}</div>
                     <div>Изменена: {new Date().toLocaleString('ru-RU')}</div>
                   </div>
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
+          {/* Main Content Area */}
+          <div className={`flex-1 flex flex-col bg-white dark:bg-gray-900 ${activeSheet === 'results' ? 'w-full' : ''}`}>
               {/* Кнопка результатов в заголовке */}
               <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
                 <div>
                   <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                     {currentModel.name || 'Финансовая модель'}
                   </h1>
-                                     <p className="text-gray-600 dark:text-gray-400 text-sm">
-                     {activeSheet && currentModel.sheets.find(s => s.id === activeSheet)?.name || 'Выберите лист'}
-                   </p>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    {activeSheet === 'results' 
+                      ? 'Результаты модели' 
+                      : (activeSheet && currentModel?.sheets?.find(s => s.id === activeSheet)?.name || 'Выберите лист')
+                    }
+                  </p>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setActiveSheet('results')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      activeSheet === 'results' 
-                        ? 'bg-purple-600 text-white' 
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    📊 Результаты
-                  </button>
+                  {activeSheet === 'results' && (
+                    <button
+                      onClick={() => {
+                        const firstSheet = currentModel?.sheets?.[0];
+                        if (firstSheet) setActiveSheet(firstSheet.id);
+                      }}
+                      className="px-4 py-2 rounded-lg font-medium transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    >
+                      ← Назад к листам
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1051,7 +1007,7 @@ const FinancialPage: React.FC = () => {
                   onExportExcel={exportToExcel}
                   onExportPDF={exportToPDF}
                 />
-              ) : activeSheet && currentModel.sheets.find(s => s.id === activeSheet) ? (
+              ) : activeSheet && currentModel?.sheets?.find(s => s.id === activeSheet) ? (
                 <div className="flex-1 flex flex-col">
                   {/* Formula Bar */}
                   <FormulaBar
@@ -1059,7 +1015,7 @@ const FinancialPage: React.FC = () => {
                     isEditing={editingCell !== null}
                     onFormulaChange={(formula) => {
                       if (editingCell) {
-                        const sheet = currentModel.sheets.find(s => s.id === activeSheet);
+                        const sheet = currentModel?.sheets?.find(s => s.id === activeSheet);
                         if (sheet) {
                           handleCellUpdate(sheet.id, editingCell.row, editingCell.col, formula);
                         }
@@ -1077,7 +1033,7 @@ const FinancialPage: React.FC = () => {
                           <span className="text-sm text-gray-600 dark:text-gray-400">Быстрые действия:</span>
                           <button
                             onClick={() => {
-                              const sheet = currentModel.sheets.find(s => s.id === activeSheet);
+                              const sheet = currentModel?.sheets?.find(s => s.id === activeSheet);
                               if (sheet) {
                                 if (activeSheet === 'revenue') {
                                   addRevenueItem(sheet.id);
@@ -1095,7 +1051,7 @@ const FinancialPage: React.FC = () => {
                           <button
                             onClick={() => {
                               if (currentCell.row > 0 && currentCell.col > 0) {
-                                const sheet = currentModel.sheets.find(s => s.id === activeSheet);
+                                const sheet = currentModel?.sheets?.find(s => s.id === activeSheet);
                                 if (sheet) {
                                   const formula = `=SUM(${String.fromCharCode(65 + currentCell.col)}2:${String.fromCharCode(65 + currentCell.col)}${currentCell.row + 1})`;
                                   handleCellUpdate(sheet.id, currentCell.row, currentCell.col, formula);
@@ -1110,7 +1066,7 @@ const FinancialPage: React.FC = () => {
                             onClick={() => {
                               console.log('Growth button clicked. Current cell:', currentCell);
                               if (currentCell.row >= 0 && currentCell.col >= 0) {
-                                const sheet = currentModel.sheets.find(s => s.id === activeSheet);
+                                const sheet = currentModel?.sheets?.find(s => s.id === activeSheet);
                                 console.log('Found sheet:', sheet?.id, 'Row:', currentCell.row, 'Col:', currentCell.col);
                                 
                                 if (sheet && sheet.data[currentCell.row]) {
@@ -1137,13 +1093,7 @@ const FinancialPage: React.FC = () => {
                           >
                             📈 Рост 15%
                           </button>
-                          <button
-                            onClick={generateNewNumbers}
-                            className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm transition flex items-center space-x-1"
-                          >
-                            <span>🎲</span>
-                            <span>Генерировать числа</span>
-                          </button>
+
                         </div>
                       </div>
                       
@@ -1163,18 +1113,30 @@ const FinancialPage: React.FC = () => {
                           <div className="w-3 h-3 bg-purple-100 dark:bg-purple-900/20 border border-purple-300 rounded"></div>
                           <span className="text-xs text-gray-600 dark:text-gray-400">Формулы</span>
                         </div>
+                        <div className="flex items-center space-x-1">
+                          <input
+                            type="checkbox"
+                            id="showFormulas"
+                            checked={showFormulas}
+                            onChange={(e) => setShowFormulas(e.target.checked)}
+                            className="w-3 h-3 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                          <label htmlFor="showFormulas" className="text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
+                            Показывать формулы
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Spreadsheet */}
-                  <div className="flex-1 overflow-auto">
+                  <div className="flex-1 overflow-auto relative">
                                         {(() => {
-                      const currentSheet = currentModel.sheets.find(s => s.id === activeSheet);
+                      const currentSheet = currentModel?.sheets?.find(s => s.id === activeSheet);
                       if (!currentSheet) return <div>Лист не найден</div>;
 
                       return (
-                        <table className="w-full border-collapse">
+                        <table className="w-full border-collapse table-fixed">
                           <tbody>
                                                           {currentSheet.data.map((row, rowIndex) => (
                                 <tr 
@@ -1194,11 +1156,23 @@ const FinancialPage: React.FC = () => {
                                       }
                                     }
                                   }}
+                                  className={`
+                                    ${rowIndex === 0 ? 'sticky top-0 z-10' : ''}
+                                    ${rowIndex % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-850'}
+                                    hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors duration-150
+                                  `}
                                 >
                                   {Array.isArray(row) ? row.map((cell, cellIndex) => (
                                     <EditableCell
                                       key={cellIndex}
-                                      value={cell || ''}
+                                      value={typeof cell === 'string' && cell.startsWith('=') && !showFormulas ? (() => {
+                                        const result = evaluateFormula(cell, currentModel?.sheets || [], currentSheet?.data || []);
+                                        // Проверяем, является ли это формулой рентабельности (деление на выручку)
+                                        if (typeof result === 'number' && cell.includes('/') && (cell.includes('B2') || cell.includes('C2') || cell.includes('D2'))) {
+                                          return `${Math.round(result * 100)}%`;
+                                        }
+                                        return result;
+                                      })() : (cell || '')}
                                       rowIndex={rowIndex}
                                       colIndex={cellIndex}
                                       isEditing={editingCell?.row === rowIndex && editingCell?.col === cellIndex}
@@ -1215,7 +1189,7 @@ const FinancialPage: React.FC = () => {
                                       onCancel={() => {
                                         setEditingCell(null);
                                       }}
-                                      isHeader={rowIndex === 0}
+                                      isHeader={rowIndex === 0 || cellIndex === 0}
                                       isFormula={typeof cell === 'string' && cell.startsWith('=')}
                                       sheetType={currentSheet?.type}
                                       onContextMenu={handleContextMenu}
@@ -1223,6 +1197,7 @@ const FinancialPage: React.FC = () => {
                                       onDragStart={handleDragStart}
                                       onDragOver={handleDragOver}
                                       onDrop={handleDrop}
+                                      showFormulas={showFormulas}
                                     />
                                   )) : null}
                                 </tr>
@@ -1252,7 +1227,7 @@ const FinancialPage: React.FC = () => {
             currentCell={currentCell}
             onApplySuggestion={(suggestion) => {
               if (editingCell) {
-                const sheet = currentModel.sheets.find(s => s.id === activeSheet);
+                const sheet = currentModel?.sheets?.find(s => s.id === activeSheet);
                 if (sheet) {
                   handleCellUpdate(sheet.id, editingCell.row, editingCell.col, suggestion);
                 }
@@ -1260,7 +1235,7 @@ const FinancialPage: React.FC = () => {
               setShowAIAssistant(false);
             }}
             onAddRow={(rowData) => {
-              const sheet = currentModel.sheets.find(s => s.id === activeSheet);
+              const sheet = currentModel?.sheets?.find(s => s.id === activeSheet);
               if (sheet) {
                 handleAddRow(sheet.id, rowData);
               }
@@ -1276,7 +1251,7 @@ const FinancialPage: React.FC = () => {
             cellValue={contextMenu.cellValue}
             rowIndex={contextMenu.rowIndex}
             colIndex={contextMenu.colIndex}
-            sheetType={currentModel.sheets.find(s => s.id === activeSheet)?.type}
+            sheetType={currentModel?.sheets?.find(s => s.id === activeSheet)?.type}
           />
         </div>
       )}
@@ -1284,3 +1259,371 @@ const FinancialPage: React.FC = () => {
   );
 };
 export default FinancialPage;
+
+// Функция для превращения ссылки на ячейку (например, A1) в числовое значение
+function getCellValue(ref: string, data: (string | number)[][]): number {
+  const match = ref.match(/([A-Z]+)(\d+)/);
+  if (!match) return 0;
+  
+  const colLetters = match[1];
+  const row = parseInt(match[2], 10) - 1; // строки в данных с 0
+  
+  // Правильное преобразование букв колонки в индекс (A=0, B=1, ..., Z=25, AA=26, etc.)
+  let col = 0;
+  for (let i = 0; i < colLetters.length; i++) {
+    col = col * 26 + (colLetters.charCodeAt(i) - 64);
+  }
+  col = col - 1; // Приводим к 0-индексации
+  
+  if (row < 0 || col < 0 || row >= data.length || col >= (data[row]?.length || 0)) {
+    return 0;
+  }
+  
+  const val = data[row]?.[col];
+  if (typeof val === 'number') {
+    return val;
+  }
+  
+  const strVal = String(val || '');
+  // Если это формула, не пытаемся её парсить как число
+  if (strVal.startsWith('=')) {
+    return 0;
+  }
+  
+  // Обработка процентных значений
+  if (strVal.includes('%')) {
+    const percentVal = parseFloat(strVal.replace(/[^\d.-]/g, ''));
+    return isNaN(percentVal) ? 0 : percentVal / 100;
+  }
+  
+  // Парсим числовое значение, убирая все нечисловые символы кроме точки и минуса
+  const numVal = parseFloat(strVal.replace(/[^\d.-]/g, ''));
+  return isNaN(numVal) ? 0 : numVal;
+}
+
+// Получить значение ячейки с учётом ссылок на другие листы
+function getCellValueGlobal(ref: string, sheets: { id: string; name?: string; data: (string | number)[][] }[], currentSheetData: (string | number)[][], visitedCells: Set<string> = new Set()): number {
+  // Проверка на циклические ссылки
+  if (visitedCells.has(ref)) {
+    return 0;
+  }
+  
+  visitedCells.add(ref);
+  
+  const parts = ref.split('!');
+  let cellRef = ref;
+  let data = currentSheetData;
+  
+  if (parts.length === 2) {
+    const [sheetPart, cellPart] = parts;
+    cellRef = cellPart;
+    const targetSheet = sheets.find(s => s.id === sheetPart || s.name === sheetPart);
+    if (targetSheet) {
+      data = targetSheet.data;
+    } else {
+      visitedCells.delete(ref);
+      return 0;
+    }
+  }
+  
+  // Получаем координаты ячейки
+  const match = cellRef.match(/([A-Z]+)(\d+)/);
+  if (!match) {
+    visitedCells.delete(ref);
+    return 0;
+  }
+  
+  let col = 0;
+  for (let i = 0; i < match[1].length; i++) {
+    col = col * 26 + (match[1].charCodeAt(i) - 64);
+  }
+  col = col - 1;
+  const row = parseInt(match[2], 10) - 1;
+  
+  if (row < 0 || col < 0 || row >= data.length || col >= (data[row]?.length || 0)) {
+    visitedCells.delete(ref);
+    return 0;
+  }
+  
+  const val = data[row]?.[col];
+  
+  // Если это формула, рекурсивно вычисляем её
+  if (typeof val === 'string' && val.startsWith('=')) {
+    const result = evaluateFormula(val, sheets, data, new Set(visitedCells));
+    visitedCells.delete(ref);
+    return typeof result === 'number' ? result : 0;
+  }
+  
+  // Обычное значение
+  visitedCells.delete(ref);
+  if (typeof val === 'number') {
+    return val;
+  }
+  
+  const strVal = String(val || '');
+  
+  // Обработка процентных значений
+  if (strVal.includes('%')) {
+    const percentVal = parseFloat(strVal.replace(/[^\d.-]/g, ''));
+    return isNaN(percentVal) ? 0 : percentVal / 100;
+  }
+  
+  const numVal = parseFloat(strVal.replace(/[^\d.-]/g, ''));
+  return isNaN(numVal) ? 0 : numVal;
+}
+
+// Улучшенная функция для вычисления формул с валидацией и расширенным набором функций
+function evaluateFormula(formula: string, sheets: { id: string; name?: string; data: (string | number)[][] }[], currentSheetData: (string | number)[][], visitedCells: Set<string> = new Set()): string | number {
+  // Валидация входных данных
+  if (!formula || typeof formula !== 'string' || !formula.startsWith('=')) {
+    return formula;
+  }
+
+  // Убираем = и пробелы
+  const expr = formula.slice(1).replace(/\s+/g, '');
+  
+  // Проверка на пустую формулу
+  if (!expr) {
+    return 0;
+  }
+
+  try {
+    // Проверка циклических ссылок
+    const cellRefs = expr.match(/([A-Za-z0-9_\- ]+!)?[A-Z]+\d+/g) || [];
+    for (const ref of cellRefs) {
+      if (visitedCells.has(ref)) {
+        console.warn(`Обнаружена циклическая ссылка: ${ref}`);
+        return '#CYCLE!';
+      }
+    }
+
+    // SUM функция с улучшенной обработкой
+    const sumMatch = expr.match(/^SUM\(((?:[A-Za-z0-9_\- ]+!)?([A-Z]+)(\d+):([A-Z]+)(\d+))\)$/i);
+    if (sumMatch) {
+      const [, rangeStr, startCol, startRow, endCol, endRow] = sumMatch;
+      let sheetData = currentSheetData;
+      
+      // Обработка межлистовых ссылок
+      if (rangeStr.includes('!')) {
+        const sheetName = rangeStr.split('!')[0];
+        const targetSheet = sheets.find(s => s.id === sheetName || s.name === sheetName);
+        if (targetSheet) {
+          sheetData = targetSheet.data;
+        } else {
+          console.warn(`Лист не найден: ${sheetName}`);
+          return '#REF!';
+        }
+      }
+      
+      const startRowIdx = parseInt(startRow, 10) - 1;
+      const endRowIdx = parseInt(endRow, 10) - 1;
+      const startColIdx = startCol.toUpperCase().charCodeAt(0) - 65;
+      const endColIdx = endCol.toUpperCase().charCodeAt(0) - 65;
+      
+      // Валидация диапазона
+      if (startRowIdx < 0 || endRowIdx < 0 || startColIdx < 0 || endColIdx < 0) {
+        return '#VALUE!';
+      }
+      
+      let sum = 0;
+      for (let r = startRowIdx; r <= endRowIdx; r++) {
+        for (let c = startColIdx; c <= endColIdx; c++) {
+          const val = sheetData[r]?.[c];
+          const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\d.-]/g, ''));
+          if (!isNaN(num)) sum += num;
+        }
+      }
+      return sum;
+    }
+
+    // AVERAGE функция
+    const avgMatch = expr.match(/^AVERAGE\(((?:[A-Za-z0-9_\- ]+!)?([A-Z]+)(\d+):([A-Z]+)(\d+))\)$/i);
+    if (avgMatch) {
+      const [, rangeStr, startCol, startRow, endCol, endRow] = avgMatch;
+      let sheetData = currentSheetData;
+      
+      if (rangeStr.includes('!')) {
+        const sheetName = rangeStr.split('!')[0];
+        const targetSheet = sheets.find(s => s.id === sheetName || s.name === sheetName);
+        if (targetSheet) sheetData = targetSheet.data;
+        else return '#REF!';
+      }
+      
+      const startRowIdx = parseInt(startRow, 10) - 1;
+      const endRowIdx = parseInt(endRow, 10) - 1;
+      const startColIdx = startCol.toUpperCase().charCodeAt(0) - 65;
+      const endColIdx = endCol.toUpperCase().charCodeAt(0) - 65;
+      
+      if (startRowIdx < 0 || endRowIdx < 0 || startColIdx < 0 || endColIdx < 0) {
+        return '#VALUE!';
+      }
+      
+      let sum = 0;
+      let count = 0;
+      for (let r = startRowIdx; r <= endRowIdx; r++) {
+        for (let c = startColIdx; c <= endColIdx; c++) {
+          const val = sheetData[r]?.[c];
+          const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\d.-]/g, ''));
+          if (!isNaN(num)) {
+            sum += num;
+            count++;
+          }
+        }
+      }
+      return count > 0 ? sum / count : 0;
+    }
+
+    // MAX функция
+    const maxMatch = expr.match(/^MAX\(((?:[A-Za-z0-9_\- ]+!)?([A-Z]+)(\d+):([A-Z]+)(\d+))\)$/i);
+    if (maxMatch) {
+      const [, rangeStr, startCol, startRow, endCol, endRow] = maxMatch;
+      let sheetData = currentSheetData;
+      
+      if (rangeStr.includes('!')) {
+        const sheetName = rangeStr.split('!')[0];
+        const targetSheet = sheets.find(s => s.id === sheetName || s.name === sheetName);
+        if (targetSheet) sheetData = targetSheet.data;
+        else return '#REF!';
+      }
+      
+      const startRowIdx = parseInt(startRow, 10) - 1;
+      const endRowIdx = parseInt(endRow, 10) - 1;
+      const startColIdx = startCol.toUpperCase().charCodeAt(0) - 65;
+      const endColIdx = endCol.toUpperCase().charCodeAt(0) - 65;
+      
+      if (startRowIdx < 0 || endRowIdx < 0 || startColIdx < 0 || endColIdx < 0) {
+        return '#VALUE!';
+      }
+      
+      let max = -Infinity;
+      for (let r = startRowIdx; r <= endRowIdx; r++) {
+        for (let c = startColIdx; c <= endColIdx; c++) {
+          const val = sheetData[r]?.[c];
+          const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\d.-]/g, ''));
+          if (!isNaN(num)) {
+            max = Math.max(max, num);
+          }
+        }
+      }
+      return max === -Infinity ? 0 : max;
+    }
+
+    // MIN функция
+    const minMatch = expr.match(/^MIN\(((?:[A-Za-z0-9_\- ]+!)?([A-Z]+)(\d+):([A-Z]+)(\d+))\)$/i);
+    if (minMatch) {
+      const [, rangeStr, startCol, startRow, endCol, endRow] = minMatch;
+      let sheetData = currentSheetData;
+      
+      if (rangeStr.includes('!')) {
+        const sheetName = rangeStr.split('!')[0];
+        const targetSheet = sheets.find(s => s.id === sheetName || s.name === sheetName);
+        if (targetSheet) sheetData = targetSheet.data;
+        else return '#REF!';
+      }
+      
+      const startRowIdx = parseInt(startRow, 10) - 1;
+      const endRowIdx = parseInt(endRow, 10) - 1;
+      const startColIdx = startCol.toUpperCase().charCodeAt(0) - 65;
+      const endColIdx = endCol.toUpperCase().charCodeAt(0) - 65;
+      
+      if (startRowIdx < 0 || endRowIdx < 0 || startColIdx < 0 || endColIdx < 0) {
+        return '#VALUE!';
+      }
+      
+      let min = Infinity;
+      for (let r = startRowIdx; r <= endRowIdx; r++) {
+        for (let c = startColIdx; c <= endColIdx; c++) {
+          const val = sheetData[r]?.[c];
+          const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^\d.-]/g, ''));
+          if (!isNaN(num)) {
+            min = Math.min(min, num);
+          }
+        }
+      }
+      return min === Infinity ? 0 : min;
+    }
+
+    // ROUND функция
+    const roundMatch = expr.match(/^ROUND\(([^,]+),?([^)]*)\)$/i);
+    if (roundMatch) {
+      const [, value, digits] = roundMatch;
+      
+      // Заменяем ссылки на ячейки в значении
+      const valueReplaced = value.replace(/([A-Za-z0-9_\- ]+!)?[A-Z]+\d+/g, (ref) => {
+        const newVisited = new Set(visitedCells);
+        return getCellValueGlobal(ref, sheets, currentSheetData, newVisited).toString();
+      });
+      
+      try {
+        const numValue = Function(`"use strict";return (${valueReplaced})`)();
+        const numDigits = digits ? parseInt(digits.trim(), 10) : 0;
+        
+        if (typeof numValue === 'number' && !isNaN(numValue)) {
+          return Math.round(numValue * Math.pow(10, numDigits)) / Math.pow(10, numDigits);
+        }
+        return '#VALUE!';
+      } catch (e) {
+        console.warn('Ошибка в функции ROUND:', e);
+        return '#VALUE!';
+      }
+    }
+
+    // IF функция
+    const ifMatch = expr.match(/^IF\(([^,]+),([^,]+),([^)]+)\)$/i);
+    if (ifMatch) {
+      const [, condition, trueValue, falseValue] = ifMatch;
+      
+      // Заменяем ссылки на ячейки в условии
+      const conditionReplaced = condition.replace(/([A-Za-z0-9_\- ]+!)?[A-Z]+\d+/g, (ref) => {
+        const newVisited = new Set(visitedCells);
+        return getCellValueGlobal(ref, sheets, currentSheetData, newVisited).toString();
+      });
+      
+      try {
+        // Безопасная оценка условия
+        const conditionResult = Function(`"use strict";return (${conditionReplaced})`)();
+        
+        if (conditionResult) {
+          // Если условие истинно, возвращаем trueValue
+          if (trueValue.match(/^[A-Z]+\d+$/)) {
+            return getCellValueGlobal(trueValue, sheets, currentSheetData, new Set(visitedCells));
+          }
+          return isNaN(Number(trueValue)) ? trueValue.replace(/"/g, '') : Number(trueValue);
+        } else {
+          // Если условие ложно, возвращаем falseValue
+          if (falseValue.match(/^[A-Z]+\d+$/)) {
+            return getCellValueGlobal(falseValue, sheets, currentSheetData, new Set(visitedCells));
+          }
+          return isNaN(Number(falseValue)) ? falseValue.replace(/"/g, '') : Number(falseValue);
+        }
+      } catch (e) {
+        console.warn('Ошибка в условии IF:', e);
+        return '#VALUE!';
+      }
+    }
+
+    // Арифметические формулы с улучшенной валидацией
+    const newVisited = new Set(visitedCells);
+    const replaced = expr.replace(/([A-Za-z0-9_\- ]+!)?[A-Z]+\d+/g, (ref) => {
+      return getCellValueGlobal(ref, sheets, currentSheetData, newVisited).toString();
+    });
+    
+    // Проверяем, что формула содержит только безопасные символы
+    if (!/^[\d+\-*/.()\s]+$/.test(replaced)) {
+      console.warn('Небезопасная формула:', replaced);
+      return '#VALUE!';
+    }
+    
+    const result = Function(`"use strict";return (${replaced})`)();
+    
+    if (typeof result === 'number' && !isNaN(result)) {
+      return result;
+    }
+    
+    return '#VALUE!';
+    
+  } catch (e) {
+    console.warn('Ошибка вычисления формулы:', formula, e);
+    return '#ERROR!';
+  }
+};
