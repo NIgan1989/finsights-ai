@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { createPortal } from 'react-dom';
+import { formatNumber } from '../../utils/formatUtils.ts';
 
 type CategoryData = {
     name: string;
@@ -15,10 +16,10 @@ type CategoryChartCardProps = {
 
 const COLORS = ['#3b82f6', '#ef4444', '#f97316', '#eab308', '#8b5cf6', '#ec4899', '#14b8a6', '#6b7280', '#d946ef', '#22c55e', '#a855f7', '#06b6d4'];
 
-const formatNumber = (value: number) => {
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-    return new Intl.NumberFormat('ru-RU').format(Math.round(value));
+const formatNumberLocal = (value: number) => {
+    if (Math.abs(value) >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(1)}K`;
+    return formatNumber(Math.round(value));
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -28,7 +29,7 @@ const CustomTooltip = ({ active, payload }: any) => {
             <div className="bg-slate-900/80 backdrop-blur-sm text-white p-4 rounded-xl shadow-2xl border border-slate-800">
                 <p className="font-bold text-lg mb-1">{data.name}</p>
                 <p style={{ color: data.payload.fill }} className="text-base font-semibold">
-                    {formatNumber(data.value)}
+                    {formatNumberLocal(data.value)}
                 </p>
                 <p className="text-sm text-slate-400">{`Доля: ${(data.payload.percent * 100).toFixed(2)}%`}</p>
             </div>
@@ -62,7 +63,7 @@ const CategoryChartCard = ({ data, title }: CategoryChartCardProps) => {
                     </div>
                     <div className="flex-grow flex flex-col">
                         <div className="flex-1 flex items-center justify-center">
-                            <ResponsiveContainer width="100%" height={280}>
+                            <ResponsiveContainer width="100%" height={280} minWidth={300} minHeight={280}>
                                 <PieChart>
                                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(71, 85, 105, 0.5)' }} />
                                     <Pie
@@ -126,7 +127,7 @@ const CategoryChartCard = ({ data, title }: CategoryChartCardProps) => {
                         </div>
                         <div className="flex-1 flex flex-col">
                             <div className="flex-1 flex items-center justify-center">
-                                <ResponsiveContainer width="100%" height="70%">
+                                <ResponsiveContainer width="100%" height="70%" minWidth={400} minHeight={300}>
                                     <PieChart>
                                         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(71, 85, 105, 0.5)' }} />
                                         <Pie
@@ -165,7 +166,7 @@ const CategoryChartCard = ({ data, title }: CategoryChartCardProps) => {
                                                     {entry.name}
                                                 </div>
                                                 <div className="text-xs text-slate-400">
-                                                    {formatNumber(entry.value)}
+                                                    {formatNumberLocal(entry.value)}
                                                 </div>
                                             </div>
                                         </div>

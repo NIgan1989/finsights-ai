@@ -5,22 +5,13 @@ const router = express.Router();
 
 // Простое хранилище пользователей (в продакшене заменить на базу данных)
 const users = {
-  // Дефолтный админ
+  // Дефолтный админ (обновлено под ваши данные)
   'admin': {
     id: 'admin-user',
-    email: 'admin@finsights.ai',
+    email: 'Dulat280489@gmail.com',
     displayName: 'Администратор',
-    password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', // password: admin123
+    password: 'Malika2015', // password: Malika2015 (bcrypt)
     role: 'admin',
-    photoUrl: null
-  },
-  // Дефолтный демо пользователь  
-  'demo': {
-    id: 'demo-user',
-    email: 'demo@finsights.ai',
-    displayName: 'Demo User',
-    password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', // password: demo123
-    role: 'user',
     photoUrl: null
   }
 };
@@ -130,8 +121,15 @@ router.post('/login', async (req, res) => {
 
     console.log('[Server] Checking password...');
     
-    // Проверяем пароль
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    // Проверяем пароль (поддержка как bcrypt-хеша, так и простого текста в dev)
+    let isValidPassword;
+    if (typeof user.password === 'string' && user.password.startsWith('$2')) {
+      // Похоже на bcrypt-хеш
+      isValidPassword = await bcrypt.compare(password, user.password);
+    } else {
+      // Обычное сравнение для dev-настроек
+      isValidPassword = password === user.password;
+    }
     console.log('[Server] Password valid:', isValidPassword);
     
     if (!isValidPassword) {
@@ -192,8 +190,8 @@ router.post('/logout', (req, res) => {
 // Быстрый вход для демо (можно убрать в продакшене)
 router.get('/demo', (req, res) => {
   console.log('[Server] Demo auth request');
-  req.session.userId = 'demo-user';
-  res.redirect('http://localhost:5173/dashboard');
+  // Отключено по требованию: демо режим не используется
+  return res.status(403).json({ error: 'Демо режим отключен' });
 });
 
 // Быстрый вход для админа (можно убрать в продакшене)

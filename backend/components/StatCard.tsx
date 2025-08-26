@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatNumber } from '../../utils/formatUtils.ts';
 
 interface StatCardProps {
   title: string;
@@ -22,8 +23,8 @@ const StatCard: React.FC<StatCardProps> = ({
   changeType 
 }) => {
   const formattedValue = isCurrency
-    ? `${new Intl.NumberFormat('ru-RU').format(Math.abs(value))} ₸`
-    : new Intl.NumberFormat('ru-RU').format(value);
+    ? `${formatNumber(Math.abs(value), { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₸`
+    : formatNumber(value);
 
   const getValueStyles = () => {
     if (!isCurrency) return 'text-slate-300';
@@ -56,21 +57,21 @@ const StatCard: React.FC<StatCardProps> = ({
     'compact': 'p-3',
     'ultra-compact': 'p-2',
     'large': 'p-6',
-  };
+  } as const;
 
   const valueClasses = {
     'default': 'text-xl font-bold',
     'compact': 'text-sm font-semibold',
     'ultra-compact': 'text-xs font-semibold',
     'large': 'text-4xl font-bold',
-  };
+  } as const;
 
   const titleClasses = {
     'default': 'text-sm font-medium',
     'compact': 'text-xs font-medium',
     'ultra-compact': 'text-2xs font-medium',
     'large': 'text-base font-medium',
-  };
+  } as const;
 
   return (
     <div className={`relative group bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl ${cardClasses[variant]} shadow-lg overflow-hidden animate-fade-in`}>

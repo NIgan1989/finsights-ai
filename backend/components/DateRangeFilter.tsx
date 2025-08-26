@@ -13,10 +13,24 @@ interface DateRangeFilterProps {
 const toYyyyMmDd = (dateString: string) => {
   if (!dateString) return '';
   try {
-    const date = new Date(dateString);
-    // Adjust for timezone offset to prevent date from shifting
-    const timezoneOffset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() - timezoneOffset).toISOString().split('T')[0];
+    // Формируем локальную дату без смещения: YYYY-MM-DD
+    // Если уже YYYY-MM-DD, не трогаем
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
+
+    const [d, m, y] = dateString.includes('.') ? dateString.split('.') : ["", "", ""];
+    if (d && m && y) {
+      const year = y.length === 2 ? (parseInt(y, 10) < 50 ? 2000 + parseInt(y, 10) : 1900 + parseInt(y, 10)) : parseInt(y, 10);
+      const mm = String(parseInt(m, 10)).padStart(2, '0');
+      const dd = String(parseInt(d, 10)).padStart(2, '0');
+      return `${year}-${mm}-${dd}`;
+    }
+
+    // Фоллбек: парсим как есть, но возвращаем локальный YYYY-MM-DD без использования UTC
+    const date = new Date(dateString + 'T00:00:00');
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   } catch (e) {
     console.error("Error formatting date:", dateString, e);
     return '';

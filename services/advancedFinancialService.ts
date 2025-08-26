@@ -1,5 +1,6 @@
 import { Transaction, FinancialReport } from '../types';
-import { generateFinancialReport } from './financeService';
+import { generateFinancialReport } from './financeService.ts';
+import { formatLocalMonth, parseLocalDate, formatRuDate, formatMonthYearLong } from '../utils/dateUtils.ts';
 
 // Расширенные типы для передовой финансовой отчетности
 export interface AdvancedFinancialMetrics {
@@ -160,14 +161,14 @@ const calculateSeasonality = (monthlyData: { month: string; value: number }[]): 
     .filter(({ avg }) => avg > overallAverage * 1.1)
     .sort((a, b) => b.avg - a.avg)
     .slice(0, 3)
-    .map(({ month }) => new Date(2024, month).toLocaleDateString('ru-RU', { month: 'long' }));
+    .map(({ month }) => formatRuDate(new Date(2024, month), { month: 'long' }));
   
   const lowMonths = monthlyAverages
     .map((avg, index) => ({ avg, month: index }))
     .filter(({ avg }) => avg < overallAverage * 0.9)
     .sort((a, b) => a.avg - b.avg)
     .slice(0, 3)
-    .map(({ month }) => new Date(2024, month).toLocaleDateString('ru-RU', { month: 'long' }));
+    .map(({ month }) => formatRuDate(new Date(2024, month), { month: 'long' }));
   
   return { peakMonths, lowMonths, seasonalityIndex };
 };
@@ -224,7 +225,7 @@ export const generateAdvancedFinancialReport = (
   }
 
   // Расчет расширенных метрик
-  const sortedTransactions = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const sortedTransactions = [...transactions].sort((a, b) => (parseLocalDate(a.date) || new Date(a.date)).getTime() - (parseLocalDate(b.date) || new Date(b.date)).getTime());
   
   // Группировка по месяцам для анализа трендов
   const monthlyData = new Map<string, {
@@ -236,7 +237,7 @@ export const generateAdvancedFinancialReport = (
   }>();
 
   sortedTransactions.forEach(tx => {
-    const month = new Date(tx.date).toISOString().slice(0, 7);
+    const month = formatLocalMonth(new Date(tx.date));
     const current = monthlyData.get(month) || {
       revenue: 0, expenses: 0, profit: 0, cashFlow: 0, transactions: 0
     };
@@ -274,7 +275,7 @@ export const generateAdvancedFinancialReport = (
 
   // Расчет сезонности
   const seasonalityData = monthlyArray.map(([month, data]) => ({
-    month: new Date(month + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }),
+    month: formatMonthYearLong(parseLocalDate(month + '-01') || new Date(month + '-01')),
     value: data.revenue
   }));
 

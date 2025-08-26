@@ -62,25 +62,15 @@ export const AuthDebug: React.FC = () => {
 
   const testDemoAuth = async () => {
     console.log('[AuthDebug] Testing demo auth...');
-    try {
-      const response = await fetch('http://localhost:3001/api/auth/demo', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
-      console.log('[AuthDebug] Demo auth response:', data);
-      
-      if (response.ok) {
-        alert('✅ Демо авторизация успешна! Перезагрузите страницу.');
-        window.location.reload();
-      } else {
-        alert('❌ Ошибка демо авторизации: ' + data.error);
-      }
-    } catch (error) {
-      console.error('[AuthDebug] Demo auth error:', error);
-      alert('❌ Ошибка демо авторизации: ' + error);
-    }
+    // Демо режим отключен
+    alert('Демо режим отключен');
+    return;
+    // const response = await fetch('http://localhost:3001/api/auth/demo', {
+    //   method: 'GET',
+    //   credentials: 'include'
+    // });
+    // const data = await response.json();
+    // console.log('[AuthDebug] Demo auth response:', data);
   };
 
   return (
@@ -179,7 +169,7 @@ export const AuthDebug: React.FC = () => {
                 <ul className="mt-2 space-y-1 text-blue-600 dark:text-blue-400">
                   <li><a href="http://localhost:3001/api/health" target="_blank" rel="noopener noreferrer">/api/health</a></li>
                   <li><a href="http://localhost:3001/api/auth/me" target="_blank" rel="noopener noreferrer">/api/auth/me</a></li>
-                  <li><a href="http://localhost:3001/api/auth/demo" target="_blank" rel="noopener noreferrer">/api/auth/demo</a></li>
+                  <li><s>/api/auth/demo</s> (отключено)</li>
                 </ul>
               </div>
               <div>

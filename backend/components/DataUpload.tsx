@@ -13,6 +13,7 @@ interface DataUploadProps {
 const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing, isCompact = false }) => {
     const [error, setError] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const { userId, email } = useUser();
 
     const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
         setError(null);
@@ -27,11 +28,29 @@ const DataUpload: React.FC<DataUploadProps> = ({ onFileUploaded, isProcessing, i
         }
     }, []);
 
-    const handleUpload = () => {
-        if (selectedFile) {
-            onFileUploaded(selectedFile);
-            setSelectedFile(null);
+    const handleUpload = async () => {
+        if (!selectedFile) return;
+
+        // Проверяем авторизацию пользователя
+        const currentUserId = userId ?? email;
+        if (!currentUserId) {
+            subscriptionService.showUpgradeModal('Войдите в систему, чтобы загружать файлы');
+            return;
         }
+
+        // Проверяем лимит загрузки файлов
+        const limitCheck = subscriptionService.checkFileUploadLimit();
+        if (!limitCheck.allowed) {
+            subscriptionService.showUpgradeModal(limitCheck.reason || 'Лимит загрузки файлов достигнут');
+            return;
+        }
+
+        // Инкрементируем счетчик загрузок файлов
+        await subscriptionService.incrementFileUploads(currentUserId);
+
+        // Передаем файл для обработки
+        onFileUploaded(selectedFile);
+        setSelectedFile(null);
     };
 
     const handleCancel = () => {

@@ -47,21 +47,22 @@ function useSubscriptionStatus() {
 }
 
 const PricingPage: React.FC = () => {
-  const { token } = useUser();
+  const { token, email, displayName, getUserId } = useUser();
   const status = useSubscriptionStatus();
   const [loading, setLoading] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<'pro' | 'free'>('free');
 
   useEffect(() => {
-    // Для MVP: userId захардкожен
-    const userId = 'demo-user';
-    fetch(`/api/subscription-status?userId=${userId}`)
+    // Используем реального пользователя
+    const userId = getUserId();
+    fetch(`/api/subscription-status?userId=${encodeURIComponent(userId)}`)
       .then(res => res.json())
       .then(data => {
-        if (data.status === 'pro') setSubscriptionStatus('pro');
+        if (data.status === 'pro' || data.status === 'admin') setSubscriptionStatus('pro');
         else setSubscriptionStatus('free');
-      });
-  }, []);
+      })
+      .catch(() => setSubscriptionStatus('free'));
+  }, [getUserId]);
 
   const handleCta = (plan: string) => {
     console.log('[PricingPage] handleCta called with plan:', plan);
@@ -90,16 +91,32 @@ const PricingPage: React.FC = () => {
   // Удаляю handleSubscribe, priceId, Stripe-логику
   // Вместо этого:
   const handleKaspiPayment = async () => {
-    setLoading(true);
-    const userId = 'demo-user'; // TODO: получить реального пользователя
-    const res = await fetch('/api/kaspi-payment-request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    });
-    const data = await res.json();
-    alert(data.message || 'Заявка отправлена!');
-    setLoading(false);
+    try {
+      setLoading(true);
+      const userId = getUserId();
+      const res = await fetch('/api/payment-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          email: email || 'unknown@user',
+          displayName: displayName || 'Пользователь',
+          amount: 2200,
+          note: 'Оплата через Kaspi Gold: +7 778 694 18 03'
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data?.error || 'Не удалось отправить заявку. Попробуйте ещё раз.');
+        return;
+      }
+      alert('Заявка на активацию PRO отправлена! Мы обработаем её в ближайшее время.');
+    } catch (e) {
+      alert('Ошибка соединения. Проверьте интернет и попробуйте снова.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

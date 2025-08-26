@@ -1,12 +1,8 @@
 import React from 'react';
+import { formatNumber } from '../../utils/formatUtils.ts';
 
 const formatCurrency = (value: number) => {
-  const formatted = new Intl.NumberFormat('ru-RU', {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(Math.round(value));
-  return formatted + ' ₸'; // неразрывный пробел
+  return formatNumber(Math.round(value), { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' ₸';
 };
 
 // --- Sub-components for structure ---

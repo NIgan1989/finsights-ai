@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getCurrentLocalDate } from '../../utils/dateUtils.ts';
 import { Transaction } from '../../types';
 
 interface CreateDebtModalProps {
@@ -25,7 +26,7 @@ const CreateDebtModal: React.FC<CreateDebtModalProps> = ({ open, onClose, onAdd 
         try {
             const transaction: Transaction = {
                 id: `debt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                date: new Date().toISOString().split('T')[0],
+                date: getCurrentLocalDate(),
                 description: debtType === 'debt' 
                     ? `Выдача займа: ${counterparty.trim()}`
                     : `Получение кредита: ${counterparty.trim()}`,

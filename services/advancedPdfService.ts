@@ -3,20 +3,17 @@ import { AdvancedFinancialReport } from '../types';
 import pdfMake from 'pdfmake/build/pdfmake';
 // @ts-ignore
 import vfsFonts from 'pdfmake/build/vfs_fonts';
+import { getCurrentLocalDate, parseLocalDate } from '../utils/dateUtils.ts';
+import { formatCurrency as formatCurrencyUtil, formatPercentage as formatPercentageUtil } from '../utils/formatUtils.ts';
 
 (pdfMake as any).vfs = (vfsFonts as any).vfs;
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'KZT',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+  return formatCurrencyUtil(value);
 };
 
 const formatPercentage = (value: number) => {
-  return `${value.toFixed(1)}%`;
+  return formatPercentageUtil(value);
 };
 
 const getTrendIcon = (trend: string) => {
@@ -44,7 +41,7 @@ export const generateAdvancedPdfReport = (report: AdvancedFinancialReport, busin
         margin: [0, 0, 0, 30]
       },
       {
-        text: `Отчет сгенерирован: ${new Date().toLocaleDateString('ru-RU')}`,
+        text: `Отчет сгенерирован: ${(parseLocalDate(getCurrentLocalDate()) || new Date()).toLocaleDateString('ru-RU')}`,
         style: 'date',
         alignment: 'right',
         margin: [0, 0, 0, 20]
@@ -431,4 +428,4 @@ export const generateAdvancedPdfReport = (report: AdvancedFinancialReport, busin
   };
 
   return pdfMake.createPdf(docDefinition);
-}; 
+};

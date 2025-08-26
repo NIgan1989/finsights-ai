@@ -16,7 +16,8 @@
         "jsonwebtoken": "^9.0.2",
         "jspdf": "^3.0.1",
         "jspdf-autotable": "^5.0.2",
-        "openai": "^4.30.0"
+        "openai": "^4.30.0",
+        "pdfkit": "^0.15.0"
     },
     "devDependencies": {
         "ts-prune": "^0.10.3"

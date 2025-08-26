@@ -11,7 +11,10 @@ export const SUBSCRIPTION_LIMITS: Record<SubscriptionStatus, UserLimits> = {
     hasAdvancedAnalytics: false,
     hasExcelExport: false,
     hasPrioritySupport: false,
-    hasFinancialModeling: false,
+    hasFinancialModeling: true, // доступна всем пользователям
+    maxFileUploads: 3, // 3 загрузки банковских выписок
+    maxReportDownloads: 3, // 3 скачивания отчетов на финансовой модели
+    maxDashboardExports: 0, // без экспорта с дашборда
   },
   pro: {
     maxProfiles: -1, // unlimited
@@ -21,6 +24,9 @@ export const SUBSCRIPTION_LIMITS: Record<SubscriptionStatus, UserLimits> = {
     hasExcelExport: true,
     hasPrioritySupport: true,
     hasFinancialModeling: true,
+    maxFileUploads: -1, // безлимитные загрузки
+    maxReportDownloads: -1, // безлимитные скачивания
+    maxDashboardExports: -1, // безлимитные экспорты с дашборда
   },
   pending: {
     maxProfiles: 1,
@@ -29,7 +35,22 @@ export const SUBSCRIPTION_LIMITS: Record<SubscriptionStatus, UserLimits> = {
     hasAdvancedAnalytics: false,
     hasExcelExport: false,
     hasPrioritySupport: false,
-    hasFinancialModeling: false,
+    hasFinancialModeling: true,
+    maxFileUploads: 3,
+    maxReportDownloads: 3,
+    maxDashboardExports: 0,
+  },
+  admin: {
+    maxProfiles: -1, // unlimited
+    maxTransactions: -1, // unlimited
+    maxAiRequests: -1, // unlimited
+    hasAdvancedAnalytics: true,
+    hasExcelExport: true,
+    hasPrioritySupport: true,
+    hasFinancialModeling: true,
+    maxFileUploads: -1, // безлимитные загрузки
+    maxReportDownloads: -1, // безлимитные скачивания
+    maxDashboardExports: -1, // безлимитные экспорты с дашборда
   }
 };
 
@@ -55,6 +76,11 @@ export class SubscriptionService {
     return isAdmin;
   }
 
+  // Публичный метод для проверки админских прав
+  public checkIsLifetimeAdmin(userIdOrEmail: string): boolean {
+    return this.isLifetimeAdmin(userIdOrEmail);
+  }
+
   async fetchSubscriptionInfo(userIdOrEmail: string): Promise<SubscriptionInfo> {
     try {
       // Проверяем гостевой режим
@@ -63,11 +89,13 @@ export class SubscriptionService {
           status: 'free',
           limits: {
             ...SUBSCRIPTION_LIMITS.free,
-            // Гости не могут использовать ИИ функции
+            // Гости не могут использовать ИИ функции и не имеют доступа к финансовой модели
             maxAiRequests: 0,
-            hasFinancialModeling: false
+            hasFinancialModeling: false,
+            maxFileUploads: 0,
+            maxReportDownloads: 0,
           },
-          currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
+          currentUsage: { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
         };
         return this.subscriptionInfo;
       }
@@ -75,9 +103,9 @@ export class SubscriptionService {
       // Проверяем, является ли пользователь администратором с пожизненной подпиской (по email)
       if (this.isLifetimeAdmin(userIdOrEmail)) {
         this.subscriptionInfo = {
-          status: 'pro',
-          limits: SUBSCRIPTION_LIMITS.pro,
-          currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
+          status: 'admin',
+          limits: SUBSCRIPTION_LIMITS.admin,
+          currentUsage: { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
         };
         return this.subscriptionInfo;
       }
@@ -89,7 +117,7 @@ export class SubscriptionService {
       this.subscriptionInfo = {
         status,
         limits: SUBSCRIPTION_LIMITS[status],
-        currentUsage: data.currentUsage || { profiles: 0, transactions: 0, aiRequests: 0 }
+        currentUsage: data.currentUsage || { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
       };
       
       return this.subscriptionInfo;
@@ -99,9 +127,9 @@ export class SubscriptionService {
       // Проверяем админа и в случае ошибки
       if (this.isLifetimeAdmin(userIdOrEmail)) {
         this.subscriptionInfo = {
-          status: 'pro',
-          limits: SUBSCRIPTION_LIMITS.pro,
-          currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
+          status: 'admin',
+          limits: SUBSCRIPTION_LIMITS.admin,
+          currentUsage: { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
         };
         return this.subscriptionInfo;
       }
@@ -110,7 +138,7 @@ export class SubscriptionService {
       this.subscriptionInfo = {
         status: 'free',
         limits: SUBSCRIPTION_LIMITS.free,
-        currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
+        currentUsage: { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
       };
       return this.subscriptionInfo;
     }
@@ -182,6 +210,64 @@ export class SubscriptionService {
     return { allowed: true };
   }
 
+  // Новые методы для проверки лимитов загрузки и скачивания
+  checkFileUploadLimit(): LimitCheckResult {
+    if (!this.subscriptionInfo) {
+      return { allowed: false, reason: 'Subscription info not loaded' };
+    }
+
+    const { limits, currentUsage } = this.subscriptionInfo;
+    if (limits.maxFileUploads === -1) return { allowed: true };
+    
+    if (currentUsage.fileUploads >= limits.maxFileUploads) {
+      return {
+        allowed: false,
+        reason: `Достигнут лимит загрузки файлов (${limits.maxFileUploads}). Обновитесь до PRO для безлимитной загрузки выписок.`,
+        upgradeRequired: true
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  checkReportDownloadLimit(): LimitCheckResult {
+    if (!this.subscriptionInfo) {
+      return { allowed: false, reason: 'Subscription info not loaded' };
+    }
+
+    const { limits, currentUsage } = this.subscriptionInfo;
+    if (limits.maxReportDownloads === -1) return { allowed: true };
+    
+    if (currentUsage.reportDownloads >= limits.maxReportDownloads) {
+      return {
+        allowed: false,
+        reason: `Достигнут лимит скачивания отчетов (${limits.maxReportDownloads}). Обновитесь до PRO для безлимитного скачивания.`,
+        upgradeRequired: true
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  checkDashboardExportLimit(): LimitCheckResult {
+    if (!this.subscriptionInfo) {
+      return { allowed: false, reason: 'Subscription info not loaded' };
+    }
+
+    const { limits, currentUsage } = this.subscriptionInfo;
+    if (limits.maxDashboardExports === -1) return { allowed: true };
+    
+    if (currentUsage.dashboardExports >= limits.maxDashboardExports) {
+      return {
+        allowed: false,
+        reason: `Экспорт отчетов с дашборда доступен только в PRO тарифе.`,
+        upgradeRequired: true
+      };
+    }
+
+    return { allowed: true };
+  }
+
   checkFeatureAccess(feature: keyof UserLimits): LimitCheckResult {
     if (!this.subscriptionInfo) {
       return { allowed: false, reason: 'Subscription info not loaded' };
@@ -222,12 +308,66 @@ export class SubscriptionService {
     }
   }
 
+  // Новые методы для увеличения счетчиков
+  async incrementFileUploads(userId: string): Promise<void> {
+    try {
+      await fetch('/api/increment-file-uploads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      
+      if (this.subscriptionInfo) {
+        this.subscriptionInfo.currentUsage.fileUploads++;
+      }
+    } catch (error) {
+      console.error('Failed to increment file uploads:', error);
+    }
+  }
+
+  async incrementReportDownloads(userId: string): Promise<void> {
+    try {
+      await fetch('/api/increment-report-downloads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      
+      if (this.subscriptionInfo) {
+        this.subscriptionInfo.currentUsage.reportDownloads++;
+      }
+    } catch (error) {
+      console.error('Failed to increment report downloads:', error);
+    }
+  }
+
+  async incrementDashboardExports(userId: string): Promise<void> {
+    try {
+      await fetch('/api/increment-dashboard-exports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      
+      if (this.subscriptionInfo) {
+        this.subscriptionInfo.currentUsage.dashboardExports++;
+      }
+    } catch (error) {
+      console.error('Failed to increment dashboard exports:', error);
+    }
+  }
+
   isPro(): boolean {
-    return this.subscriptionInfo?.status === 'pro';
+    return this.subscriptionInfo?.status === 'pro' || this.subscriptionInfo?.status === 'admin';
   }
 
   isFree(): boolean {
     return this.subscriptionInfo?.status === 'free';
+  }
+
+  // Проверяем, является ли пользователь администратором
+  isAdmin(): boolean {
+    return this.subscriptionInfo?.status === 'admin';
   }
 
   showUpgradeModal(reason: string): void {
@@ -252,4 +392,4 @@ export class SubscriptionService {
   }
 }
 
-export const subscriptionService = SubscriptionService.getInstance(); 
+export const subscriptionService = SubscriptionService.getInstance();

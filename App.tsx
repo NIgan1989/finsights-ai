@@ -12,6 +12,7 @@ import { processAndCategorizeTransactions, generateFinancialReport } from './ser
 import { UserProvider, useUser, useUserState, useUserActions } from './backend/components/UserContext';
 import { ThemeProvider } from './backend/components/ThemeProvider';
 import LandingPage from './backend/components/LandingPage';
+import { formatLocalDate, parseLocalDate } from './utils/dateUtils.ts';
 
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import PricingPage from './backend/components/PricingPage';
@@ -145,9 +146,12 @@ const AppContent: React.FC = () => {
                 }
                 
                 if (transactions && Array.isArray(transactions) && transactions.length > 0) {
+                    console.log('💾 Устанавливаем allTransactions:', transactions.length, 'транзакций');
+                    console.log('📋 Первые 3 транзакции:', transactions.slice(0, 3));
                     setAllTransactions(transactions);
                     setAppState('dashboard');
                 } else {
+                    console.log('⚠️ Нет транзакций для загрузки:', { transactions, isArray: Array.isArray(transactions), length: transactions?.length });
                     setAppState('upload');
                 }
                 
@@ -163,14 +167,38 @@ const AppContent: React.FC = () => {
 
     // Фильтрация транзакций по диапазону дат
     const filteredTransactions = useMemo(() => {
-        if (!allTransactions || !dateRange) return allTransactions;
-        
-        return allTransactions.filter(transaction => {
-            const transactionDate = new Date(transaction.date);
-            const startDate = new Date(dateRange.start);
-            const endDate = new Date(dateRange.end);
-            return transactionDate >= startDate && transactionDate <= endDate;
+        console.log('🔍 Фильтрация транзакций:', {
+            allTransactions: allTransactions?.length || 0,
+            dateRange,
+            hasDateRange: !!dateRange
         });
+        
+        if (!allTransactions || !dateRange) {
+            console.log('📊 Возвращаем все транзакции:', allTransactions?.length || 0);
+            return allTransactions;
+        }
+        
+        const filtered = allTransactions.filter(transaction => {
+            const transactionDate = new Date(transaction.date + 'T00:00:00'); // Добавляем время, чтобы избежать timezone проблем
+            const startDate = new Date(dateRange.start + 'T00:00:00');
+            const endDate = new Date(dateRange.end + 'T23:59:59'); // Включаем весь день
+            
+            const isInRange = transactionDate >= startDate && transactionDate <= endDate;
+            
+            if (!isInRange) {
+                console.log('❌ Транзакция не в диапазоне:', {
+                    date: transaction.date,
+                    transactionDate: transactionDate.toISOString(),
+                    startDate: startDate.toISOString(),
+                    endDate: endDate.toISOString()
+                });
+            }
+            
+            return isInRange;
+        });
+        
+        console.log('✅ Отфильтрованные транзакции:', filtered.length);
+        return filtered;
     }, [allTransactions, dateRange]);
 
     // Ленивая загрузка компонентов
@@ -456,10 +484,10 @@ const AppContent: React.FC = () => {
 
                 // Создаем dateRange если его нет
                 const effectiveDateRange = dateRange || (() => {
-                    const dates = allTransactions.map(t => new Date(t.date).getTime());
+                    const dates = allTransactions.map(t => (parseLocalDate(t.date) || new Date(t.date)).getTime());
                     return {
-                        start: new Date(Math.min(...dates)).toISOString().split('T')[0],
-                        end: new Date(Math.max(...dates)).toISOString().split('T')[0]
+                        start: formatLocalDate(new Date(Math.min(...dates))),
+                        end: formatLocalDate(new Date(Math.max(...dates)))
                     };
                 })();
 
@@ -523,8 +551,8 @@ const AppContent: React.FC = () => {
                                         <DateRangeFilter 
                                             startDate={effectiveDateRange.start}
                                             endDate={effectiveDateRange.end}
-                                            minDate={allTransactions.length > 0 ? new Date(Math.min(...allTransactions.map(t => new Date(t.date).getTime()))).toISOString().split('T')[0] : ''}
-                                            maxDate={allTransactions.length > 0 ? new Date(Math.max(...allTransactions.map(t => new Date(t.date).getTime()))).toISOString().split('T')[0] : ''}
+                                            minDate={allTransactions.length > 0 ? formatLocalDate(new Date(Math.min(...allTransactions.map(t => (parseLocalDate(t.date) || new Date(t.date)).getTime())))) : ''}
+                                            maxDate={allTransactions.length > 0 ? formatLocalDate(new Date(Math.max(...allTransactions.map(t => (parseLocalDate(t.date) || new Date(t.date)).getTime())))) : ''}
                                             onDateChange={(start, end) => setDateRange({ start, end })}
 
                                         />

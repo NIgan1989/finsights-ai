@@ -239,9 +239,12 @@ export interface UserLimits {
   hasExcelExport: boolean;
   hasPrioritySupport: boolean;
   hasFinancialModeling: boolean;
+  maxFileUploads: number;
+  maxReportDownloads: number;
+  maxDashboardExports: number;
 }
 
-export type SubscriptionStatus = 'free' | 'pro' | 'pending';
+export type SubscriptionStatus = 'free' | 'pro' | 'pending' | 'admin';
 
 export interface SubscriptionInfo {
   status: SubscriptionStatus;
@@ -250,6 +253,9 @@ export interface SubscriptionInfo {
     profiles: number;
     transactions: number;
     aiRequests: number;
+    fileUploads: number;
+    reportDownloads: number;
+    dashboardExports: number;
   };
 }
 

@@ -43,7 +43,13 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ transactions, report, dateRan
         setIsLoading(true);
 
         // Увеличиваем счетчик ИИ запросов
-        const currentUserId = userId || email || 'demo-user';
+        const currentUserId = userId ?? email; // удален fallback 'demo-user'
+        if (!currentUserId) {
+            // Пользователь не авторизован — просим войти
+            subscriptionService.showUpgradeModal('Войдите, чтобы использовать ИИ ассистента');
+            setIsLoading(false);
+            return;
+        }
         await subscriptionService.incrementAiRequests(currentUserId);
 
         try {

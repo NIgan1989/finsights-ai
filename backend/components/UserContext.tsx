@@ -240,7 +240,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         throw new Error('Invalid response type');
       })
-      .then(data => {
+      .then(async (data) => {
         console.log('[UserContext] /api/me success data:', data);
         
         // Сохраняем токен и данные пользователя
@@ -268,29 +268,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
         console.log('[UserContext] Successfully authenticated via /api/me');
         
-        // Специальная обработка для админ пользователя
-        if (data.email?.toLowerCase().trim() === 'dulat280489@gmail.com') {
-          console.log('[UserContext] Admin user detected, setting PRO subscription');
-          const adminSubscription: SubscriptionInfo = {
-            status: 'pro' as const,
-            limits: {
-              maxProfiles: -1,
-              maxTransactions: -1, 
-              maxAiRequests: -1,
-              hasAdvancedAnalytics: true,
-              hasExcelExport: true,
-              hasPrioritySupport: true,
-              hasFinancialModeling: true,
-            },
-            currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
-          };
-          setSubscriptionInfo(adminSubscription);
-          // Синхронизируем с subscriptionService
-          subscriptionService.setSubscriptionInfo(adminSubscription);
-        } else {
-          // Загружаем информацию о подписке для обычных пользователей
-          refreshSubscription();
-        }
+        // Загружаем информацию о подписке
+        // Демо обход админ-входа удален. Используем только серверную аутентификацию.
+        await refreshSubscription();
       })
       .catch((err) => {
         console.log('[UserContext] /api/me failed:', err);
@@ -336,53 +316,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     console.log('[UserContext] Login attempt for:', email);
     
-    // Демо вход для админа (если сервер недоступен)
-    if (email.toLowerCase().trim() === 'dulat280489@gmail.com' && (password === 'admin123' || password === 'Malika2015')) {
-      console.log('[UserContext] Demo admin login');
-      
-      const userData = {
-        token: 'session-auth',
-        email: 'Dulat280489@gmail.com',
-        displayName: 'Админ',
-        userId: 'admin_user_1',
-        role: 'admin',
-        photoUrl: null
-      };
-
-      // Сохраняем в localStorage
-      localStorage.setItem('finsights_auth', JSON.stringify(userData));
-      
-      // Обновляем состояние
-      setToken('session-auth');
-      setEmail('Dulat280489@gmail.com');
-      setDisplayName('Админ');
-      setUserId('admin_user_1');
-      setRole('admin');
-      setPhotoUrl(null);
-      setLoading(false);
-
-      // Устанавливаем PRO подписку
-      const adminSubscription: SubscriptionInfo = {
-        status: 'pro' as const,
-        limits: {
-          maxProfiles: -1,
-          maxTransactions: -1, 
-          maxAiRequests: -1,
-          hasAdvancedAnalytics: true,
-          hasExcelExport: true,
-          hasPrioritySupport: true,
-          hasFinancialModeling: true,
-        },
-        currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
-      };
-      console.log('[UserContext] Demo admin - setting subscription:', adminSubscription);
-      setSubscriptionInfo(adminSubscription);
-      // Синхронизируем с subscriptionService
-      subscriptionService.setSubscriptionInfo(adminSubscription);
-
-      console.log('[UserContext] Demo admin login successful');
-      return { success: true };
-    }
+    // Демо обход админ-входа удален. Используем только серверную аутентификацию.
 
     try {
       const response = await fetch('http://localhost:3001/api/auth/login', {
@@ -418,30 +352,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setPhotoUrl(data.user.photoUrl);
         setLoading(false);
 
-        // Специальная обработка для админ пользователя
-        if (data.user.email?.toLowerCase().trim() === 'dulat280489@gmail.com') {
-          console.log('[UserContext] Admin login detected, setting PRO subscription');
-          const adminSubscription: SubscriptionInfo = {
-            status: 'pro' as const,
-            limits: {
-              maxProfiles: -1,
-              maxTransactions: -1, 
-              maxAiRequests: -1,
-              hasAdvancedAnalytics: true,
-              hasExcelExport: true,
-              hasPrioritySupport: true,
-              hasFinancialModeling: true,
-            },
-            currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
-          };
-          console.log('[UserContext] Setting admin subscription:', adminSubscription);
-          setSubscriptionInfo(adminSubscription);
-          // Синхронизируем с subscriptionService
-          subscriptionService.setSubscriptionInfo(adminSubscription);
-        } else {
-          // Загружаем информацию о подписке для обычных пользователей
-          refreshSubscription();
-        }
+        // Загружаем информацию о подписке
+        await refreshSubscription();
 
         console.log('[UserContext] Login successful');
         return { success: true };
@@ -544,11 +456,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const refreshSubscription = useCallback(async () => {
-    if (userId || email) {
-      const currentUserId = userId || email || 'demo-user';
-      const info = await subscriptionService.fetchSubscriptionInfo(currentUserId);
-      setSubscriptionInfo(info);
-    }
+    const currentUserId = userId ?? email;
+    if (!currentUserId) return;
+    const info = await subscriptionService.fetchSubscriptionInfo(currentUserId);
+    setSubscriptionInfo(info);
   }, [userId, email]);
 
   const logout = useCallback(async () => {

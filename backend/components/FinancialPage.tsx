@@ -7,6 +7,8 @@ import TemplateGallery from './TemplateGallery';
 import ContextMenu from './ContextMenu';
 import ResultsDashboard from './ResultsDashboard';
 import { getImplementedTemplates } from '../../templates/templateData';
+import { useUser } from './UserContext';
+import { subscriptionService } from '../../services/subscriptionService';
 
 // Финальный интерфейс шаблона, используемый на странице
 interface FinancialTemplate {
@@ -45,6 +47,7 @@ interface ModelSheet {
 }
 
 const FinancialPage: React.FC = () => {
+  const { userId, email, subscriptionInfo, refreshSubscription } = useUser();
   const [currentStep, setCurrentStep] = useState<'choose' | 'customize' | 'edit'>('choose');
   const [selectedTemplate, setSelectedTemplate] = useState<FinancialTemplate | null>(null);
   const [activeSheet, setActiveSheet] = useState('assumptions');
@@ -178,6 +181,18 @@ const FinancialPage: React.FC = () => {
   const exportToExcel = async () => {
     if (!currentModel) return;
 
+    // Проверка авторизации и лимитов
+    const currentUserId = userId ?? email;
+    if (!currentUserId) {
+      subscriptionService.showUpgradeModal('Войдите, чтобы экспортировать отчеты');
+      return;
+    }
+    const reportLimit = subscriptionService.checkReportDownloadLimit();
+    if (!reportLimit.allowed) {
+      subscriptionService.showUpgradeModal(reportLimit.reason || 'Лимит скачивания отчетов достигнут');
+      return;
+    }
+
     try {
       // Добавляем лист результатов во временную модель для экспорта
       const modelWithResults = {
@@ -217,6 +232,20 @@ const FinancialPage: React.FC = () => {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         
+        // Инкремент счетчика скачивания отчетов (с проверкой и ленивой подзагрузкой подписки)
+        if (!subscriptionInfo) {
+          try {
+            await refreshSubscription();
+          } catch (e) {
+            console.warn('Не удалось обновить информацию о подписке:', e);
+          }
+        }
+        const reportLimit = subscriptionService.checkReportDownloadLimit();
+        if (!reportLimit.allowed) {
+          subscriptionService.showUpgradeModal(reportLimit.reason || 'Лимит скачивания отчетов достигнут');
+          return;
+        }
+        await subscriptionService.incrementReportDownloads(currentUserId);
         console.log('Excel export successful');
       } else {
         const errorText = await response.text();
@@ -230,6 +259,18 @@ const FinancialPage: React.FC = () => {
 
   const exportToPDF = async () => {
     if (!currentModel) return;
+
+    // Проверка авторизации и лимитов
+    const currentUserId = userId ?? email;
+    if (!currentUserId) {
+      subscriptionService.showUpgradeModal('Войдите, чтобы экспортировать отчеты');
+      return;
+    }
+    const reportLimit = subscriptionService.checkReportDownloadLimit();
+    if (!reportLimit.allowed) {
+      subscriptionService.showUpgradeModal(reportLimit.reason || 'Лимит скачивания отчетов достигнут');
+      return;
+    }
 
     try {
       const modelWithResults = {
@@ -263,6 +304,20 @@ const FinancialPage: React.FC = () => {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         
+        // Инкремент счетчика скачивания отчетов (с проверкой и ленивой подзагрузкой подписки)
+        if (!subscriptionInfo) {
+          try {
+            await refreshSubscription();
+          } catch (e) {
+            console.warn('Не удалось обновить информацию о подписке:', e);
+          }
+        }
+        const reportLimit = subscriptionService.checkReportDownloadLimit();
+        if (!reportLimit.allowed) {
+          subscriptionService.showUpgradeModal(reportLimit.reason || 'Лимит скачивания отчетов достигнут');
+          return;
+        }
+        await subscriptionService.incrementReportDownloads(currentUserId);
         console.log('PDF export successful');
       } else {
         const errorText = await response.text();
@@ -276,6 +331,18 @@ const FinancialPage: React.FC = () => {
 
   const exportToGoogleSheets = async () => {
     if (!currentModel) return;
+
+    // Проверка авторизации и лимитов
+    const currentUserId = userId ?? email;
+    if (!currentUserId) {
+      subscriptionService.showUpgradeModal('Войдите, чтобы экспортировать отчеты');
+      return;
+    }
+    const exportLimit = subscriptionService.checkDashboardExportLimit();
+    if (!exportLimit.allowed) {
+      subscriptionService.showUpgradeModal(exportLimit.reason || 'Экспорт доступен только в PRO тарифе');
+      return;
+    }
 
     try {
       const modelWithResults = {
@@ -306,6 +373,9 @@ const FinancialPage: React.FC = () => {
         
         // Открываем Google Sheets
         window.open(result.url, '_blank');
+        
+        // Инкремент счетчика экспортов дашборда
+        await subscriptionService.incrementDashboardExports(currentUserId);
         
         alert('📋 CSV данные скопированы в буфер обмена!\n🌐 Google Sheets открыт в новой вкладке.\n\nВставьте данные (Ctrl+V) и выберите "Import data".');
       } else {

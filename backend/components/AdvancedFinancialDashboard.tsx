@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AdvancedFinancialReport } from '../../types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { formatCurrency as formatCurrencyUtil, formatPercentage as formatPercentageUtil } from '../../utils/formatUtils.ts';
 
 interface AdvancedFinancialDashboardProps {
   report: AdvancedFinancialReport;
@@ -14,16 +15,11 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
   const [modalChart, setModalChart] = useState<string | null>(null);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'KZT',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatCurrencyUtil(value);
   };
 
   const formatPercentage = (value: number) => {
-    return `${(value * 100).toFixed(1)}%`;
+    return formatPercentageUtil(value, { fraction: true });
   };
 
   const getRiskColor = (value: number) => {
@@ -107,7 +103,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="chart-card cursor-pointer hover:shadow-lg transition-all duration-300" onClick={() => setModalChart('pnl')}>
           <h3 className="text-lg font-bold mb-6 text-gray-900 dark:text-white tracking-tight">Динамика P&L</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
             <LineChart data={report.pnl.monthlyData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
@@ -305,7 +301,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
       {/* Cash Flow Chart */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-all duration-300" onClick={() => setModalChart('cashflow')}>
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Анализ денежных потоков</h3>
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={400} minWidth={400} minHeight={400}>
           <BarChart data={report.cashFlow.monthlyData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
@@ -552,7 +548,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
               </button>
             </div>
             <div className="h-96">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={400} minHeight={400}>
                 {modalChart === 'pnl' ? (
                   <LineChart data={report.pnl.monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />

@@ -25,6 +25,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContaine
 import { generateAdvancedFinancialReport } from '../../services/advancedFinancialService.ts';
 import { generateAdvancedPdfReport } from '../../services/advancedPdfService';
 import CreateDebtModal from './CreateDebtModal.tsx';
+import { useUser } from './UserContext';
+import { subscriptionService } from '../../services/subscriptionService';
+import { formatLocalDate, getCurrentLocalDate, parseLocalDate } from '../../utils/dateUtils.ts';
+import { formatCurrency as formatCurrencyUtil, formatNumber } from '../../utils/formatUtils.ts';
 
 interface DashboardProps {
     report: FinancialReport;
@@ -36,9 +40,10 @@ interface DashboardProps {
 
 type ReportView = 'pnl' | 'cashflow' | 'balance' | 'forecast' | 'counterparties' | 'debts' | 'advanced';
 
-const formatCurrency = (value: number) => new Intl.NumberFormat('ru-RU').format(Math.round(value)) + ' ₸';
+const formatCurrency = (value: number) => formatCurrencyUtil(Math.round(value));
 
 const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, profile, onAddTransaction }) => {
+    const { userId, email, subscriptionInfo, refreshSubscription } = useUser();
     const { pnl, cashFlow, balanceSheet, counterpartyReport, debtReport } = report;
     const [activeReport, setActiveReport] = useState<ReportView>('pnl');
     const [forecastData, setForecastData] = useState<ForecastData | null>(null);
@@ -68,20 +73,20 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
         }
 
         const getGroupKey = (dateStr: string, gran: Granularity): string => {
-            const d = new Date(dateStr);
+            const d = parseLocalDate(dateStr) || new Date(dateStr);
             if (gran === 'day') {
-                return d.toISOString().split('T')[0];
+                return formatLocalDate(d);
             }
             if (gran === 'week') {
                 const startOfWeek = new Date(d);
                 startOfWeek.setDate(d.getDate() - d.getDay());
-                return startOfWeek.toISOString().split('T')[0];
+                return formatLocalDate(startOfWeek);
             }
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         };
 
         const getLabel = (dateStr: string, gran: Granularity): string => {
-            const d = new Date(dateStr);
+            const d = parseLocalDate(dateStr) || new Date(dateStr);
             if (gran === 'day') return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
             if (gran === 'week') return `Нед. ${d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}`;
             return d.toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' });
@@ -129,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
 
         const transaction: Transaction = {
             id: `repay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            date: new Date().toISOString().split('T')[0],
+            date: getCurrentLocalDate(),
             description: isReceivable 
                 ? `Возврат долга: ${counterparty}`
                 : `Погашение кредита: ${counterparty}`,
@@ -399,15 +404,56 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
 
 
     const handleDownloadAdvancedReport = async () => {
+        const currentUserId = userId ?? email;
+        if (!currentUserId) {
+            subscriptionService.showUpgradeModal('Войдите, чтобы скачивать отчеты');
+            return;
+        }
+        
+        // Обновляем информацию о подписке перед проверкой лимитов
+        if (!subscriptionInfo) {
+            try {
+                await refreshSubscription();
+            } catch (error) {
+                console.warn('Не удалось обновить информацию о подписке:', error);
+            }
+        }
+        
+        const reportLimit = subscriptionService.checkReportDownloadLimit();
+        if (!reportLimit.allowed) {
+            subscriptionService.showUpgradeModal(reportLimit.reason || 'Лимит скачивания отчетов достигнут');
+            return;
+        }
         const advancedReport = generateAdvancedFinancialReport(transactions);
         const pdf = generateAdvancedPdfReport(advancedReport, profile?.businessName || 'Бизнес');
-        pdf.download(`advanced-financial-report-${new Date().toISOString().split('T')[0]}.pdf`);
+        pdf.download(`advanced-financial-report-${getCurrentLocalDate()}.pdf`);
+        await subscriptionService.incrementReportDownloads(currentUserId);
     };
 
     const handleDownloadFullReport = async () => {
+        const currentUserId = userId ?? email;
+        if (!currentUserId) {
+            subscriptionService.showUpgradeModal('Войдите, чтобы скачивать отчеты');
+            return;
+        }
+        
+        // Обновляем информацию о подписке перед проверкой лимитов
+        if (!subscriptionInfo) {
+            try {
+                await refreshSubscription();
+            } catch (error) {
+                console.warn('Не удалось обновить информацию о подписке:', error);
+            }
+        }
+        
+        const reportLimit = subscriptionService.checkReportDownloadLimit();
+        if (!reportLimit.allowed) {
+            subscriptionService.showUpgradeModal(reportLimit.reason || 'Лимит скачивания отчетов достигнут');
+            return;
+        }
         const { pnl, cashFlow, balanceSheet, counterpartyReport, debtReport } = report;
-        const start = new Date(dateRange.start).toLocaleDateString('ru-RU');
-        const end = new Date(dateRange.end).toLocaleDateString('ru-RU');
+        const start = (parseLocalDate(dateRange.start) || new Date(dateRange.start)).toLocaleDateString('ru-RU');
+        const end = (parseLocalDate(dateRange.end) || new Date(dateRange.end)).toLocaleDateString('ru-RU');
         const now = new Date().toLocaleString('ru-RU');
 
         // Получаем изображения графиков через html2canvas
@@ -805,6 +851,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
             }
         };
         pdfMake.createPdf(docDefinition).download('FinSights_Full_Report.pdf');
+        await subscriptionService.incrementReportDownloads(currentUserId);
     };
 
     const PnlView = () => (
@@ -924,14 +971,14 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                     </button>
                                 </div>
                                 <div className="flex-1">
-                                    <ResponsiveContainer width="100%" height={300}>
+                                    <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
                                         <BarChart data={[{name: 'Операции', value: cashFlow.operatingActivities}, {name: 'Инвестиции', value: cashFlow.investingActivities}, {name: 'Финансы', value: cashFlow.financingActivities}, {name: 'Итого', value: cashFlow.netCashFlow}]}
                                             margin={{ top: 10, right: 5, left: -10, bottom: 5 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                                             <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                                             <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={60} domain={[0, 'dataMax']} />
-                                            <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> new Intl.NumberFormat('ru-RU', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v as number) + ' KZT'} />
+                                            <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> formatCurrencyUtil(Number(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
                                             <Bar dataKey="value" radius={[8,8,8,8]} isAnimationActive={false}>
                                                 {['Операции','Инвестиции','Финансы','Итого'].map((name, idx) => (
                                                     <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Операции' ? '#22c55e' : name==='Инвестиции' ? '#fbbf24' : '#a78bfa'} />
@@ -956,14 +1003,14 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                         </button>
                                     </div>
                                     <div className="flex-1">
-                                        <ResponsiveContainer width="100%" height="100%">
+                                        <ResponsiveContainer width="100%" height="100%" minWidth={400} minHeight={400}>
                                             <BarChart data={[{name: 'Операции', value: cashFlow.operatingActivities}, {name: 'Инвестиции', value: cashFlow.investingActivities}, {name: 'Финансы', value: cashFlow.financingActivities}, {name: 'Итого', value: cashFlow.netCashFlow}]}
                                                 margin={{ top: 20, right: 30, left: 0, bottom: 40 }}
                                             >
                                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                                                 <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickMargin={15} />
                                                 <YAxis stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={80} domain={[0, 'dataMax']} />
-                                                <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> new Intl.NumberFormat('ru-RU', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v as number) + ' KZT'} />
+                                                <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> formatCurrencyUtil(Number(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
                                                 <Bar dataKey="value" radius={[10,10,10,10]} isAnimationActive={false}>
                                                     {['Операции','Инвестиции','Финансы','Итого'].map((name, idx) => (
                                                         <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Операции' ? '#22c55e' : name==='Инвестиции' ? '#fbbf24' : '#a78bfa'} />
@@ -1037,7 +1084,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                 </button>
                             </div>
                             <div className="flex-1">
-                                <ResponsiveContainer width="100%" height={300}>
+                                <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
                                     <BarChart data={[
                                         {name: 'Активы', value: balanceSheet.assets.totalAssets},
                                         {name: 'Обязательства', value: balanceSheet.liabilities.totalLiabilities},
@@ -1047,7 +1094,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                                         <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                                         <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={60} domain={[0, 'dataMax']} />
-                                        <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> new Intl.NumberFormat('ru-RU', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v as number) + ' KZT'} />
+                                        <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> formatCurrencyUtil(Number(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
                                         <Bar dataKey="value" radius={[8,8,8,8]} isAnimationActive={false}>
                                             {['Активы','Обязательства','Капитал','Итого'].map((name, idx) => (
                                                 <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Активы' ? '#22c55e' : name==='Обязательства' ? '#ef4444' : '#3b82f6'} />
@@ -1072,7 +1119,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                     </button>
                                 </div>
                                 <div className="flex-1">
-                                    <ResponsiveContainer width="100%" height="100%">
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={400} minHeight={400}>
                                         <BarChart data={[
                                             {name: 'Активы', value: balanceSheet.assets.totalAssets},
                                             {name: 'Обязательства', value: balanceSheet.liabilities.totalLiabilities},

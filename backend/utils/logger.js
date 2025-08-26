@@ -51,7 +51,8 @@ class Logger {
    */
   writeToFile(level, message, meta = {}) {
     const formattedMessage = this.formatMessage(level, message, meta);
-    const date = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const filename = `${date}.log`;
     const filepath = path.join(this.logDir, filename);
     

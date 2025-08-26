@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useUser } from './UserContext';
+import { subscriptionService } from '../../services/subscriptionService';
 
 interface AIAssistantProps {
   isOpen: boolean;
@@ -258,8 +260,29 @@ const AIFinancialAssistant: React.FC<AIAssistantProps> = ({
   const handleChatSubmit = async () => {
     if (!chatQuery.trim()) return;
     
+    // Получаем текущего пользователя
+    const { userId, email } = useUser();
+    
+    // Проверяем авторизацию
+    const currentUserId = userId ?? email;
+    if (!currentUserId || currentUserId.startsWith('guest_')) {
+      // Пользователь не авторизован или является гостем
+      subscriptionService.showUpgradeModal('Войдите, чтобы использовать ИИ ассистента');
+      return;
+    }
+    
+    // Проверяем лимит ИИ запросов
+    const limitCheck = subscriptionService.checkAiRequestLimit();
+    if (!limitCheck.allowed) {
+      subscriptionService.showUpgradeModal(limitCheck.reason || 'Лимит ИИ запросов достигнут');
+      return;
+    }
+    
     setIsLoading(true);
     setChatHistory(prev => [...prev, { role: 'user', content: chatQuery }]);
+    
+    // Увеличиваем счетчик ИИ запросов
+    await subscriptionService.incrementAiRequests(currentUserId);
     
     // Простые ответы без API
     let response = '';
@@ -476,4 +499,4 @@ ${currentSheet === 'revenue'
   );
 };
 
-export default AIFinancialAssistant; 
+export default AIFinancialAssistant;

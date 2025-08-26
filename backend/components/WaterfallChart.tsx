@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, LabelList, Cell } from 'recharts';
+import { formatNumber, formatCurrency as formatCurrencyUtil } from '../../utils/formatUtils.ts';
 
 interface WaterfallDataPoint {
   name: string;
@@ -16,14 +17,7 @@ interface WaterfallChartProps {
   title?: string;
 }
 
-const formatCurrency = (value: number) => {
-  const formatted = new Intl.NumberFormat('ru-RU', {
-    style: 'decimal',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value);
-  return formatted + ' KZT'; // неразрывный пробел
-};
+const formatCurrency = (value: number) => formatCurrencyUtil(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -110,7 +104,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ data, width = '100%', h
         </div>
         <div className="flex-1 flex flex-col">
           <div className="flex-1">
-      <ResponsiveContainer width={width} height={height}>
+      <ResponsiveContainer width={width} height={height} minWidth={300} minHeight={300}>
         <BarChart
           data={processedData}
           margin={{ top: 10, right: 5, left: -20, bottom: 5 }}
@@ -125,9 +119,10 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ data, width = '100%', h
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
           <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
           <YAxis stroke="#94a3b8" tickFormatter={(value) => {
-            if (Math.abs(value) >= 1e6) return (value / 1e6).toFixed(1) + 'M';
-            if (Math.abs(value) >= 1e3) return (value / 1e3).toFixed(1) + 'K';
-            return new Intl.NumberFormat('ru-RU').format(Math.round(value));
+            const v = Number(value);
+            if (Math.abs(v) >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+            if (Math.abs(v) >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+            return formatNumber(Math.round(v));
           }} tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={60} domain={[0, 'dataMax']} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(100,116,139,0.08)' }} />
           <Bar dataKey="value" radius={[8, 8, 8, 8]} isAnimationActive={false}>
@@ -195,7 +190,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ data, width = '100%', h
             </button>
           </div>
           <div className="flex-1">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={400} minHeight={400}>
               <BarChart
                 data={processedData}
                 margin={{ top: 20, right: 30, left: 0, bottom: 40 }}
@@ -203,7 +198,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ data, width = '100%', h
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                 <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickMargin={15} />
-                <YAxis stroke="#94a3b8" tickFormatter={formatCurrency} tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={80} tickMargin={10} domain={[0, 'dataMax']} />
+                <YAxis stroke="#94a3b8" tickFormatter={(v:number)=>formatCurrency(v)} tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={80} tickMargin={10} domain={[0, 'dataMax']} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(100,116,139,0.08)' }} />
                 
                 <Bar dataKey="value" radius={[8, 8, 8, 8]} isAnimationActive={false}>

@@ -139,11 +139,11 @@ const Profile: React.FC<ProfileProps> = React.memo(({ allProfiles, activeProfile
                         )}
                     </div>
                     <div className={`absolute -bottom-2 -right-2 px-3 py-1 rounded-full text-xs font-bold ${
-                        status === 'pro' 
+                        status === 'pro' || status === 'admin'
                             ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' 
                             : 'bg-gradient-to-r from-slate-400 to-slate-600 text-white'
                     }`}>
-                        {status === 'pro' ? 'PRO' : 'FREE'}
+                        {status === 'pro' || status === 'admin' ? 'PRO' : 'FREE'}
                     </div>
                 </div>
                 

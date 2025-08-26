@@ -38,7 +38,7 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const status = subscriptionInfo?.status || 'free';
-  const isLifetimeAdmin = email?.toLowerCase().trim() === 'dulat280489@gmail.com';
+  const isLifetimeAdmin = subscriptionService.checkIsLifetimeAdmin((email?.toLowerCase().trim()) || '');
   const isGuest = role === 'guest';
 
   // Отладка для диагностики проблем

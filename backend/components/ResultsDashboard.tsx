@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { parseLocalDate } from '../../utils/dateUtils.ts';
 
 interface ResultsDashboardProps {
   model: any;
@@ -519,7 +520,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ model, onExportExce
             <div className="flex items-center gap-4 mt-3 text-sm text-purple-200">
               <span>📋 Листов: {model.sheets?.length || 0}</span>
               <span>🏭 Отрасль: {model.industry || 'Не указана'}</span>
-              <span>📅 Создана: {new Date(model.createdAt).toLocaleDateString('ru-RU')}</span>
+              <span>📅 Создана: {(parseLocalDate(model.createdAt) || new Date(model.createdAt)).toLocaleDateString('ru-RU')}</span>
             </div>
           </div>
           <div className="flex gap-3">
@@ -661,7 +662,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ model, onExportExce
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
           💰 Финансовые показатели по годам
         </h2>
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={400} minWidth={400} minHeight={400}>
           <BarChart 
             data={chartData} 
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -720,7 +721,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ model, onExportExce
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
             📈 Рентабельность по годам
           </h2>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
             <LineChart 
               data={chartData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -764,7 +765,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ model, onExportExce
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
             🥧 Структура расходов (1-й год)
           </h2>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
             <PieChart>
               <Pie
                 data={expensesBreakdown}
@@ -808,7 +809,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ model, onExportExce
               <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
                 💰 Денежный поток по годам
               </h2>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
                 <BarChart data={getCashflowData()}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
                   <XAxis dataKey="year" tick={{ fontSize: 12 }} />
@@ -835,7 +836,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ model, onExportExce
               <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
                 ⚖️ Баланс по годам
               </h2>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
                 <BarChart data={getBalanceData()}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
                   <XAxis dataKey="year" tick={{ fontSize: 12 }} />
@@ -953,10 +954,10 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ model, onExportExce
             </thead>
             <tbody>
               {getMainMetrics().map((metric, index) => (
-                <tr key={index} className="border-b border-gray-100 dark:border-gray-700">
+                <tr key={`metric-${index}-${metric.label}`} className="border-b border-gray-100 dark:border-gray-700">
                   <td className="p-3 font-medium text-gray-900 dark:text-white">{metric.label}</td>
                   {metric.values.map((value, yearIndex) => (
-                    <td key={yearIndex} className={`p-3 text-right font-medium ${
+                    <td key={`${metric.label}-${yearIndex}-${value}`} className={`p-3 text-right font-medium ${
                       metric.type === 'revenue' ? 'text-blue-600' : 
                       metric.type === 'expense' ? 'text-red-600' : 
                       metric.type === 'profit' ? (value >= 0 ? 'text-green-600' : 'text-red-600') :

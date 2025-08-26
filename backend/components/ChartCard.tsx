@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Area, Line } from 'recharts';
+import { formatNumber, formatCurrency } from '../../utils/formatUtils.ts';
 
 interface ChartCardProps {
     title: ReactNode;
@@ -8,12 +9,10 @@ interface ChartCardProps {
     series: { key: string; type: 'area' | 'line'; color: string; dashed?: boolean }[];
 }
 
-const formatNumber = (num: number) => new Intl.NumberFormat('ru-RU').format(Math.round(num));
-
 const abbreviatedNumber = (num: number) => {
     if (Math.abs(num) >= 1e6) return (num / 1e6).toFixed(1) + 'M';
     if (Math.abs(num) >= 1e3) return (num / 1e3).toFixed(1) + 'K';
-    return formatNumber(num);
+    return formatNumber(Math.round(num));
 };
 
 const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {
@@ -25,7 +24,7 @@ const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {
                     <div key={pld.dataKey} className="flex items-center space-x-2 py-1">
                         <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: pld.color }}></div>
                         <span className="font-medium text-sm" style={{ color: pld.color }}>
-                            {pld.name}: <span className="font-bold">{formatNumber(pld.value)} ₸</span>
+                            {pld.name}: <span className="font-bold">{formatCurrency(Math.round(pld.value))}</span>
                         </span>
                     </div>
                 ))}
@@ -60,7 +59,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ title, data, series }) => {
                     <div className="flex-grow flex flex-col">
                         <div className="flex-1 flex items-center justify-center">
                             <div className="w-full h-[280px]">
-                        <ResponsiveContainer>
+                        <ResponsiveContainer width="100%" height={280} minWidth={300} minHeight={280}>
                             <ComposedChart data={data} margin={{ top: 10, right: 5, left: -20, bottom: 5 }}>
                                 <defs>
                                     {series.map(s => 
@@ -154,7 +153,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ title, data, series }) => {
                             </button>
                         </div>
                         <div className="flex-1">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={400} minHeight={400}>
                             <ComposedChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 40 }}>
                                 <defs>
                                     {series.map(s => 
@@ -178,7 +177,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ title, data, series }) => {
                                 <YAxis 
                                     stroke="#94a3b8" 
                                     tick={{ fill: '#94a3b8', fontSize: 14 }}
-                                    tickFormatter={formatNumber} 
+                                    tickFormatter={(v: number) => formatNumber(Math.round(v))} 
                                     tickLine={false} 
                                     axisLine={false} 
                                     width={80}
