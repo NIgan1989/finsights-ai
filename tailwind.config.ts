@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import { THEME_TOKENS } from './config/themes.config';
 
 const config: Config = {
   content: [
@@ -7,90 +8,154 @@ const config: Config = {
     './backend/**/*.{js,ts,jsx,tsx}',
     './**/*.{js,ts,jsx,tsx}'
   ],
-  darkMode: ['class', '[data-theme="dark"]'],
+  darkMode: 'selector',
   theme: {
     extend: {
-      // 8px Grid System
-      spacing: {
-        '0': 'var(--spacing-0)',
-        '1': 'var(--spacing-1)',
-        '2': 'var(--spacing-2)',
-        '3': 'var(--spacing-3)',
-        '4': 'var(--spacing-4)',
-        '6': 'var(--spacing-6)',
-        '8': 'var(--spacing-8)',
-        '10': 'var(--spacing-10)',
-        '12': 'var(--spacing-12)',
-        '16': 'var(--spacing-16)',
-        '20': 'var(--spacing-20)',
-        '24': 'var(--spacing-24)',
-        '32': 'var(--spacing-32)',
-        '40': 'var(--spacing-40)',
-        '48': 'var(--spacing-48)',
-        '64': 'var(--spacing-64)'
-      },
+      // 8px Grid System из централизованной конфигурации
+      spacing: Object.fromEntries(
+        Object.entries(THEME_TOKENS.spacing).map(([key, value]) => [
+          key,
+          `var(--spacing-${key})`
+        ])
+      ),
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
         display: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
       },
-      fontSize: {
-        '2xs': ['var(--text-2xs)', { lineHeight: 'var(--leading-snug)' }],
-        'xs': ['var(--text-xs)', { lineHeight: 'var(--leading-snug)' }],
-        'sm': ['var(--text-sm)', { lineHeight: 'var(--leading-snug)' }],
-        'base': ['var(--text-base)', { lineHeight: 'var(--leading-normal)' }],
-        'lg': ['var(--text-lg)', { lineHeight: 'var(--leading-normal)' }],
-        'xl': ['var(--text-xl)', { lineHeight: 'var(--leading-tight)' }],
-        '2xl': ['var(--text-2xl)', { lineHeight: 'var(--leading-tight)' }],
-        '3xl': ['var(--text-3xl)', { lineHeight: 'var(--leading-tight)' }],
-        '4xl': ['var(--text-4xl)', { lineHeight: 'var(--leading-tight)' }],
-        '5xl': ['var(--text-5xl)', { lineHeight: 'var(--leading-none)' }],
-        '6xl': ['var(--text-6xl)', { lineHeight: 'var(--leading-none)' }]
-      },
-      fontWeight: {
-        light: 'var(--font-weight-light)',
-        normal: 'var(--font-weight-normal)',
-        medium: 'var(--font-weight-medium)',
-        semibold: 'var(--font-weight-semibold)',
-        bold: 'var(--font-weight-bold)',
-        extrabold: 'var(--font-weight-extrabold)'
-      },
-      letterSpacing: {
-        tight: 'var(--letter-spacing-tight)',
-        normal: 'var(--letter-spacing-normal)',
-        wide: 'var(--letter-spacing-wide)',
-        wider: 'var(--letter-spacing-wider)',
-        widest: 'var(--letter-spacing-widest)'
-      },
+      // Typography из централизованной конфигурации
+      fontSize: Object.fromEntries(
+        Object.entries(THEME_TOKENS.fontSize).map(([key, value]) => [
+          key,
+          [`var(--text-${key})`, { lineHeight: 'var(--leading-normal)' }]
+        ])
+      ),
+      fontWeight: Object.fromEntries(
+        Object.entries(THEME_TOKENS.fontWeight).map(([key, value]) => [
+          key,
+          `var(--font-weight-${key})`
+        ])
+      ),
+      letterSpacing: Object.fromEntries(
+        Object.entries(THEME_TOKENS.letterSpacing).map(([key, value]) => [
+          key,
+          `var(--letter-spacing-${key})`
+        ])
+      ),
       colors: {
-        // Используем CSS переменные для совместимости с существующими стилями
-        background: 'var(--background)',
-        surface: 'var(--surface)',
-        'surface-accent': 'var(--surface-accent)',
-        'surface-hover': 'var(--surface-hover)',
-        border: 'var(--border)',
-        'border-hover': 'var(--border-hover)',
-        'text-primary': 'var(--text-primary)',
-        'text-secondary': 'var(--text-secondary)',
-        'text-muted': 'var(--text-muted)',
-        'text-inverse': 'var(--text-inverse)',
+        // Основные цвета из CSS переменных
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        
+        // Поверхности
+        surface: "hsl(var(--surface))",
+        'surface-accent': "hsl(var(--surface-accent))",
+        'surface-hover': "hsl(var(--surface-hover))",
+        'surface-elevated': "hsl(var(--surface-elevated))",
+        'surface-subtle': "hsl(var(--surface-subtle))",
+        
+        // Основные цвета
         primary: {
-          DEFAULT: 'var(--primary)',
-          foreground: 'var(--primary-foreground)',
-          hover: 'var(--primary-hover)'
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(var(--primary-hover))",
+          light: "hsl(var(--primary-light))",
         },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        
+        // Семантические цвета
         success: {
-          DEFAULT: 'var(--success)',
-          foreground: 'var(--success-foreground)'
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+          light: "hsl(var(--success-light))",
         },
         warning: {
-          DEFAULT: 'var(--warning)',
-          foreground: 'var(--warning-foreground)'
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+          light: "hsl(var(--warning-light))",
         },
         destructive: {
-          DEFAULT: 'var(--destructive)',
-          foreground: 'var(--destructive-foreground)'
-        }
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+          light: "hsl(var(--destructive-light))",
+        },
+        error: {
+          DEFAULT: "hsl(var(--error))",
+          foreground: "hsl(var(--error-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          light: "hsl(var(--info-light))",
+          subtle: "hsl(var(--info-subtle))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+          light: "hsl(var(--muted-light))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+          light: "hsl(var(--accent-light))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        
+        // Текстовые цвета
+        'text-primary': "var(--text-primary)",
+        'text-secondary': "var(--text-secondary)",
+        'text-muted': "var(--text-muted)",
+        'text-subtle': "var(--text-subtle)",
+        'text-inverse': "var(--text-inverse)",
+        'text-accent': "var(--text-accent)",
+        'text-success': "var(--text-success)",
+        'text-warning': "var(--text-warning)",
+        'text-error': "var(--text-error)",
+        
+        // Финансовые цвета из CSS переменных
+        'financial-profit': "hsl(var(--profit))",
+        'financial-loss': "hsl(var(--loss))",
+        'financial-neutral': "hsl(var(--neutral))",
+        'financial-growth': "hsl(var(--growth))",
+        'financial-decline': "hsl(var(--decline))",
+        
+        // Цвета графиков
+        'chart-primary': "hsl(var(--chart-primary))",
+        'chart-secondary': "hsl(var(--chart-secondary))",
+        'chart-tertiary': "hsl(var(--chart-tertiary))",
+        'chart-quaternary': "hsl(var(--chart-quaternary))",
+        'chart-accent': "hsl(var(--chart-accent))",
+        'chart-muted': "hsl(var(--chart-muted))",
+        
+        // Дополнительные цвета графиков для совместимости
+        'chart-1': "var(--chart-1)",
+        'chart-2': "var(--chart-2)",
+        'chart-3': "var(--chart-3)",
+        'chart-4': "var(--chart-4)",
+        'chart-5': "var(--chart-5)",
+        'chart-6': "var(--chart-6)",
+        
+        // Фоновые цвета страниц
+        'page-dashboard': "hsl(var(--page-dashboard))",
+        'page-analytics': "hsl(var(--page-analytics))",
+        'page-transactions': "hsl(var(--page-transactions))",
+        'page-reports': "hsl(var(--page-reports))",
+        'page-settings': "hsl(var(--page-settings))",
+      },
+      backgroundImage: {
+        // Gradients removed - replaced with solid colors
       },
       borderRadius: {
         'sm': 'var(--radius-sm)',

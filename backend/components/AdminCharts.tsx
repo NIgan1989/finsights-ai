@@ -42,23 +42,23 @@ interface RealTimeStats {
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, change, icon, color }) => (
-  <div className="bg-surface p-6 rounded-xl border border-border">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-text-secondary text-sm">{title}</p>
-        <p className="text-2xl font-bold text-text-primary">{value}</p>
+  <div className="bg-surface p-4 sm:p-6 rounded-xl border border-border shadow-lg min-w-0">
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <p className="text-foreground text-sm truncate">{title}</p>
+        <p className="text-xl sm:text-2xl font-bold text-foreground truncate">{value}</p>
         <div className="flex items-center gap-1 mt-1">
           {change > 0 ? (
-            <FaArrowUp className="text-green-500 text-sm" />
+            <FaArrowUp className="text-success text-sm flex-shrink-0" />
           ) : (
-            <FaArrowDown className="text-red-500 text-sm" />
+            <FaArrowDown className="text-destructive text-sm flex-shrink-0" />
           )}
-          <span className={`text-sm ${change > 0 ? 'text-green-500' : 'text-red-500'}`}>
+          <span className={`text-sm ${change > 0 ? 'text-success-foreground' : 'text-destructive-foreground'} truncate`}>
             {Math.abs(change)}%
           </span>
         </div>
       </div>
-      <div className={`p-3 rounded-lg ${color}`}>
+      <div className={`p-2 sm:p-3 rounded-lg flex-shrink-0 ${color}`}>
         {icon}
       </div>
     </div>
@@ -170,17 +170,17 @@ const AdminCharts: React.FC = () => {
     { 
       name: 'FREE', 
       value: Math.max(stats.totalUsers - stats.proUsers, 0), 
-      color: '#6B7280' 
+      color: 'var(--muted-foreground)' 
     },
     { 
       name: 'PRO', 
       value: stats.proUsers, 
-      color: '#8B5CF6' 
+      color: 'var(--chart-5)' 
     },
     { 
       name: 'PENDING', 
       value: stats.pendingRequests, 
-      color: '#F59E0B' 
+      color: 'var(--warning)' 
     }
   ];
 
@@ -189,7 +189,7 @@ const AdminCharts: React.FC = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-text-secondary">Загрузка аналитики...</p>
+          <p className="text-foreground">Загрузка аналитики...</p>
         </div>
       </div>
     );
@@ -199,9 +199,9 @@ const AdminCharts: React.FC = () => {
     <div className="space-y-6">
       {/* Заголовок с обновлением */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-text-primary">Аналитика в реальном времени</h2>
+        <h2 className="text-2xl font-bold text-foreground">Аналитика в реальном времени</h2>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-text-secondary">
+          <span className="text-sm text-muted-foreground">
             Обновлено: {lastUpdate}
           </span>
           <button 
@@ -216,66 +216,66 @@ const AdminCharts: React.FC = () => {
       </div>
 
       {/* Метрики */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <MetricCard
           title="Новые пользователи"
           value={`+${stats.newUsersThisMonth}`}
           change={Number(usersChange.toFixed(1))}
-          icon={<FaUsers className="text-white text-xl" />}
-          color="bg-blue-500"
+          icon={<FaUsers className="text-primary-foreground text-xl" />}
+          color="bg-primary border border-primary/20"
         />
         <MetricCard
           title="Доход"
           value={`₸${(stats.totalRevenue / 1000).toFixed(0)}K`}
           change={Number(revenueChange.toFixed(1))}
-          icon={<FaCreditCard className="text-white text-xl" />}
-          color="bg-green-500"
+          icon={<FaCreditCard className="text-success-foreground text-xl" />}
+          color="bg-success border border-success/20"
         />
         <MetricCard
           title="Конверсия"
           value={`${stats.conversionRate.toFixed(1)}%`}
           change={Number(conversionChange.toFixed(1))}
-          icon={<FaChartLine className="text-white text-xl" />}
-          color="bg-purple-500"
+          icon={<FaChartLine className="text-accent-foreground text-xl" />}
+          color="bg-accent border border-accent/20"
         />
         <MetricCard
           title="Активность"
           value={`${stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}%`}
           change={8.5}
-          icon={<FaArrowUp className="text-white text-xl" />}
-          color="bg-orange-500"
+          icon={<FaArrowUp className="text-warning-foreground text-xl" />}
+          color="bg-warning border border-warning/20"
         />
       </div>
 
       {/* Графики */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface p-6 rounded-xl border border-border">
-          <h3 className="text-lg font-semibold text-text-primary mb-4">Рост пользователей</h3>
-          <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-surface p-4 sm:p-6 rounded-xl border border-border overflow-hidden">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Рост пользователей</h3>
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="month" stroke="#6B7280" />
-              <YAxis stroke="#6B7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-line-grid)" opacity={0.4} />
+                <XAxis dataKey="month" stroke="var(--chart-line-axis)" />
+                <YAxis stroke="var(--chart-line-axis)" />
               <Tooltip 
                 contentStyle={{
-                  backgroundColor: '#1F2937',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#F9FAFB'
+                  backgroundColor: 'var(--popover)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '6px',
+                  color: 'var(--popover-foreground)'
                 }}
               />
               <Legend />
               <Line 
                 type="monotone" 
                 dataKey="users" 
-                stroke="#3B82F6" 
+                stroke="var(--primary)" 
                 strokeWidth={2}
                 name="Новые пользователи"
               />
               <Line 
                 type="monotone" 
                 dataKey="approved" 
-                stroke="#10B981" 
+                stroke="var(--success)" 
                 strokeWidth={2}
                 name="PRO подписки"
               />
@@ -283,19 +283,19 @@ const AdminCharts: React.FC = () => {
           </ResponsiveContainer>
         </div>
         
-        <div className="bg-surface p-6 rounded-xl border border-border">
-          <h3 className="text-lg font-semibold text-text-primary mb-4">Доходы по месяцам</h3>
-          <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
+        <div className="bg-surface p-4 sm:p-6 rounded-xl border border-border overflow-hidden">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Доходы по месяцам</h3>
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="month" stroke="#6B7280" />
-              <YAxis stroke="#6B7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-line-grid)" opacity={0.4} />
+                <XAxis dataKey="month" stroke="var(--chart-line-axis)" />
+                <YAxis stroke="var(--chart-line-axis)" />
               <Tooltip 
                 contentStyle={{
-                  backgroundColor: '#1F2937',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#F9FAFB'
+                  backgroundColor: 'var(--popover)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '6px',
+                  color: 'var(--popover-foreground)'
                 }}
                 formatter={(value) => [`₸${Number(value).toLocaleString()}`, 'Доход']}
               />
@@ -303,7 +303,7 @@ const AdminCharts: React.FC = () => {
               <Line 
                 type="monotone" 
                 dataKey="revenue" 
-                stroke="#10B981" 
+                stroke="var(--success)" 
                 strokeWidth={3}
                 name="Доход (₸)"
               />
@@ -313,10 +313,10 @@ const AdminCharts: React.FC = () => {
       </div>
 
       {/* Подписки */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface p-6 rounded-xl border border-border">
-          <h3 className="text-lg font-semibold text-text-primary mb-4">Распределение подписок</h3>
-          <ResponsiveContainer width="100%" height={300} minWidth={300} minHeight={300}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-surface p-4 sm:p-6 rounded-xl border border-border overflow-hidden">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Распределение подписок</h3>
+          <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
                 data={subscriptionData}
@@ -325,7 +325,7 @@ const AdminCharts: React.FC = () => {
                 labelLine={false}
                 label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
                 outerRadius={80}
-                fill="#8884d8"
+                fill="var(--chart-1)"
                 dataKey="value"
               >
                 {subscriptionData.map((entry, index) => (
@@ -334,38 +334,38 @@ const AdminCharts: React.FC = () => {
               </Pie>
               <Tooltip 
                 contentStyle={{
-                  backgroundColor: '#1F2937',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#F9FAFB'
+                  backgroundColor: 'var(--popover)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    color: 'var(--popover-foreground)'
                 }}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-surface p-6 rounded-xl border border-border">
-          <h3 className="text-lg font-semibold text-text-primary mb-4">Статистика</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <span className="text-text-secondary">Всего пользователей</span>
-              <span className="text-xl font-bold text-text-primary">{stats.totalUsers}</span>
+        <div className="bg-surface p-4 sm:p-6 rounded-xl border border-border overflow-hidden">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Статистика</h3>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg gap-2">
+              <span className="text-muted-foreground text-sm sm:text-base truncate">Всего пользователей</span>
+              <span className="text-lg sm:text-xl font-bold text-foreground flex-shrink-0">{stats.totalUsers}</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-              <span className="text-text-secondary">PRO подписки</span>
-              <span className="text-xl font-bold text-purple-600">{stats.proUsers}</span>
+            <div className="flex items-center justify-between p-2 sm:p-3 bg-primary/10 rounded-lg gap-2">
+              <span className="text-muted-foreground text-sm sm:text-base truncate">PRO подписки</span>
+              <span className="text-lg sm:text-xl font-bold text-primary flex-shrink-0">{stats.proUsers}</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-              <span className="text-text-secondary">Ожидают активации</span>
-              <span className="text-xl font-bold text-yellow-600">{stats.pendingRequests}</span>
+            <div className="flex items-center justify-between p-2 sm:p-3 bg-warning/10 rounded-lg gap-2">
+              <span className="text-muted-foreground text-sm sm:text-base truncate">Ожидают активации</span>
+              <span className="text-lg sm:text-xl font-bold text-warning flex-shrink-0">{stats.pendingRequests}</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <span className="text-text-secondary">Общий доход</span>
-              <span className="text-xl font-bold text-green-600">₸{stats.totalRevenue.toLocaleString()}</span>
+            <div className="flex items-center justify-between p-2 sm:p-3 bg-success/10 rounded-lg gap-2">
+              <span className="text-muted-foreground text-sm sm:text-base truncate">Общий доход</span>
+              <span className="text-lg sm:text-xl font-bold text-success flex-shrink-0">₸{stats.totalRevenue.toLocaleString()}</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <span className="text-text-secondary">Конверсия</span>
-              <span className="text-xl font-bold text-blue-600">{stats.conversionRate.toFixed(1)}%</span>
+            <div className="flex items-center justify-between p-2 sm:p-3 bg-info/10 rounded-lg gap-2">
+              <span className="text-muted-foreground text-sm sm:text-base truncate">Конверсия</span>
+              <span className="text-lg sm:text-xl font-bold text-info flex-shrink-0">{stats.conversionRate.toFixed(1)}%</span>
             </div>
           </div>
         </div>

@@ -228,35 +228,35 @@ const FormulaAutocomplete: React.FC<FormulaAutocompleteProps> = ({
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'math': return 'bg-blue-100 text-blue-800';
-      case 'financial': return 'bg-green-100 text-green-800';
-      case 'statistical': return 'bg-purple-100 text-purple-800';
-      case 'logical': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'math': return 'bg-primary/10 text-primary';
+      case 'financial': return 'bg-success/10 text-success';
+      case 'statistical': return 'bg-secondary/10 text-secondary';
+      case 'logical': return 'bg-warning/10 text-warning';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   return (
     <div
       ref={containerRef}
-      className="absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto"
+      className="absolute z-50 bg-surface border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto"
       style={{
         left: position.x,
         top: position.y,
         minWidth: '300px'
       }}
     >
-      <div className="p-2 border-b border-gray-200 bg-gray-50">
-        <div className="text-sm font-medium text-gray-700">Формулы</div>
-        <div className="text-xs text-gray-500">Используйте стрелки для навигации, Enter для выбора</div>
+      <div className="p-2 border-b border-border bg-surface-accent">
+        <div className="text-sm font-medium text-foreground">Формулы</div>
+        <div className="text-xs text-muted-foreground">Используйте стрелки для навигации, Enter для выбора</div>
       </div>
       
       <div className="py-1">
         {filteredSuggestions.map((suggestion, index) => (
           <div
             key={suggestion.id}
-            className={`px-3 py-2 cursor-pointer hover:bg-blue-50 transition ${
-              index === selectedIndex ? 'bg-blue-100' : ''
+            className={`px-3 py-2 cursor-pointer hover:bg-surface-hover transition ${
+              index === selectedIndex ? 'bg-primary/10' : ''
             }`}
             onClick={() => onSelect(suggestion.formula)}
           >
@@ -264,13 +264,13 @@ const FormulaAutocomplete: React.FC<FormulaAutocompleteProps> = ({
               <span className="text-lg">{getCategoryIcon(suggestion.category)}</span>
               <div className="flex-1">
                 <div className="flex items-center space-x-2">
-                  <span className="font-medium text-gray-800">{suggestion.name}</span>
+                  <span className="font-medium text-foreground">{suggestion.name}</span>
                   <span className={`px-2 py-1 rounded-full text-xs ${getCategoryColor(suggestion.category)}`}>
                     {suggestion.category}
                   </span>
                 </div>
-                <div className="text-sm text-gray-600 mt-1">{suggestion.description}</div>
-                <div className="text-xs font-mono text-blue-600 mt-1">{suggestion.formula}</div>
+                <div className="text-sm text-muted-foreground mt-1">{suggestion.description}</div>
+                <div className="text-xs font-mono text-primary mt-1">{suggestion.formula}</div>
               </div>
             </div>
           </div>
@@ -278,7 +278,7 @@ const FormulaAutocomplete: React.FC<FormulaAutocompleteProps> = ({
       </div>
 
       {filteredSuggestions.length === 0 && (
-        <div className="px-3 py-4 text-center text-gray-500">
+        <div className="px-3 py-4 text-center text-muted-foreground">
           <div className="text-2xl mb-2">🔍</div>
           <div>Формулы не найдены</div>
           <div className="text-xs mt-1">Попробуйте другой поисковый запрос</div>
@@ -288,4 +288,4 @@ const FormulaAutocomplete: React.FC<FormulaAutocompleteProps> = ({
   );
 };
 
-export default FormulaAutocomplete; 
+export default FormulaAutocomplete;

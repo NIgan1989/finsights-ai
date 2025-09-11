@@ -3,7 +3,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { ThemeProvider } from './backend/components/ThemeProvider';
 
 // Глобальное логирование для отладки
 console.log('[Index] Application starting...');
@@ -51,9 +50,7 @@ console.log('[Index] Rendering React app...');
 
 root.render(
   <React.StrictMode>
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
+    <App />
   </React.StrictMode>
 );
 

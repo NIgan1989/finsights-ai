@@ -29,9 +29,8 @@
   },
   "include": [
     "./index.css",
-    "./src",
-    "./src/types",
     "./backend/components",
+    "./types",
     "./*"
   ]
 }

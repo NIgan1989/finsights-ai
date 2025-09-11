@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatNumber } from '../../utils/formatUtils.ts';
+import { formatNumber } from '../../utils/formatUtils';
 
 interface StatCardProps {
   title: string;
@@ -27,17 +27,17 @@ const StatCard: React.FC<StatCardProps> = ({
     : formatNumber(value);
 
   const getValueStyles = () => {
-    if (!isCurrency) return 'text-slate-300';
+    if (!isCurrency) return 'text-muted-foreground';
     if (trend) {
       switch (trend) {
-        case 'up': return 'text-emerald-400';
-        case 'down': return 'text-red-400';
-        case 'neutral': return 'text-slate-300';
+        case 'up': return 'text-success-foreground';
+        case 'down': return 'text-destructive-foreground';
+        case 'neutral': return 'text-muted-foreground';
       }
     }
     return value >= 0 
-      ? 'text-emerald-400' 
-      : 'text-red-400';
+      ? 'text-success-foreground' 
+      : 'text-destructive-foreground';
   };
 
   const getIcon = () => {
@@ -74,35 +74,35 @@ const StatCard: React.FC<StatCardProps> = ({
   } as const;
 
   return (
-    <div className={`relative group bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl ${cardClasses[variant]} shadow-lg overflow-hidden animate-fade-in`}>
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-70 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-      <div className="absolute top-2 right-2 text-2xl opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all duration-300">
+    <div className={`relative group bg-chart-card backdrop-blur-xl border border-border rounded-2xl ${cardClasses[variant]} shadow-lg overflow-hidden animate-fade-in min-w-0`}>
+      <div className="absolute -inset-0.5 bg-primary/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-70 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+      <div className="absolute top-2 right-2 text-2xl opacity-60 group-hover:opacity-80 group-hover:scale-110 transition-all duration-300">
         {icon}
       </div>
       
-      <div className="relative z-10">
-        <div className="mb-2">
-          <h4 className={`${titleClasses[variant]} text-slate-400 group-hover:text-slate-300 transition-colors duration-300`}>
+      <div className="relative z-10 min-w-0">
+        <div className="mb-2 min-w-0">
+          <h4 className={`${titleClasses[variant]} text-foreground group-hover:text-primary transition-colors duration-300 truncate min-w-0 pr-8`} title={title}>
             {title}
           </h4>
           {subtitle && (
-            <p className="text-2xs text-slate-500 mt-1">
+            <p className="text-2xs text-muted-foreground mt-1 truncate min-w-0 pr-8" title={subtitle}>
               {subtitle}
             </p>
           )}
         </div>
         
-        <div className="flex items-baseline gap-2">
-          <p className={`${valueClasses[variant]} font-display ${getValueStyles()} group-hover:scale-105 transition-transform duration-300`}>
+        <div className="flex items-baseline gap-2 min-w-0">
+          <p className={`${valueClasses[variant]} font-display ${getValueStyles()} group-hover:scale-105 transition-transform duration-300 truncate min-w-0 flex-1`} title={`${isCurrency && value < 0 ? '−' : ''}${formattedValue}`}>
             {isCurrency && value < 0 && '−'}{formattedValue}
           </p>
           {isCurrency && trend && (
             <span className={`text-2xs font-medium px-2 py-0.5 rounded-full ${
               trend === 'up'
-                ? 'bg-emerald-900/50 text-emerald-300'
+                ? 'bg-chart-card text-success-foreground'
                 : trend === 'down'
-                ? 'bg-red-900/50 text-red-300'
-                : 'bg-slate-800 text-slate-300'
+                ? 'bg-chart-card text-destructive-foreground'
+                : 'bg-chart-card text-muted-foreground'
             }`}>
               {trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→'}
             </span>
@@ -110,13 +110,13 @@ const StatCard: React.FC<StatCardProps> = ({
         </div>
         
         {variant !== 'compact' && variant !== 'ultra-compact' && (
-          <div className="mt-3 h-1 bg-slate-800 rounded-full overflow-hidden">
+          <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">
             <div className={`h-full transition-all duration-1000 delay-300 ${
               (trend || (value >= 0 ? 'up' : 'down')) === 'up'
-                ? 'bg-gradient-to-r from-emerald-500 to-green-400'
+                ? 'bg-success'
                 : (trend || (value >= 0 ? 'up' : 'down')) === 'down'
-                ? 'bg-gradient-to-r from-red-500 to-rose-400'
-                : 'bg-gradient-to-r from-slate-500 to-slate-400'
+                ? 'bg-destructive'
+                : 'bg-muted-foreground'
             } w-0 group-hover:w-full`}
             ></div>
           </div>

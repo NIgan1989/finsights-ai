@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { formatLocalDate, getCurrentLocalDate, parseLocalDate, formatFullDate, formatRuDate } from '../../utils/dateUtils.ts';
+import { formatLocalDate, getCurrentLocalDate, parseLocalDate, formatFullDate, formatRuDate } from '../../utils/dateUtils';
 import { useUser } from './UserContext';
 import { Navigate } from 'react-router-dom';
 import { FaCrown, FaUsers, FaChartBar, FaCog, FaShieldAlt, FaDatabase, FaBell, FaTrophy, FaCreditCard, FaUserCheck, FaUserTimes, FaChartLine, FaServer, FaKey, FaClipboardList, FaCheck, FaTimes, FaSync } from 'react-icons/fa';
 import { subscriptionService } from '../../services/subscriptionService';
-import { formatNumber, formatCurrency } from '../../utils/formatUtils.ts';
+import { formatNumber, formatCurrency } from '../../utils/formatUtils';
 
 interface AdminStats {
   totalUsers: number;
@@ -346,10 +346,10 @@ const AdminPanel: React.FC = () => {
   const AdminDashboard = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-text-primary">Панель управления</h2>
+        <h2 className="text-2xl font-bold text-foreground">Панель управления</h2>
         <div className="flex items-center gap-4">
           {lastUpdated && (
-            <span className="text-sm text-text-secondary">
+            <span className="text-sm text-muted-foreground">
               Обновлено: {lastUpdated}
             </span>
           )}
@@ -365,78 +365,78 @@ const AdminPanel: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100">Всего пользователей</p>
-              <p className="text-3xl font-bold">{formatNumber(stats.totalUsers)}</p>
-            </div>
-            <FaUsers className="text-4xl opacity-80" />
+        <div className="bg-primary backdrop-blur-xl p-6 rounded-2xl text-primary-foreground border border-primary/20 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-primary-foreground/80">Всего пользователей</p>
+            <p className="text-3xl font-bold text-primary-foreground">{formatNumber(stats.totalUsers)}</p>
+          </div>
+          <FaUsers className="text-4xl opacity-80 text-primary-foreground/80" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100">PRO пользователи</p>
-              <p className="text-3xl font-bold">{formatNumber(stats.proUsers)}</p>
-            </div>
-            <FaTrophy className="text-4xl opacity-80" />
+        <div className="bg-success backdrop-blur-xl p-6 rounded-2xl text-success-foreground border border-success/20 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-success-foreground/80">PRO пользователи</p>
+            <p className="text-3xl font-bold text-success-foreground">{formatNumber(stats.proUsers)}</p>
+          </div>
+          <FaTrophy className="text-4xl opacity-80 text-success-foreground/80" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100">Заявки</p>
-              <p className="text-3xl font-bold">{formatNumber(stats.totalTransactions)}</p>
+        <div className="bg-accent backdrop-blur-xl p-6 rounded-2xl text-accent-foreground border border-accent/20 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-accent-foreground/80">Заявки</p>
+            <p className="text-3xl font-bold text-accent-foreground">{formatNumber(stats.totalTransactions)}</p>
             </div>
-            <FaChartBar className="text-4xl opacity-80" />
+            <FaChartBar className="text-4xl opacity-80 text-accent-foreground/80" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 rounded-xl text-white">
+        <div className="bg-warning backdrop-blur-xl p-6 rounded-2xl text-warning-foreground border border-warning/20 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-orange-100">Доход</p>
-              <p className="text-3xl font-bold">{(stats.totalRevenue / 1000).toFixed(0)}K ₸</p>
+              <p className="text-warning-foreground/80">Доход</p>
+              <p className="text-3xl font-bold text-warning-foreground">{(stats.totalRevenue / 1000).toFixed(0)}K ₸</p>
             </div>
-            <FaCreditCard className="text-4xl opacity-80" />
+            <FaCreditCard className="text-4xl opacity-80 text-warning-foreground/80" />
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface p-6 rounded-xl border border-border">
-          <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+        <div className="bg-card backdrop-blur-xl p-6 rounded-2xl border border-border shadow-lg">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <FaChartLine className="text-primary" />
             Активность системы
           </h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-text-secondary">Статус системы</span>
+              <span className="text-muted-foreground">Статус системы</span>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                stats.systemHealth === 'good' ? 'bg-green-100 text-green-800' :
-                stats.systemHealth === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-red-100 text-red-800'
+                stats.systemHealth === 'good' ? 'bg-success/20 text-success' :
+                stats.systemHealth === 'warning' ? 'bg-warning/20 text-warning' :
+                'bg-destructive/20 text-destructive'
               }`}>
                 {stats.systemHealth === 'good' ? 'Отлично' : 
                  stats.systemHealth === 'warning' ? 'Внимание' : 'Критично'}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-text-secondary">Активные пользователи</span>
-              <span className="text-text-primary font-medium">{stats.activeUsers}</span>
+              <span className="text-muted-foreground">Активные пользователи</span>
+              <span className="text-foreground font-medium">{stats.activeUsers}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-text-secondary">Ожидают активации</span>
-              <span className="text-text-primary font-medium">{stats.pendingUpgrades}</span>
+              <span className="text-muted-foreground">Ожидают активации</span>
+              <span className="text-foreground font-medium">{stats.pendingUpgrades}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-surface p-6 rounded-xl border border-border">
-          <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+        <div className="bg-card backdrop-blur-xl p-6 rounded-2xl border border-border shadow-lg">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <FaBell className="text-primary" />
             Последние действия
           </h3>
@@ -444,20 +444,20 @@ const AdminPanel: React.FC = () => {
             {paymentRequests.slice(0, 3).map((request, index) => (
               <div key={request.id} className="flex items-center gap-3 text-sm">
                 <div className={`w-2 h-2 rounded-full ${
-                  request.status === 'approved' ? 'bg-green-500' :
-                  request.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
+                  request.status === 'approved' ? 'bg-success' :
+                  request.status === 'pending' ? 'bg-warning' : 'bg-destructive'
                 }`}></div>
-                <span className="text-text-secondary">
+                <span className="text-muted-foreground">
                   {request.status === 'approved' ? 'PRO активирован' :
                    request.status === 'pending' ? 'Новая заявка' : 'Заявка отклонена'}: {request.displayName}
                 </span>
-                <span className="text-text-primary">
+                <span className="text-foreground">
                   {formatFullDate(request.createdAt)}
                 </span>
               </div>
             ))}
             {paymentRequests.length === 0 && (
-              <div className="text-text-secondary text-sm">Нет активности</div>
+              <div className="text-muted-foreground text-sm">Нет активности</div>
             )}
           </div>
         </div>
@@ -468,33 +468,33 @@ const AdminPanel: React.FC = () => {
   const UsersManagement = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-text-primary">Управление пользователями</h2>
+        <h2 className="text-2xl font-bold text-foreground">Управление пользователями</h2>
         <button onClick={refreshAllData} className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary-hover transition disabled:opacity-50">
           Обновить
         </button>
       </div>
 
-      <div className="bg-surface rounded-xl border border-border overflow-hidden">
+      <div className="bg-card backdrop-blur-xl rounded-2xl border border-border shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-background">
+            <thead className="bg-muted/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Пользователь
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Статус
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Подписка
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                  Транзакции
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Операции
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Последний вход
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Действия
                 </th>
               </tr>
@@ -504,15 +504,15 @@ const AdminPanel: React.FC = () => {
                 <tr key={user.id} className="hover:bg-background/50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-text-primary">{user.displayName}</div>
-                      <div className="text-sm text-text-secondary">{user.email}</div>
+                      <div className="text-sm font-medium text-foreground">{user.displayName}</div>
+                      <div className="text-sm text-muted-foreground">{user.email}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      user.status === 'active' ? 'bg-green-100 text-green-800' :
-                      user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
+                      user.status === 'active' ? 'bg-success/20 text-success' :
+                      user.status === 'pending' ? 'bg-warning/20 text-warning' :
+                      'bg-destructive/20 text-destructive'
                     }`}>
                       {user.status === 'active' ? 'Активен' : 
                        user.status === 'pending' ? 'Ожидает' : 'Неактивен'}
@@ -520,18 +520,18 @@ const AdminPanel: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      user.subscription === 'pro' ? 'bg-purple-100 text-purple-800' :
-                      user.subscription === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                      user.subscription === 'pro' ? 'bg-primary/20 text-primary' :
+                      user.subscription === 'pending' ? 'bg-warning/20 text-warning' :
+                      'bg-muted text-muted-foreground'
                     }`}>
                       {user.subscription === 'pro' ? 'PRO' : 
                        user.subscription === 'pending' ? 'Ожидает' : 'FREE'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {user.transactionsCount}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {(parseLocalDate(user.lastLogin) || new Date(user.lastLogin)).toLocaleDateString('ru-RU')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -539,7 +539,7 @@ const AdminPanel: React.FC = () => {
                       <button className="text-primary hover:text-primary-hover" title="Активировать PRO вручную" onClick={() => alert('Эта функция будет добавлена позже')}>
                         <FaUserCheck />
                       </button>
-                      <button className="text-red-500 hover:text-red-600" title="Деактивировать пользователя" onClick={() => alert('Эта функция будет добавлена позже')}>
+                      <button className="text-destructive hover:text-destructive-hover" title="Деактивировать пользователя" onClick={() => alert('Эта функция будет добавлена позже')}>
                         <FaUserTimes />
                       </button>
                     </div>
@@ -548,7 +548,7 @@ const AdminPanel: React.FC = () => {
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-text-secondary">Пользователи не найдены</td>
+                  <td colSpan={6} className="text-center py-8 text-muted-foreground">Пользователи не найдены</td>
                 </tr>
               )}
             </tbody>
@@ -563,7 +563,7 @@ const AdminPanel: React.FC = () => {
     
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-text-primary">Аналитика</h2>
+        <h2 className="text-2xl font-bold text-foreground">Аналитика</h2>
         <React.Suspense fallback={<div className="text-center py-8">Загрузка аналитики...</div>}>
           <AdminCharts />
         </React.Suspense>
@@ -573,44 +573,44 @@ const AdminPanel: React.FC = () => {
 
   const Settings = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-text-primary">Настройки системы</h2>
+      <h2 className="text-2xl font-bold text-foreground">Настройки системы</h2>
       {!settings && (
-        <div className="text-text-secondary">Загрузка настроек...</div>
+        <div className="text-muted-foreground">Загрузка настроек...</div>
       )}
       {settings && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-surface p-6 rounded-xl border border-border">
-            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <div className="bg-card backdrop-blur-xl p-6 rounded-2xl border border-border shadow-lg">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <FaCog className="text-primary" />
               Общие настройки
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Уведомления</span>
+                <span className="text-muted-foreground">Уведомления</span>
                 <button
                   onClick={() => updateSetting('notifications', !settings.notifications)}
                   disabled={settingsSaving}
-                  className={`px-3 py-1 rounded text-sm ${settings.notifications ? 'bg-primary text-primary-foreground' : 'bg-gray-200 dark:bg-border text-gray-700 dark:text-text-secondary'}`}
+                  className={`px-3 py-1 rounded text-sm ${settings.notifications ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
                 >
                   {settings.notifications ? 'Включено' : 'Выключено'}
                 </button>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Автоматические бэкапы</span>
+                <span className="text-muted-foreground">Автоматические бэкапы</span>
                 <button
                   onClick={() => updateSetting('automaticBackups', !settings.automaticBackups)}
                   disabled={settingsSaving}
-                  className={`px-3 py-1 rounded text-sm ${settings.automaticBackups ? 'bg-primary text-primary-foreground' : 'bg-gray-200 dark:bg-border text-gray-700 dark:text-text-secondary'}`}
+                  className={`px-3 py-1 rounded text-sm ${settings.automaticBackups ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
                 >
                   {settings.automaticBackups ? 'Включено' : 'Выключено'}
                 </button>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Режим обслуживания</span>
+                <span className="text-muted-foreground">Режим обслуживания</span>
                 <button
                   onClick={() => updateSetting('maintenanceMode', !settings.maintenanceMode)}
                   disabled={settingsSaving}
-                  className={`px-3 py-1 rounded text-sm ${settings.maintenanceMode ? 'bg-yellow-200 text-yellow-900' : 'bg-gray-200 dark:bg-border text-gray-700 dark:text-text-secondary'}`}
+                  className={`px-3 py-1 rounded text-sm ${settings.maintenanceMode ? 'bg-warning/20 text-warning' : 'bg-muted text-muted-foreground'}`}
                 >
                   {settings.maintenanceMode ? 'Включено' : 'Выключено'}
                 </button>
@@ -618,7 +618,7 @@ const AdminPanel: React.FC = () => {
 
               <div className="pt-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-text-secondary">Лимит API (запросов/час)</span>
+                  <span className="text-muted-foreground">Лимит API (запросов/час)</span>
                   <input
                     type="number"
                     className="w-28 bg-background border border-border rounded px-2 py-1 text-text-primary"
@@ -630,7 +630,7 @@ const AdminPanel: React.FC = () => {
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-text-secondary">Макс. размер файла (МБ)</span>
+                  <span className="text-muted-foreground">Макс. размер файла (МБ)</span>
                   <input
                     type="number"
                     className="w-28 bg-background border border-border rounded px-2 py-1 text-text-primary"
@@ -642,7 +642,7 @@ const AdminPanel: React.FC = () => {
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-text-secondary">Таймаут сессии (часы)</span>
+                  <span className="text-muted-foreground">Таймаут сессии (часы)</span>
                   <input
                     type="number"
                     className="w-28 bg-background border border-border rounded px-2 py-1 text-text-primary"
@@ -657,48 +657,48 @@ const AdminPanel: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-surface p-6 rounded-xl border border-border">
-            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <div className="bg-card backdrop-blur-xl p-6 rounded-2xl border border-border shadow-lg">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <FaShieldAlt className="text-primary" />
               Безопасность
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Двухфакторная аутентификация</span>
+                <span className="text-muted-foreground">Двухфакторная аутентификация</span>
                 <button
                   onClick={() => updateSetting('twoFactorAuth', !settings.twoFactorAuth)}
                   disabled={settingsSaving}
-                  className={`px-3 py-1 rounded text-sm ${settings.twoFactorAuth ? 'bg-primary text-primary-foreground' : 'bg-gray-200 dark:bg-border text-gray-700 dark:text-text-secondary'}`}
+                  className={`px-3 py-1 rounded text-sm ${settings.twoFactorAuth ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
                 >
                   {settings.twoFactorAuth ? 'Включено' : 'Выключено'}
                 </button>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Логирование</span>
+                <span className="text-muted-foreground">Логирование</span>
                 <button
                   onClick={() => updateSetting('logging', !settings.logging)}
                   disabled={settingsSaving}
-                  className={`px-3 py-1 rounded text-sm ${settings.logging ? 'bg-primary text-primary-foreground' : 'bg-gray-200 dark:bg-border text-gray-700 dark:text-text-secondary'}`}
+                  className={`px-3 py-1 rounded text-sm ${settings.logging ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
                 >
                   {settings.logging ? 'Включено' : 'Выключено'}
                 </button>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Ограничение IP</span>
+                <span className="text-muted-foreground">Ограничение IP</span>
                 <button
                   onClick={() => updateSetting('ipRestriction', !settings.ipRestriction)}
                   disabled={settingsSaving}
-                  className={`px-3 py-1 rounded text-sm ${settings.ipRestriction ? 'bg-primary text-primary-foreground' : 'bg-gray-200 dark:bg-border text-gray-700 dark:text-text-secondary'}`}
+                  className={`px-3 py-1 rounded text-sm ${settings.ipRestriction ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
                 >
                   {settings.ipRestriction ? 'Включено' : 'Выключено'}
                 </button>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Режим отладки</span>
+                <span className="text-muted-foreground">Режим отладки</span>
                 <button
                   onClick={() => updateSetting('debugMode', !settings.debugMode)}
                   disabled={settingsSaving}
-                  className={`px-3 py-1 rounded text-sm ${settings.debugMode ? 'bg-yellow-200 text-yellow-900' : 'bg-gray-200 dark:bg-border text-gray-700 dark:text-text-secondary'}`}
+                  className={`px-3 py-1 rounded text-sm ${settings.debugMode ? 'bg-warning/20 text-warning' : 'bg-muted text-muted-foreground'}`}
                 >
                   {settings.debugMode ? 'Включено' : 'Выключено'}
                 </button>
@@ -713,7 +713,7 @@ const AdminPanel: React.FC = () => {
   const SystemInfo = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-text-primary">Информация о системе</h2>
+        <h2 className="text-2xl font-bold text-foreground">Информация о системе</h2>
         <button
           onClick={fetchSystemInfo}
           className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary-hover transition flex items-center gap-2"
@@ -723,102 +723,102 @@ const AdminPanel: React.FC = () => {
       </div>
 
       {!systemInfo && (
-        <div className="text-text-secondary">Загрузка системной информации...</div>
+        <div className="text-muted-foreground">Загрузка системной информации...</div>
       )}
 
       {systemInfo && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-surface p-6 rounded-xl border border-border">
-            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <div className="bg-card backdrop-blur-xl p-6 rounded-2xl border border-border shadow-lg">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <FaServer className="text-primary" />
               Сервер
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-text-secondary">Платформа</span>
-                <span className="text-text-primary">{systemInfo.server.platform} ({systemInfo.server.architecture})</span>
+                <span className="text-muted-foreground">Платформа</span>
+                <span className="text-foreground">{systemInfo.server.platform} ({systemInfo.server.architecture})</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Node</span>
-                <span className="text-text-primary">{systemInfo.server.nodeVersion}</span>
+                <span className="text-muted-foreground">Node</span>
+                <span className="text-foreground">{systemInfo.server.nodeVersion}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Аптайм</span>
-                <span className="text-text-primary">{formatUptime(systemInfo.server.uptime)}</span>
+                <span className="text-muted-foreground">Аптайм</span>
+                <span className="text-foreground">{formatUptime(systemInfo.server.uptime)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">CPU</span>
+                <span className="text-muted-foreground">CPU</span>
                 <span className="text-text-primary">{systemInfo.server.cpu.model} • {systemInfo.server.cpu.cores}× • {systemInfo.server.cpu.usage}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">RAM</span>
+                <span className="text-muted-foreground">RAM</span>
                 <span className="text-text-primary">{(systemInfo.server.memory.used / 1024).toFixed(2)} GB / {systemInfo.server.memory.total.toFixed(2)} GB • {systemInfo.server.memory.usage}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Диск</span>
+                <span className="text-muted-foreground">Диск</span>
                 <span className="text-text-primary">Занято {systemInfo.server.disk.usage}% • Свободно {systemInfo.server.disk.available} GB</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Сеть</span>
+                <span className="text-muted-foreground">Сеть</span>
                 <span className="text-text-primary">{systemInfo.server.network.status} • {systemInfo.server.network.latency} ms</span>
               </div>
             </div>
           </div>
           
-          <div className="bg-surface p-6 rounded-xl border border-border">
-            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <div className="bg-card backdrop-blur-xl p-6 rounded-2xl border border-border shadow-lg">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <FaDatabase className="text-primary" />
               База данных
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-text-secondary">Тип</span>
+                <span className="text-muted-foreground">Тип</span>
                 <span className="text-text-primary">{systemInfo.database.type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Размер</span>
+                <span className="text-muted-foreground">Размер</span>
                 <span className="text-text-primary">{systemInfo.database.size} KB</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Подключения</span>
+                <span className="text-muted-foreground">Подключения</span>
                 <span className="text-text-primary">{systemInfo.database.connections}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Запросы/сек</span>
+                <span className="text-muted-foreground">Запросы/сек</span>
                 <span className="text-text-primary">{systemInfo.database.queriesPerSecond}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Время ответа</span>
+                <span className="text-muted-foreground">Время ответа</span>
                 <span className="text-text-primary">{systemInfo.database.responseTime} ms</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-surface p-6 rounded-xl border border-border lg:col-span-2">
+          <div className="bg-card backdrop-blur-xl p-6 rounded-2xl border border-border shadow-lg lg:col-span-2">
             <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
               <FaKey className="text-primary" />
               Приложение
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="flex justify-between">
-                <span className="text-text-secondary">Версия</span>
-                <span className="text-text-primary">{systemInfo.application.version}</span>
+                <span className="text-muted-foreground">Версия</span>
+                <span className="text-foreground">{systemInfo.application.version}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Окружение</span>
-                <span className="text-text-primary">{systemInfo.application.environment}</span>
+                <span className="text-muted-foreground">Окружение</span>
+                <span className="text-foreground">{systemInfo.application.environment}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">OpenAI API ключ</span>
-                <span className={`px-2 py-0.5 rounded text-sm ${systemInfo.application.apiKeys.openai === 'configured' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{systemInfo.application.apiKeys.openai === 'configured' ? 'сконфигурирован' : 'отсутствует'}</span>
+                <span className="text-muted-foreground">OpenAI API ключ</span>
+                <span className={`px-2 py-0.5 rounded text-sm ${systemInfo.application.apiKeys.openai === 'configured' ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>{systemInfo.application.apiKeys.openai === 'configured' ? 'сконфигурирован' : 'отсутствует'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Активные соединения</span>
-                <span className="text-text-primary">{systemInfo.application.activeConnections}</span>
+                <span className="text-muted-foreground">Активные соединения</span>
+                <span className="text-foreground">{systemInfo.application.activeConnections}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Ошибка/рейт</span>
-                <span className="text-text-primary">{systemInfo.application.errorRate}</span>
+                <span className="text-muted-foreground">Ошибка/рейт</span>
+                <span className="text-foreground">{systemInfo.application.errorRate}</span>
               </div>
             </div>
           </div>
@@ -841,27 +841,27 @@ const AdminPanel: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-surface rounded-xl border border-border overflow-hidden">
+      <div className="bg-card backdrop-blur-xl rounded-2xl border border-border shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-background">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Пользователь
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Сумма
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Статус
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Дата создания
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Примечание
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Действия
                 </th>
               </tr>
@@ -871,24 +871,24 @@ const AdminPanel: React.FC = () => {
                 <tr key={request.id} className="hover:bg-background/50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-text-primary">{request.displayName}</div>
-                      <div className="text-sm text-text-secondary">{request.email}</div>
+                      <div className="text-sm font-medium text-foreground">{request.displayName}</div>
+                      <div className="text-sm text-muted-foreground">{request.email}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">
                     {formatCurrency(request.amount)} ₸
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      request.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
+                      request.status === 'approved' ? 'bg-success/10 text-success' :
+                      request.status === 'pending' ? 'bg-warning/10 text-warning' :
+                      'bg-destructive/10 text-destructive'
                     }`}>
                       {request.status === 'approved' ? 'Одобрено' : 
                        request.status === 'pending' ? 'Ожидает' : 'Отклонено'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatRuDate(request.createdAt, {
                       year: 'numeric',
                       month: 'short',
@@ -897,7 +897,7 @@ const AdminPanel: React.FC = () => {
                       minute: '2-digit'
                     })}
                   </td>
-                  <td className="px-6 py-4 text-sm text-text-secondary max-w-xs truncate">
+                  <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs truncate">
                     {request.note || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -906,7 +906,7 @@ const AdminPanel: React.FC = () => {
                         <button 
                           onClick={() => handleApproveRequest(request.id)}
                           disabled={loading}
-                          className="text-green-600 hover:text-green-800 disabled:opacity-50 flex items-center gap-1 px-2 py-1 rounded bg-green-50 hover:bg-green-100 transition"
+                          className="text-success hover:text-success-hover disabled:opacity-50 flex items-center gap-1 px-2 py-1 rounded bg-success/10 hover:bg-success/20 transition"
                         >
                           <FaCheck />
                           Одобрить
@@ -914,14 +914,14 @@ const AdminPanel: React.FC = () => {
                         <button 
                           onClick={() => handleRejectRequest(request.id)}
                           disabled={loading}
-                          className="text-red-600 hover:text-red-800 disabled:opacity-50 flex items-center gap-1 px-2 py-1 rounded bg-red-50 hover:bg-red-100 transition"
+                          className="text-destructive hover:text-destructive-hover disabled:opacity-50 flex items-center gap-1 px-2 py-1 rounded bg-destructive/10 hover:bg-destructive/20 transition"
                         >
                           <FaTimes />
                           Отклонить
                         </button>
                       </div>
                     ) : (
-                      <span className="text-text-secondary text-xs">
+                      <span className="text-muted-foreground text-xs">
                         {request.status === 'approved' ? 'Обработано' : 'Отклонено'}
                       </span>
                     )}
@@ -934,8 +934,8 @@ const AdminPanel: React.FC = () => {
         
         {paymentRequests.length === 0 && (
           <div className="text-center py-12">
-            <FaClipboardList className="mx-auto text-4xl text-text-secondary mb-4 opacity-50" />
-            <p className="text-text-secondary">Заявки не найдены</p>
+            <FaClipboardList className="mx-auto text-4xl text-muted-foreground mb-4 opacity-50" />
+            <p className="text-muted-foreground">Заявки не найдены</p>
           </div>
         )}
       </div>
@@ -943,56 +943,61 @@ const AdminPanel: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-surface border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <FaCrown className="text-2xl text-primary" />
-            <h1 className="text-2xl font-bold text-text-primary">Админ Панель</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background via-surface to-surface-elevated p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <header className="p-6 bg-card backdrop-blur-sm border border-border rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-8 animate-fade-in shadow-lg mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+              <FaCrown className="text-xl text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Админ Панель</h1>
+              <p className="text-muted-foreground">Управление системой и пользователями</p>
+            </div>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-text-secondary">Админ: {email}</span>
+            <span className="text-muted-foreground">Админ: {email}</span>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Navigation */}
-      <nav className="bg-surface border-b border-border px-6">
-        <div className="flex space-x-8">
-          {[
-            { id: 'dashboard', label: 'Дашборд', icon: FaChartBar },
-            { id: 'users', label: 'Пользователи', icon: FaUsers },
-            { id: 'requests', label: 'Заявки', icon: FaClipboardList },
-            { id: 'analytics', label: 'Аналитика', icon: FaChartLine },
-            { id: 'settings', label: 'Настройки', icon: FaCog },
-            { id: 'system', label: 'Система', icon: FaServer }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition ${
-                activeTab === tab.id
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              <tab.icon />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </nav>
+        {/* Navigation */}
+        <nav className="bg-card backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg mb-8">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'dashboard', label: 'Дашборд', icon: FaChartBar },
+              { id: 'users', label: 'Пользователи', icon: FaUsers },
+              { id: 'requests', label: 'Заявки', icon: FaClipboardList },
+              { id: 'analytics', label: 'Аналитика', icon: FaChartLine },
+              { id: 'settings', label: 'Настройки', icon: FaCog },
+              { id: 'system', label: 'Система', icon: FaServer }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-r from-primary to-secondary shadow-lg text-foreground'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-surface/50'
+                }`}
+              >
+                <tab.icon />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </nav>
 
-      {/* Content */}
-      <main className="p-6">
-        {activeTab === 'dashboard' && <AdminDashboard />}
-        {activeTab === 'users' && <UsersManagement />}
-        {activeTab === 'requests' && <PaymentRequestsManagement />}
-        {activeTab === 'analytics' && <Analytics />}
-        {activeTab === 'settings' && <Settings />}
-        {activeTab === 'system' && <SystemInfo />}
-      </main>
+        {/* Content */}
+        <main>
+          {activeTab === 'dashboard' && <AdminDashboard />}
+          {activeTab === 'users' && <UsersManagement />}
+          {activeTab === 'requests' && <PaymentRequestsManagement />}
+          {activeTab === 'analytics' && <Analytics />}
+          {activeTab === 'settings' && <Settings />}
+          {activeTab === 'system' && <SystemInfo />}
+        </main>
+      </div>
     </div>
   );
 };

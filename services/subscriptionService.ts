@@ -373,16 +373,16 @@ export class SubscriptionService {
   showUpgradeModal(reason: string): void {
     // Показать модальное окно с предложением обновления
     const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+    modal.className = 'fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4';
     modal.innerHTML = `
-      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full shadow-xl">
-        <h3 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Обновление до PRO</h3>
-        <p class="text-gray-600 dark:text-gray-300 mb-6">${reason}</p>
+      <div class="bg-modal-card rounded-xl p-6 max-w-md w-full shadow-xl">
+        <h3 class="text-xl font-bold mb-4 text-foreground">Обновление до PRO</h3>
+        <p class="text-muted-foreground mb-6">${reason}</p>
         <div class="flex gap-3">
-          <button onclick="window.location.href='/pricing'" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+          <button onclick="window.location.href='/pricing'" class="flex-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition">
             Обновить до PRO
           </button>
-          <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+          <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-border rounded-lg hover:bg-accent transition">
             Отмена
           </button>
         </div>

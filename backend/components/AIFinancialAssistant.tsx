@@ -333,20 +333,20 @@ ${currentSheet === 'revenue'
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl h-[600px] flex flex-col">
+    <div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50">
+      <div className="bg-surface rounded-xl shadow-2xl w-full max-w-2xl h-[600px] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-xl">
+        <div className="bg-primary text-primary-foreground p-4 rounded-t-xl">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold">🤖 Помощник по финансам</h2>
-              <p className="text-blue-100 text-sm">
+              <p className="text-primary-foreground/80 text-sm">
                 Лист: {currentSheet} • Ячейка: {String.fromCharCode(65 + currentCell.col)}{currentCell.row + 1}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition"
+              className="text-primary-foreground hover:bg-primary-foreground/20 rounded-full p-2 transition"
             >
               ✕
             </button>
@@ -354,14 +354,14 @@ ${currentSheet === 'revenue'
         </div>
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="border-b border-border">
           <nav className="flex">
             <button
               onClick={() => setActiveTab('quick')}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition ${
                 activeTab === 'quick'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               ⚡ Быстрые действия
@@ -370,8 +370,8 @@ ${currentSheet === 'revenue'
               onClick={() => setActiveTab('chat')}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition ${
                 activeTab === 'chat'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               💬 Задать вопрос
@@ -383,7 +383,7 @@ ${currentSheet === 'revenue'
         <div className="flex-1 overflow-hidden p-4">
           {activeTab === 'quick' && (
             <div className="space-y-3">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="font-semibold text-foreground mb-4">
                 Быстрые действия для листа "{currentSheet}"
               </h3>
               
@@ -391,13 +391,13 @@ ${currentSheet === 'revenue'
                 <button
                   key={action.id}
                   onClick={action.action}
-                  className="w-full text-left p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                  className="w-full text-left p-4 bg-muted rounded-lg hover:bg-muted/80 transition"
                 >
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">{action.icon}</span>
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-white">{action.title}</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-300">{action.description}</div>
+                      <div className="font-medium text-foreground">{action.title}</div>
+                      <div className="text-sm text-muted-foreground">{action.description}</div>
                     </div>
                   </div>
                 </button>
@@ -405,8 +405,8 @@ ${currentSheet === 'revenue'
 
               {/* Добавление новой строки */}
               {(currentSheet === 'revenue' || currentSheet === 'expenses') && (
-                <div className="mt-6 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">
+                <div className="mt-6 p-4 border-2 border-dashed border-border rounded-lg">
+                  <h4 className="font-medium text-foreground mb-3">
                     ➕ Добавить новую статью {currentSheet === 'revenue' ? 'дохода' : 'расходов'}
                   </h4>
                   <div className="space-y-3">
@@ -415,19 +415,19 @@ ${currentSheet === 'revenue'
                       value={newRowName}
                       onChange={(e) => setNewRowName(e.target.value)}
                       placeholder={`Название ${currentSheet === 'revenue' ? 'дохода' : 'расхода'}`}
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
+                      className="w-full p-2 border border-border rounded bg-surface text-foreground"
                     />
                     <input
                       type="text"
                       value={newRowValue}
                       onChange={(e) => setNewRowValue(e.target.value)}
                       placeholder="Сумма или формула (например: 100000 или =A1*0.1)"
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
+                      className="w-full p-2 border border-border rounded bg-surface text-foreground"
                     />
                     <button
                       onClick={handleAddRow}
                       disabled={!newRowName.trim()}
-                      className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      className="w-full bg-primary text-primary-foreground py-2 px-4 rounded hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
                       Добавить строку
                     </button>
@@ -441,7 +441,7 @@ ${currentSheet === 'revenue'
             <div className="h-full flex flex-col">
               <div className="flex-1 overflow-y-auto space-y-3 mb-4">
                 {chatHistory.length === 0 && (
-                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  <div className="text-center text-muted-foreground py-8">
                     <div className="text-4xl mb-4">💬</div>
                     <p>Задайте вопрос о финансовой модели</p>
                     <p className="text-sm mt-2">Например: "Как добавить статью расходов?" или "Какие формулы использовать?"</p>
@@ -452,8 +452,8 @@ ${currentSheet === 'revenue'
                   <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] p-3 rounded-lg whitespace-pre-line ${
                       msg.role === 'user' 
-                        ? 'bg-blue-600 text-white rounded-br-none' 
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none'
+                        ? 'bg-primary text-primary-foreground rounded-br-none'
+                        : 'bg-muted text-foreground rounded-bl-none'
                     }`}>
                       {msg.content}
                     </div>
@@ -462,11 +462,11 @@ ${currentSheet === 'revenue'
                 
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+                    <div className="bg-muted p-3 rounded-lg">
                       <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                       </div>
                     </div>
                   </div>
@@ -480,13 +480,13 @@ ${currentSheet === 'revenue'
                   onChange={(e) => setChatQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
                   placeholder="Спросите что-нибудь..."
-                  className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="flex-1 p-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-surface text-foreground"
                   disabled={isLoading}
                 />
                 <button
                   onClick={handleChatSubmit}
                   disabled={isLoading || !chatQuery.trim()}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   📤
                 </button>

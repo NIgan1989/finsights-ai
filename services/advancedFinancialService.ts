@@ -1,6 +1,6 @@
 import { Transaction, FinancialReport } from '../types';
-import { generateFinancialReport } from './financeService.ts';
-import { formatLocalMonth, parseLocalDate, formatRuDate, formatMonthYearLong } from '../utils/dateUtils.ts';
+import { generateFinancialReport } from './financeService';
+import { formatLocalMonth, parseLocalDate, formatRuDate, formatMonthYearLong } from '../utils/dateUtils';
 
 // Расширенные типы для передовой финансовой отчетности
 export interface AdvancedFinancialMetrics {

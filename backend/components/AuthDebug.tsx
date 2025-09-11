@@ -74,34 +74,34 @@ export const AuthDebug: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <div className="min-h-screen bg-muted dark:bg-background p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <div className="bg-surface rounded-lg shadow-lg p-6">
+          <h1 className="text-2xl font-bold text-foreground mb-6">
             🔧 Отладка авторизации
           </h1>
 
           {/* Статус системы */}
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-muted dark:bg-surface-accent rounded-lg p-4 mb-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Статус системы
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center justify-between">
                 <span>Сервер доступен</span>
-                <span className={debugInfo.serverReachable ? 'text-green-600' : 'text-red-600'}>
+                <span className={debugInfo.serverReachable ? 'text-success' : 'text-destructive'}>
                   {debugInfo.serverReachable ? '✅' : '❌'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Сессия существует</span>
-                <span className={debugInfo.sessionExists ? 'text-green-600' : 'text-red-600'}>
+                <span className={debugInfo.sessionExists ? 'text-success' : 'text-destructive'}>
                   {debugInfo.sessionExists ? '✅' : '❌'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Пользователь авторизован</span>
-                <span className={debugInfo.userLoggedIn ? 'text-green-600' : 'text-red-600'}>
+                <span className={debugInfo.userLoggedIn ? 'text-success' : 'text-destructive'}>
                   {debugInfo.userLoggedIn ? '✅' : '❌'}
                 </span>
               </div>
@@ -109,8 +109,8 @@ export const AuthDebug: React.FC = () => {
           </div>
 
           {/* Информация о пользователе */}
-          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-6">
-            <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4">
+          <div className="bg-primary/10 dark:bg-primary/30 rounded-lg p-4 mb-6">
+            <h2 className="text-lg font-semibold text-info mb-4">
               Текущий пользователь
             </h2>
             <div className="space-y-2 text-sm">
@@ -122,21 +122,21 @@ export const AuthDebug: React.FC = () => {
           </div>
 
           {/* Быстрые действия */}
-          <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 mb-6">
-            <h2 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-4">
+          <div className="bg-success/10 dark:bg-success/30 rounded-lg p-4 mb-6">
+            <h2 className="text-lg font-semibold text-success mb-4">
               Быстрые действия
             </h2>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={testDemoAuth}
                 disabled={!debugInfo.serverReachable}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary-hover disabled:bg-muted disabled:cursor-not-allowed"
               >
                 🚀 Демо вход
               </button>
               <button
                 onClick={checkAllSystems}
-                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+                className="bg-muted-foreground text-primary-foreground px-4 py-2 rounded hover:bg-muted-foreground/80"
               >
                 🔄 Обновить статус
               </button>
@@ -145,11 +145,11 @@ export const AuthDebug: React.FC = () => {
 
           {/* Возможные проблемы */}
           {(!debugInfo.serverReachable || !debugInfo.sessionExists) && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-4">
-              <h2 className="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-4">
+            <div className="bg-warning/10 dark:bg-warning/30 rounded-lg p-4">
+              <h2 className="text-lg font-semibold text-warning mb-4">
                 ⚠️ Возможные проблемы
               </h2>
-              <ul className="text-sm text-yellow-800 dark:text-yellow-200 space-y-1">
+              <ul className="text-sm text-warning space-y-1">
                 <li>• Бэкенд сервер не запущен (http://localhost:3001)</li>
                 <li>• Проблемы с сетевым подключением</li>
                 <li>• Сессия истекла или повреждена</li>
@@ -159,14 +159,14 @@ export const AuthDebug: React.FC = () => {
           )}
 
           {/* Полезные ссылки */}
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mt-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-muted/50 rounded-lg p-4 mt-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               🔗 Полезные ссылки
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <strong>API Endpoints:</strong>
-                <ul className="mt-2 space-y-1 text-blue-600 dark:text-blue-400">
+                <ul className="mt-2 space-y-1 text-primary">
                   <li><a href="http://localhost:3001/api/health" target="_blank" rel="noopener noreferrer">/api/health</a></li>
                   <li><a href="http://localhost:3001/api/auth/me" target="_blank" rel="noopener noreferrer">/api/auth/me</a></li>
                   <li><s>/api/auth/demo</s> (отключено)</li>
@@ -174,7 +174,7 @@ export const AuthDebug: React.FC = () => {
               </div>
               <div>
                 <strong>Панели:</strong>
-                <ul className="mt-2 space-y-1 text-blue-600 dark:text-blue-400">
+                <ul className="mt-2 space-y-1 text-primary">
                   <li><a href="/admin">Админ панель</a></li>
                   <li><a href="/">Главная страница</a></li>
                 </ul>

@@ -1,9 +1,3 @@
-
-
-
-
-
-
 export interface Transaction {
   id: string;
   date: string;
@@ -227,9 +221,7 @@ export interface ForecastData {
 
 export type Granularity = 'day' | 'week' | 'month';
 
-export type Theme = 'light' | 'dark';
-
-  export type View = 'dashboard' | 'transactions' | 'ai_assistant' | 'profile' | 'financial_model' | 'advanced' | 'admin';
+export type View = 'dashboard' | 'transactions' | 'ai_assistant' | 'profile' | 'financial_model' | 'advanced' | 'admin';
 
 export interface UserLimits {
   maxProfiles: number;
@@ -270,3 +262,20 @@ export interface ChatMessage {
   content: string;
   timestamp?: Date;
 }
+
+// Централизованные типы для приложения
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface FinancialData {
+  transactions: Transaction[];
+  balance: number;
+  income: number;
+  expenses: number;
+}
+
+// Типы для темизации - импортируются из config/theme.config.ts
+export type { Theme } from './config/themes.config';

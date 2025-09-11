@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 // PDF and related imports are now dynamically imported in handleDownload
-import { FinancialReport, ForecastData, Transaction, Granularity, BusinessProfile, CounterpartyData } from '../../types.ts';
+import { FinancialReport, ForecastData, Transaction, Granularity, BusinessProfile, CounterpartyData } from '../../types';
 import StatCard from './StatCard.tsx';
 import ChartCard from './ChartCard.tsx';
 import CategoryChartCard from './CategoryChartCard.tsx';
@@ -22,13 +22,13 @@ import html2canvas from 'html2canvas';
 
 import AdvancedFinancialDashboard from './AdvancedFinancialDashboard.tsx';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell } from 'recharts';
-import { generateAdvancedFinancialReport } from '../../services/advancedFinancialService.ts';
+import { generateAdvancedFinancialReport } from '../../services/advancedFinancialService';
 import { generateAdvancedPdfReport } from '../../services/advancedPdfService';
 import CreateDebtModal from './CreateDebtModal.tsx';
 import { useUser } from './UserContext';
 import { subscriptionService } from '../../services/subscriptionService';
-import { formatLocalDate, getCurrentLocalDate, parseLocalDate } from '../../utils/dateUtils.ts';
-import { formatCurrency as formatCurrencyUtil, formatNumber } from '../../utils/formatUtils.ts';
+import { formatLocalDate, getCurrentLocalDate, parseLocalDate } from '../../utils/dateUtils';
+import { formatCurrency as formatCurrencyUtil, formatNumber } from '../../utils/formatUtils';
 
 interface DashboardProps {
     report: FinancialReport;
@@ -159,19 +159,12 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     
     // Используем theme для адаптации цветов графиков
     const chartColors = useMemo(() => {
-        return theme === 'dark' 
-            ? { 
-                revenue: '#4ade80', // зеленый для темной темы
-                expense: '#f87171', // красный для темной темы
-                profit: '#60a5fa', // синий для темной темы
-                background: '#1e293b' // темный фон
-              }
-            : {
-                revenue: '#22c55e', // зеленый для светлой темы
-                expense: '#ef4444', // красный для светлой темы
-                profit: '#3b82f6', // синий для светлой темы
-                background: '#ffffff' // светлый фон
-              };
+        return {
+            revenue: 'var(--chart-1)',     // Синий для доходов
+            expense: 'var(--chart-3)',     // Красный для расходов
+            profit: 'var(--chart-2)',      // Зеленый для прибыли
+            background: 'var(--background)'
+        };
     }, [theme]);
 
     const kpi = useMemo(() => {
@@ -213,26 +206,26 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
     }, [pnl.monthlyData]);
 
     const ExplanationsSection = () => (
-        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 p-6 rounded-2xl shadow-lg">
+        <div className="bg-card backdrop-blur-xl border border-border p-6 rounded-2xl shadow-lg">
             <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <svg className="w-7 h-7 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <div className="w-12 h-12 bg-info/20 rounded-lg flex items-center justify-center">
+                    <svg className="w-7 h-7 text-info" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                     </svg>
                 </div>
                 <div>
-                    <h3 className="text-2xl font-bold text-white">Инсайты и пояснения</h3>
-                    <p className="text-slate-400">Автоматический анализ ключевых изменений</p>
+                    <h3 className="text-2xl font-bold text-foreground">Инсайты и пояснения</h3>
+                    <p className="text-muted-foreground">Автоматический анализ ключевых изменений</p>
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {explanations.slice(0, 3).map((explanation, index) => (
-                    <div key={index} className="relative group bg-slate-900/70 backdrop-blur-xl border border-slate-800 p-6 rounded-2xl shadow-lg h-full flex flex-col hover:border-slate-700 transition-colors">
+                    <div key={index} className="relative group bg-card backdrop-blur-xl border border-border p-6 rounded-2xl shadow-lg h-full flex flex-col hover:border-border/80 transition-colors">
                          <div className="relative z-10 flex items-start gap-4">
-                            <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center shrink-0 mt-1">
-                                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div className="w-12 h-12 bg-info/20 rounded-lg flex items-center justify-center shrink-0 mt-1">
+                                <svg className="w-6 h-6 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
-                            <p className="text-slate-300 text-sm leading-relaxed">{explanation}</p>
+                            <p className="text-muted-foreground text-sm leading-relaxed">{explanation}</p>
                         </div>
                     </div>
                 ))}
@@ -248,26 +241,26 @@ const Dashboard: React.FC<DashboardProps> = ({ report, dateRange, transactions, 
 };
 
 const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
-        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 p-6 rounded-2xl shadow-lg">
+        <div className="bg-card backdrop-blur-xl border border-border p-6 rounded-2xl shadow-lg">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">Ключевые показатели</h2>
-                    <p className="text-slate-400">Обзор основных финансовых метрик</p>
+                    <h2 className="text-2xl font-bold text-foreground">Ключевые показатели</h2>
+                    <p className="text-muted-foreground">Обзор основных финансовых метрик</p>
                 </div>
             </div>
             
             {/* Основные KPI в сетке */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <StatCard title="Quick Ratio" value={kpi.quickRatio} change={kpi.quickRatio > 1 ? 1 : -1} changeType={kpi.quickRatio > 1 ? 'increase' : 'decrease'} subtitle={kpi.quickRatio > 1 ? 'Отличная' : 'Требует внимания'} />
-                <StatCard title="Current Ratio" value={kpi.currentRatio} change={kpi.currentRatio > 2 ? 1 : -1} changeType={kpi.currentRatio > 2 ? 'increase' : 'decrease'} subtitle={kpi.currentRatio > 2 ? 'Высокая' : 'Норма'} />
-                <StatCard title="Рентабельность" value={kpi.profitMargin} change={0} changeType="increase" subtitle="vs last month" />
-                <StatCard title="Динамика прибыли" value={kpi.profitDelta} change={kpi.profitDelta} changeType={kpi.profitDelta >= 0 ? 'increase' : 'decrease'} subtitle="vs last month" isCurrency={true} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 min-w-0">
+                <StatCard title="Коэффициент быстрой ликвидности" value={kpi.quickRatio} change={kpi.quickRatio > 1 ? 1 : -1} changeType={kpi.quickRatio > 1 ? 'increase' : 'decrease'} subtitle={kpi.quickRatio > 1 ? 'Отличная' : 'Требует внимания'} />
+                <StatCard title="Коэффициент текущей ликвидности" value={kpi.currentRatio} change={kpi.currentRatio > 2 ? 1 : -1} changeType={kpi.currentRatio > 2 ? 'increase' : 'decrease'} subtitle={kpi.currentRatio > 2 ? 'Высокая' : 'Норма'} />
+                <StatCard title="Рентабельность" value={kpi.profitMargin} change={0} changeType="increase" subtitle="по сравнению с прошлым месяцем" />
+                <StatCard title="Динамика прибыли" value={kpi.profitDelta} change={kpi.profitDelta} changeType={kpi.profitDelta >= 0 ? 'increase' : 'decrease'} subtitle="по сравнению с прошлым месяцем" isCurrency={true} />
             </div>
 
             {/* Дополнительные метрики в компактной сетке */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 min-w-0">
                 <StatCard 
-                    title="Profit Margin" 
+                    title="Рентабельность продаж" 
                     value={kpi.profitMargin} 
                     isCurrency={false}
                     variant="compact"
@@ -276,7 +269,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                 />
                 
                 <StatCard 
-                    title="ROI" 
+                    title="Рентабельность инвестиций" 
                     value={((kpi.profitMargin * kpi.currentRatio) / 10)} 
                     isCurrency={false}
                     variant="compact"
@@ -285,7 +278,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                 />
                 
                 <StatCard 
-                    title="Debt Ratio" 
+                    title="Коэффициент задолженности" 
                     value={(1 - kpi.quickRatio)} 
                     isCurrency={false}
                     variant="compact"
@@ -294,7 +287,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                 />
                 
                 <StatCard 
-                    title="Cash Flow" 
+                    title="Денежный поток" 
                     value={report.cashFlow.netCashFlow} 
                     isCurrency={true}
                     variant="compact"
@@ -313,26 +306,26 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
             </div>
 
             {/* Сводка аналитики */}
-            <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700 rounded-lg p-4">
+            <div className="bg-card backdrop-blur-xl border border-border rounded-2xl shadow-lg p-6">
                 <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner ${
-                        kpi.profitDelta > 0 ? 'bg-green-500/20 text-green-400' : 
-                        kpi.profitDelta < 0 ? 'bg-red-500/20 text-red-400' : 
-                        'bg-gray-500/20 text-gray-400'
+                        kpi.profitDelta > 0 ? 'bg-success/20 text-success-foreground' :
+                kpi.profitDelta < 0 ? 'bg-destructive/20 text-destructive-foreground' : 
+                        'bg-muted/20 text-muted-foreground'
                     }`}>
                         {kpi.profitDelta > 0 ? '📈' : kpi.profitDelta < 0 ? '📉' : '📊'}
                     </div>
                     <div className="flex-1">
                         <div className={`text-base font-semibold ${
-                            kpi.profitDelta > 0 ? 'text-green-400' : 
-                            kpi.profitDelta < 0 ? 'text-red-400' : 
-                            'text-gray-400'
+                            kpi.profitDelta > 0 ? 'text-success-foreground' :
+                kpi.profitDelta < 0 ? 'text-destructive-foreground' : 
+                            'text-muted-foreground'
                         }`}>
                             {kpi.profitDelta > 0 ? 'Позитивная динамика' : 
                              kpi.profitDelta < 0 ? 'Требует внимания' : 
                              'Стабильные показатели'}
                         </div>
-                        <div className="text-slate-400 text-sm">
+                        <div className="text-muted-foreground text-sm">
                             {forecastData?.summary || 'Аналитика по итогам периода'}
                         </div>
                     </div>
@@ -357,12 +350,10 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
             });
             if (!response.ok) throw new Error('Ошибка сервера');
             let data = await response.json();
-            console.log('Forecast API response:', data);
             // Если data — строка, пробуем распарсить как JSON
             if (typeof data === 'string') {
                 try {
                     data = JSON.parse(data);
-                    console.log('Parsed string data:', data);
                 } catch (e) {
                     setForecastError('Ошибка парсинга ответа: ' + data);
                     return;
@@ -397,7 +388,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
 
     const getChartImage = async (ref: React.RefObject<HTMLDivElement>) => {
         if (!ref.current) return null;
-        const canvas = await html2canvas(ref.current, { backgroundColor: '#fff', scale: 2 });
+        const canvas = await html2canvas(ref.current, { backgroundColor: 'var(--background)', scale: 2 });
         return canvas.toDataURL('image/png');
     };
 
@@ -487,11 +478,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                 ]
             },
             layout: {
-                fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
+                fillColor: (row: number) => row === 0 ? 'var(--gray-100)' : null,
                 hLineWidth: () => 0.5,
                 vLineWidth: () => 0.5,
-                hLineColor: () => '#d1d5db',
-                vLineColor: () => '#d1d5db',
+                hLineColor: () => 'var(--gray-300)',
+                vLineColor: () => 'var(--gray-300)',
                 paddingLeft: () => 4,
                 paddingRight: () => 4,
                 paddingTop: () => 2,
@@ -503,7 +494,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
         const executiveSummarySection = [
             { text: 'Executive Summary', style: 'header', alignment: 'center', margin: [0, 0, 0, 6] },
             executiveSummaryTable,
-            { text: kpi.profitDelta > 0 ? 'Чистая прибыль растет' : kpi.profitDelta < 0 ? 'Чистая прибыль снижается' : 'Без изменений', color: kpi.profitDelta > 0 ? 'green' : kpi.profitDelta < 0 ? 'red' : 'gray', alignment: 'center', margin: [0, 0, 0, 8] },
+            { text: kpi.profitDelta > 0 ? 'Чистая прибыль растет' : kpi.profitDelta < 0 ? 'Чистая прибыль снижается' : 'Без изменений', color: kpi.profitDelta > 0 ? 'var(--financial-positive)' : kpi.profitDelta < 0 ? 'var(--financial-negative)' : 'var(--financial-neutral)', alignment: 'center', margin: [0, 0, 0, 8] },
             { text: forecastData?.summary || 'Аналитика по итогам периода.', style: 'meta', alignment: 'center', margin: [0, 0, 0, 8] },
             { text: `Сформировано автоматически • ${now}`, style: 'meta', alignment: 'right', margin: [0, 0, 0, 8] },
         ];
@@ -519,9 +510,9 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                 { text: `Период: с ${start} по ${end}`, alignment: 'center', style: 'meta', margin: [0, 0, 0, 6] },
                 { text: `Дата формирования: ${now}`, alignment: 'center', style: 'meta', margin: [0, 0, 0, 18] },
                 { text: 'Ключевые KPI', style: 'sectionHeader' },
-                { text: `Quick Ratio: ${kpi.quickRatio.toFixed(2)}`, color: kpi.quickRatio > 1 ? 'green' : 'red' },
-                { text: `Current Ratio: ${kpi.currentRatio.toFixed(2)}`, color: kpi.currentRatio > 1 ? 'green' : 'red' },
-                { text: `Profit Margin: ${kpi.profitMargin.toFixed(2)}%`, color: kpi.profitMargin > 0 ? 'green' : 'red' },
+                { text: `Quick Ratio: ${kpi.quickRatio.toFixed(2)}`, color: kpi.quickRatio > 1 ? 'var(--financial-positive)' : 'var(--financial-negative)' },
+            { text: `Current Ratio: ${kpi.currentRatio.toFixed(2)}`, color: kpi.currentRatio > 1 ? 'var(--financial-positive)' : 'var(--financial-negative)' },
+            { text: `Profit Margin: ${kpi.profitMargin.toFixed(2)}%`, color: kpi.profitMargin > 0 ? 'var(--financial-positive)' : 'var(--financial-negative)' },
                 { text: 'Динамика прибыли и убытков', style: 'sectionHeader', margin: [0, 0, 0, 8] },
                 pnlChartImg ? { image: pnlChartImg, width: 382, alignment: 'center', margin: [0, 0, 0, 12] } : {},
                 { text: 'Отчет о прибылях и убытках (ОПиУ)', style: 'sectionHeader', margin: [0, 0, 0, 8] },
@@ -542,11 +533,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         ]
                     },
                     layout: {
-                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
+                        fillColor: (row: number) => row === 0 ? 'var(--muted)' : null,
                         hLineWidth: () => 0.5,
                         vLineWidth: () => 0.5,
-                        hLineColor: () => '#d1d5db',
-                        vLineColor: () => '#d1d5db',
+                        hLineColor: () => 'var(--border)',
+        vLineColor: () => 'var(--border)',
                         paddingLeft: () => 8,
                         paddingRight: () => 8,
                         paddingTop: () => 4,
@@ -571,11 +562,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         ]
                     },
                     layout: {
-                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
-                        hLineWidth: () => 0.5,
-                        vLineWidth: () => 0.5,
-                        hLineColor: () => '#d1d5db',
-                        vLineColor: () => '#d1d5db',
+                        fillColor: (row: number) => row === 0 ? 'var(--muted)' : null,
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+                hLineColor: () => 'var(--border)',
+        vLineColor: () => 'var(--border)',
                         paddingLeft: () => 8,
                         paddingRight: () => 8,
                         paddingTop: () => 4,
@@ -603,11 +594,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         ]
                     },
                     layout: {
-                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
-                        hLineWidth: () => 0.5,
-                        vLineWidth: () => 0.5,
-                        hLineColor: () => '#d1d5db',
-                        vLineColor: () => '#d1d5db',
+                        fillColor: (row: number) => row === 0 ? 'var(--muted)' : null,
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+                hLineColor: () => 'var(--border)',
+        vLineColor: () => 'var(--border)',
                         paddingLeft: () => 8,
                         paddingRight: () => 8,
                         paddingTop: () => 4,
@@ -632,11 +623,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         ]
                     },
                     layout: {
-                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
-                        hLineWidth: () => 0.5,
-                        vLineWidth: () => 0.5,
-                        hLineColor: () => '#d1d5db',
-                        vLineColor: () => '#d1d5db',
+                        fillColor: (row: number) => row === 0 ? 'var(--muted)' : null,
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+                hLineColor: () => 'var(--border)',
+        vLineColor: () => 'var(--border)',
                         paddingLeft: () => 8,
                         paddingRight: () => 8,
                         paddingTop: () => 4,
@@ -660,11 +651,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         ]
                     },
                     layout: {
-                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
+                        fillColor: (row: number) => row === 0 ? 'var(--surface-accent)' : null,
                         hLineWidth: () => 0.5,
                         vLineWidth: () => 0.5,
-                        hLineColor: () => '#d1d5db',
-                        vLineColor: () => '#d1d5db',
+                        hLineColor: () => 'var(--border)',
+        vLineColor: () => 'var(--border)',
                         paddingLeft: () => 8,
                         paddingRight: () => 8,
                         paddingTop: () => 4,
@@ -693,11 +684,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                         ]
                                     },
                                     layout: {
-                                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
+                                        fillColor: (row: number) => row === 0 ? 'var(--surface-accent)' : null,
                                         hLineWidth: () => 0.5,
                                         vLineWidth: () => 0.5,
-                                        hLineColor: () => '#d1d5db',
-                                        vLineColor: () => '#d1d5db',
+                                        hLineColor: () => 'var(--border)',
+                        vLineColor: () => 'var(--border)',
                                         paddingLeft: () => 8,
                                         paddingRight: () => 8,
                                         paddingTop: () => 4,
@@ -724,11 +715,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                         ]
                                     },
                                     layout: {
-                                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
+                                        fillColor: (row: number) => row === 0 ? 'var(--surface-accent)' : null,
                                         hLineWidth: () => 0.5,
                                         vLineWidth: () => 0.5,
-                                        hLineColor: () => '#d1d5db',
-                                        vLineColor: () => '#d1d5db',
+                                        hLineColor: () => 'var(--border)',
+                        vLineColor: () => 'var(--border)',
                                         paddingLeft: () => 8,
                                         paddingRight: () => 8,
                                         paddingTop: () => 4,
@@ -759,11 +750,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         ]
                     },
                     layout: {
-                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
+                        fillColor: (row: number) => row === 0 ? 'var(--surface-accent)' : null,
                         hLineWidth: () => 0.5,
                         vLineWidth: () => 0.5,
-                        hLineColor: () => '#d1d5db',
-                        vLineColor: () => '#d1d5db',
+                        hLineColor: () => 'var(--border)',
+        vLineColor: () => 'var(--border)',
                         paddingLeft: () => 8,
                         paddingRight: () => 8,
                         paddingTop: () => 4,
@@ -789,11 +780,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         ]
                     },
                     layout: {
-                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
+                        fillColor: (row: number) => row === 0 ? 'var(--surface-accent)' : null,
                         hLineWidth: () => 0.5,
                         vLineWidth: () => 0.5,
-                        hLineColor: () => '#d1d5db',
-                        vLineColor: () => '#d1d5db',
+                        hLineColor: () => 'var(--border)',
+        vLineColor: () => 'var(--border)',
                         paddingLeft: () => 8,
                         paddingRight: () => 8,
                         paddingTop: () => 4,
@@ -818,11 +809,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         ]
                     },
                     layout: {
-                        fillColor: (row: number) => row === 0 ? '#f3f4f6' : null,
+                        fillColor: (row: number) => row === 0 ? 'hsl(var(--surface-accent))' : null,
                         hLineWidth: () => 0.5,
                         vLineWidth: () => 0.5,
-                        hLineColor: () => '#d1d5db',
-                        vLineColor: () => '#d1d5db',
+                        hLineColor: () => 'var(--border)',
+                        vLineColor: () => 'var(--border)',
                         paddingLeft: () => 8,
                         paddingRight: () => 8,
                         paddingTop: () => 4,
@@ -833,15 +824,15 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                 } : {},
                 { text: 'Пояснения', style: 'sectionHeader', margin: [0, 0, 0, 8] },
                 {
-                    ul: explanations.map(e => ({ text: e, margin: [0, 0, 0, 2], color: '#374151' }))
+                    ul: explanations.map(e => ({ text: e, margin: [0, 0, 0, 2], color: 'hsl(var(--muted-foreground))' }))
                 },
             ],
             styles: {
                 header: { fontSize: 16, bold: true, lineHeight: 1.5, margin: [0, 0, 0, 12] },
                 subheader: { fontSize: 13, bold: true, lineHeight: 1.5, margin: [0, 0, 0, 12] },
-                sectionHeader: { fontSize: 12, bold: true, color: '#2563eb', lineHeight: 1.5, margin: [0, 18, 0, 6] },
-                tableHeader: { fontSize: 11, bold: true, color: '#2563eb', lineHeight: 1.2 },
-                meta: { fontSize: 10, italics: true, color: '#555', lineHeight: 1.2 },
+                sectionHeader: { fontSize: 12, bold: true, color: 'hsl(var(--primary))', lineHeight: 1.5, margin: [0, 18, 0, 6] },
+        tableHeader: { fontSize: 11, bold: true, color: 'hsl(var(--primary))', lineHeight: 1.2 },
+        meta: { fontSize: 10, italics: true, color: 'hsl(var(--muted-foreground))', lineHeight: 1.2 },
                 paragraph: { fontSize: 11, lineHeight: 1.5, margin: [35, 0, 0, 6] }, // абзацный отступ 35pt
             },
             defaultStyle: {
@@ -852,6 +843,115 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
         };
         pdfMake.createPdf(docDefinition).download('FinSights_Full_Report.pdf');
         await subscriptionService.incrementReportDownloads(currentUserId);
+    };
+
+    const handleExportToExcel = async () => {
+        const currentUserId = userId ?? email;
+        if (!currentUserId) {
+            subscriptionService.showUpgradeModal('Войдите, чтобы экспортировать данные');
+            return;
+        }
+        
+        const exportLimit = subscriptionService.checkDashboardExportLimit();
+        if (!exportLimit.allowed) {
+            subscriptionService.showUpgradeModal(exportLimit.reason || 'Лимит экспорта дашборда достигнут');
+            return;
+        }
+
+        try {
+            const { pnl, cashFlow, counterpartyReport } = report;
+            
+            const exportData = {
+                financialReport: {
+                    totalRevenue: pnl.totalRevenue,
+                    totalExpenses: pnl.totalOperatingExpenses,
+                    netProfit: pnl.netProfit,
+                    monthlyData: pnl.monthlyData
+                },
+                cashFlow: {
+                    operatingActivities: cashFlow.operatingActivities,
+                    investingActivities: cashFlow.investingActivities,
+                    financingActivities: cashFlow.financingActivities,
+                    netCashFlow: cashFlow.netCashFlow,
+                    monthlyData: cashFlow.monthlyData
+                },
+                counterparties: counterpartyReport,
+                transactions: transactions
+            };
+
+            const response = await fetch('/api/export/excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(exportData)
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка при создании Excel файла');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `FinSights_Dashboard_${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            await subscriptionService.incrementDashboardExports(currentUserId);
+        } catch (error) {
+            console.error('Ошибка экспорта в Excel:', error);
+            alert('Произошла ошибка при экспорте в Excel');
+        }
+    };
+
+    const handleExportToCSV = async () => {
+        const currentUserId = userId ?? email;
+        if (!currentUserId) {
+            subscriptionService.showUpgradeModal('Войдите, чтобы экспортировать данные');
+            return;
+        }
+        
+        const exportLimit = subscriptionService.checkDashboardExportLimit();
+        if (!exportLimit.allowed) {
+            subscriptionService.showUpgradeModal(exportLimit.reason || 'Лимит экспорта дашборда достигнут');
+            return;
+        }
+
+        try {
+            const csvData = transactions.map(t => ({
+                Дата: t.date,
+                Описание: t.description,
+                Категория: t.category,
+                Сумма: t.amount,
+                Тип: t.type === 'income' ? 'Доход' : 'Расход',
+                Контрагент: t.counterparty || ''
+            }));
+
+            const headers = Object.keys(csvData[0] || {});
+            const csvContent = [
+                headers.join(','),
+                ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row] || ''}"`).join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `FinSights_Transactions_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            await subscriptionService.incrementDashboardExports(currentUserId);
+        } catch (error) {
+            console.error('Ошибка экспорта в CSV:', error);
+            alert('Произошла ошибка при экспорте в CSV');
+        }
     };
 
     const PnlView = () => (
@@ -890,7 +990,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 items-start">
                 <div className="lg:col-span-3" ref={pnlChartRef}>
                     <ChartCard
-                        title={<span className="text-blue-600">Отчет о прибылях и убытках</span>}
+                        title={<span className="text-primary">Отчет о прибылях и убытках</span>}
                         data={aggregatedChartData.pnlData}
                         series={[
                             { key: 'Доход', type: 'area', color: chartColors.revenue },
@@ -953,15 +1053,15 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                     </div>
                     <div className="lg:col-span-2">
                         <div 
-                            className="relative group bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 shadow-lg h-full flex flex-col cursor-pointer"
+                            className="relative group bg-chart-card backdrop-blur-xl border border-border rounded-2xl p-4 shadow-lg h-full flex flex-col cursor-pointer"
                             onClick={() => setIsCashflowModalOpen(true)}
                         >
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-70 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                            <div className="absolute -inset-0.5 bg-primary/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-70 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
                             <div className="relative z-10 flex flex-col h-full">
                                 <div className="flex justify-between items-start mb-4">
-                                    <h3 className="text-xl font-bold text-white">Структура денежного потока</h3>
+                                    <h3 className="text-xl font-bold text-foreground">Структура денежного потока</h3>
                                     <button 
-                                        className="text-slate-400 hover:text-white transition-colors"
+                                        className="text-muted-foreground hover:text-foreground transition-colors"
                                         onClick={(e) => { e.stopPropagation(); setIsCashflowModalOpen(true); }}
                                         title="Развернуть"
                                     >
@@ -975,13 +1075,13 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                         <BarChart data={[{name: 'Операции', value: cashFlow.operatingActivities}, {name: 'Инвестиции', value: cashFlow.investingActivities}, {name: 'Финансы', value: cashFlow.financingActivities}, {name: 'Итого', value: cashFlow.netCashFlow}]}
                                             margin={{ top: 10, right: 5, left: -10, bottom: 5 }}
                                         >
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                                            <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                                            <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={60} domain={[0, 'dataMax']} />
-                                            <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> formatCurrencyUtil(Number(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-line-grid)" opacity={0.4} />
+                <XAxis dataKey="name" stroke="var(--chart-line-axis)" tick={{ fontSize: 12, fill: 'var(--chart-line-axis)' }} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--chart-line-axis)" tick={{ fontSize: 12, fill: 'var(--chart-line-axis)' }} tickLine={false} axisLine={false} width={60} domain={[0, 'dataMax']} />
+                <Tooltip cursor={{ fill: 'var(--muted)', opacity: 0.08 }} formatter={(v:number)=> formatCurrencyUtil(Number(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
                                             <Bar dataKey="value" radius={[8,8,8,8]} isAnimationActive={false}>
                                                 {['Операции','Инвестиции','Финансы','Итого'].map((name, idx) => (
-                                                    <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Операции' ? '#22c55e' : name==='Инвестиции' ? '#fbbf24' : '#a78bfa'} />
+                                                    <Cell key={idx} fill={name==='Итого' ? 'var(--primary)' : name==='Операции' ? 'var(--success)' : name==='Инвестиции' ? 'var(--warning)' : 'var(--chart-4)'} />
                                                 ))}
                                             </Bar>
                                         </BarChart>
@@ -990,12 +1090,12 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                             </div>
                         </div>
                         {isCashflowModalOpen && createPortal(
-                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setIsCashflowModalOpen(false)}>
-                                <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl w-[95vw] h-[95vh] max-w-7xl max-h-[95vh] relative flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                            <div className="fixed inset-0 bg-card/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setIsCashflowModalOpen(false)}>
+                                <div className="bg-chart-card border border-border p-6 rounded-xl w-[95vw] h-[95vh] max-w-7xl max-h-[95vh] relative flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
                                     <div className="mb-4 pr-12">
-                                        <h3 className="text-2xl font-bold text-white">Структура денежного потока</h3>
+                                        <h3 className="text-2xl font-bold text-foreground">Структура денежного потока</h3>
                                         <button 
-                                            className="absolute top-4 right-4 z-[70] w-9 h-9 flex items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-2xl font-bold transition-colors duration-200"
+                                            className="absolute top-4 right-4 z-[70] w-9 h-9 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-2xl font-bold transition-colors duration-200"
                                             onClick={() => setIsCashflowModalOpen(false)}
                                             title="Закрыть"
                                         >
@@ -1007,13 +1107,13 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                             <BarChart data={[{name: 'Операции', value: cashFlow.operatingActivities}, {name: 'Инвестиции', value: cashFlow.investingActivities}, {name: 'Финансы', value: cashFlow.financingActivities}, {name: 'Итого', value: cashFlow.netCashFlow}]}
                                                 margin={{ top: 20, right: 30, left: 0, bottom: 40 }}
                                             >
-                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickMargin={15} />
-                                                <YAxis stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={80} domain={[0, 'dataMax']} />
-                                                <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> formatCurrencyUtil(Number(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
+                                                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-line-grid)" opacity={0.4} />
+                                                <XAxis dataKey="name" stroke="var(--chart-line-axis)" tick={{ fontSize: 14, fill: 'var(--chart-line-axis)' }} tickLine={false} axisLine={false} tickMargin={15} />
+                                                <YAxis stroke="var(--chart-line-axis)" tick={{ fontSize: 14, fill: 'var(--chart-line-axis)' }} tickLine={false} axisLine={false} width={80} domain={[0, 'dataMax']} />
+                                                <Tooltip cursor={{ fill: 'var(--muted) / 0.1' }} formatter={(v:number)=> formatCurrencyUtil(Number(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
                                                 <Bar dataKey="value" radius={[10,10,10,10]} isAnimationActive={false}>
                                                     {['Операции','Инвестиции','Финансы','Итого'].map((name, idx) => (
-                                                        <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Операции' ? '#22c55e' : name==='Инвестиции' ? '#fbbf24' : '#a78bfa'} />
+                                                        <Cell key={idx} fill={name==='Итого' ? 'var(--primary)' : name==='Операции' ? 'var(--success)' : name==='Инвестиции' ? 'var(--chart-3)' : 'var(--chart-4)'} />
                                                     ))}
                                                 </Bar>
                                             </BarChart>
@@ -1066,15 +1166,15 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                 </div>
                 <div>
                     <div 
-                        className="relative group bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 shadow-lg h-full flex flex-col cursor-pointer"
+                        className="relative group bg-chart-card backdrop-blur-xl border border-border rounded-2xl p-4 shadow-lg h-full flex flex-col cursor-pointer"
                         onClick={() => setIsBalanceModalOpen(true)}
                     >
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-70 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                        <div className="absolute -inset-0.5 bg-primary/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-70 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
                         <div className="relative z-10 flex flex-col h-full">
                             <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-xl font-bold text-white">Структура баланса</h3>
+                                <h3 className="text-xl font-bold text-foreground">Структура баланса</h3>
                                 <button 
-                                    className="text-slate-400 hover:text-white transition-colors"
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
                                     onClick={(e) => { e.stopPropagation(); setIsBalanceModalOpen(true); }}
                                     title="Развернуть"
                                 >
@@ -1091,13 +1191,13 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                         {name: 'Капитал', value: balanceSheet.equity.totalEquity},
                                         {name: 'Итого', value: balanceSheet.totalLiabilitiesAndEquity}
                                     ]} margin={{ top: 10, right: 5, left: -10, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                                        <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                                        <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={60} domain={[0, 'dataMax']} />
-                                        <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> formatCurrencyUtil(Number(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-line-grid)" opacity={0.4} />
+                                        <XAxis dataKey="name" stroke="var(--chart-line-axis)" tick={{ fontSize: 12, fill: 'var(--chart-line-axis)' }} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="var(--chart-line-axis)" tick={{ fontSize: 12, fill: 'var(--chart-line-axis)' }} tickLine={false} axisLine={false} width={60} domain={[0, 'dataMax']} />
+                                        <Tooltip cursor={{ fill: 'var(--muted) / 0.1' }} formatter={(v:number)=> formatCurrencyUtil(Number(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
                                         <Bar dataKey="value" radius={[8,8,8,8]} isAnimationActive={false}>
                                             {['Активы','Обязательства','Капитал','Итого'].map((name, idx) => (
-                                                <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Активы' ? '#22c55e' : name==='Обязательства' ? '#ef4444' : '#3b82f6'} />
+                                                <Cell key={idx} fill={name==='Итого' ? 'var(--primary)' : name==='Активы' ? 'var(--success)' : name==='Обязательства' ? 'var(--destructive)' : 'var(--primary)'} />
                                             ))}
                                         </Bar>
                                     </BarChart>
@@ -1106,12 +1206,12 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         </div>
                     </div>
                     {isBalanceModalOpen && createPortal(
-                        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setIsBalanceModalOpen(false)}>
-                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl w-[95vw] h-[95vh] max-w-7xl max-h-[95vh] relative flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="fixed inset-0 bg-card/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setIsBalanceModalOpen(false)}>
+                            <div className="bg-chart-card border border-border p-6 rounded-xl w-[95vw] h-[95vh] max-w-7xl max-h-[95vh] relative flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
                                 <div className="mb-4 pr-12">
-                                    <h3 className="text-2xl font-bold text-white">Структура баланса</h3>
+                                    <h3 className="text-2xl font-bold text-foreground">Структура баланса</h3>
                                     <button 
-                                        className="absolute top-4 right-4 z-[70] w-9 h-9 flex items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-2xl font-bold transition-colors duration-200"
+                                        className="absolute top-4 right-4 z-[70] w-9 h-9 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-2xl font-bold transition-colors duration-200"
                                         onClick={() => setIsBalanceModalOpen(false)}
                                         title="Закрыть"
                                     >
@@ -1126,13 +1226,13 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                             {name: 'Капитал', value: balanceSheet.equity.totalEquity},
                                             {name: 'Итого', value: balanceSheet.totalLiabilitiesAndEquity}
                                         ]} margin={{ top: 20, right: 30, left: 0, bottom: 40 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                                            <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickMargin={15} />
-                                            <YAxis stroke="#94a3b8" tick={{ fontSize: 14, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={80} domain={[0, 'dataMax']} />
-                                            <Tooltip cursor={{ fill: 'rgba(100,116,139,0.08)' }} formatter={(v:number)=> new Intl.NumberFormat('ru-RU', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v as number) + ' KZT'} />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-line-grid)" opacity={0.4} />
+                                            <XAxis dataKey="name" stroke="var(--chart-line-axis)" tick={{ fontSize: 14, fill: 'var(--chart-line-axis)' }} tickLine={false} axisLine={false} tickMargin={15} />
+                                            <YAxis stroke="var(--chart-line-axis)" tick={{ fontSize: 14, fill: 'var(--chart-line-axis)' }} tickLine={false} axisLine={false} width={80} domain={[0, 'dataMax']} />
+                                            <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.1)' }} formatter={(v:number)=> new Intl.NumberFormat('ru-RU', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v as number) + ' KZT'} />
                                             <Bar dataKey="value" radius={[10,10,10,10]} isAnimationActive={false}>
                                                 {['Активы','Обязательства','Капитал','Итого'].map((name, idx) => (
-                                                    <Cell key={idx} fill={name==='Итого' ? '#2563eb' : name==='Активы' ? '#22c55e' : name==='Обязательства' ? '#ef4444' : '#3b82f6'} />
+                                                    <Cell key={idx} fill={name==='Итого' ? 'hsl(var(--primary))' : name==='Активы' ? 'hsl(var(--success))' : name==='Обязательства' ? 'hsl(var(--destructive))' : 'hsl(var(--chart-1))'} />
                                                 ))}
                                             </Bar>
                                         </BarChart>
@@ -1220,24 +1320,26 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                 subtitle={topSupplier.name}
               />
                 </div>
-                <div className="bg-surface rounded-2xl overflow-hidden border border-border shadow-lg">
+                <div className="bg-card rounded-2xl overflow-hidden border border-border shadow-lg">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-full">
-                            <thead className="bg-surface-accent">
+                            <thead className="bg-card">
                                 <tr>
-                                    <th className="p-4 cursor-pointer whitespace-nowrap text-text-secondary" onClick={() => requestSort('name')}>Контрагент {getSortIndicator('name')}</th>
-                                    <th className="p-4 cursor-pointer whitespace-nowrap text-right text-text-secondary" onClick={() => requestSort('income')}>Доход {getSortIndicator('income')}</th>
-                                    <th className="p-4 cursor-pointer whitespace-nowrap text-right text-text-secondary" onClick={() => requestSort('expense')}>Расход {getSortIndicator('expense')}</th>
-                                    <th className="p-4 cursor-pointer whitespace-nowrap text-right text-text-secondary" onClick={() => requestSort('balance')}>Баланс {getSortIndicator('balance')}</th>
+                                    <th className="p-4 cursor-pointer whitespace-nowrap text-muted-foreground" onClick={() => requestSort('name')}>Контрагент {getSortIndicator('name')}</th>
+                                    <th className="p-4 cursor-pointer whitespace-nowrap text-right text-muted-foreground" onClick={() => requestSort('income')}>Доход {getSortIndicator('income')}</th>
+                                    <th className="p-4 cursor-pointer whitespace-nowrap text-right text-muted-foreground" onClick={() => requestSort('expense')}>Расход {getSortIndicator('expense')}</th>
+                                    <th className="p-4 cursor-pointer whitespace-nowrap text-right text-muted-foreground" onClick={() => requestSort('balance')}>Баланс {getSortIndicator('balance')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {sortedData.map((c) => (
-                                    <tr key={c.name} className="border-t border-border transition-colors hover:bg-surface-accent/50">
-                                        <td className="p-4 whitespace-nowrap text-text-primary font-medium">{c.name}</td>
-                                        <td className="p-4 text-right font-mono whitespace-nowrap text-success">{formatCurrency(c.income)}</td>
-                                        <td className="p-4 text-right font-mono whitespace-nowrap text-destructive">{formatCurrency(-c.expense)}</td>
-                                        <td className={`p-4 text-right font-mono whitespace-nowrap font-semibold ${c.balance >= 0 ? 'text-success' : 'text-destructive'}`}>{formatCurrency(c.balance)}</td>
+                                    <tr key={c.name} className="border-t border-border transition-colors hover:bg-card/50">
+                                        <td className="p-4 text-foreground font-medium max-w-[200px]">
+                                            <div className="truncate" title={c.name}>{c.name}</div>
+                                        </td>
+                                        <td className="p-4 text-right font-mono whitespace-nowrap text-success-foreground">{formatCurrency(c.income)}</td>
+                <td className="p-4 text-right font-mono whitespace-nowrap text-destructive-foreground">{formatCurrency(-c.expense)}</td>
+                <td className={`p-4 text-right font-mono whitespace-nowrap font-semibold ${c.balance >= 0 ? 'text-success-foreground' : 'text-destructive-foreground'}`}>{formatCurrency(c.balance)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -1251,11 +1353,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
     const DebtsView = () => (
         <div className="space-y-8">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-text-primary">Управление долгами</h2>
+                <h2 className="text-2xl font-bold text-foreground">Управление долгами</h2>
                 {onAddTransaction && (
                     <button
                         onClick={() => setIsCreateDebtModalOpen(true)}
-                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1281,27 +1383,27 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-surface rounded-2xl overflow-hidden border border-border shadow-lg">
-                    <h3 className="text-xl font-bold text-text-primary p-4">Кто должен мне</h3>
+                <div className="bg-card rounded-2xl overflow-hidden border border-border shadow-lg">
+                    <h3 className="text-xl font-bold text-foreground p-4">Кто должен мне</h3>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-full">
-                            <thead className="bg-surface-accent">
+                            <thead className="bg-card">
                                 <tr>
-                                    <th className="px-4 py-3 whitespace-nowrap text-text-secondary">Контрагент</th>
-                                    <th className="px-4 py-3 whitespace-nowrap text-right text-text-secondary">Сумма</th>
-                                    {onAddTransaction && <th className="px-4 py-3 whitespace-nowrap text-center text-text-secondary">Действия</th>}
+                                    <th className="px-4 py-3 whitespace-nowrap text-muted-foreground">Контрагент</th>
+                <th className="px-4 py-3 whitespace-nowrap text-right text-muted-foreground">Сумма</th>
+                {onAddTransaction && <th className="px-4 py-3 whitespace-nowrap text-center text-muted-foreground">Действия</th>}
                                 </tr>
                             </thead>
                             <tbody>
                                 {debtReport.receivables.map((d) => (
-                                    <tr key={d.counterparty} className="border-t border-border transition-colors hover:bg-surface-accent/50">
-                                        <td className="px-4 py-3 whitespace-nowrap text-text-primary font-medium">{d.counterparty}</td>
-                                        <td className="px-4 py-3 text-right font-mono whitespace-nowrap text-success">{formatCurrency(d.amount)}</td>
+                                    <tr key={d.counterparty} className="border-t border-border transition-colors hover:bg-card/50">
+                                        <td className="px-4 py-3 whitespace-nowrap text-foreground font-medium">{d.counterparty}</td>
+                                        <td className="px-4 py-3 text-right font-mono whitespace-nowrap text-success-foreground">{formatCurrency(d.amount)}</td>
                                         {onAddTransaction && (
                                             <td className="px-4 py-3 text-center">
                                                 <button
                                                     onClick={() => handleRepayDebt(d.counterparty, d.amount, true)}
-                                                    className="px-3 py-1 bg-success text-white rounded hover:bg-success/90 transition-colors text-sm"
+                                                    className="px-3 py-1 bg-success text-success-foreground rounded hover:bg-success/90 transition-colors text-sm"
                                                     title="Погасить долг"
                                                 >
                                                     Погасить
@@ -1312,34 +1414,34 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                 ))}
                                 {debtReport.receivables.length === 0 && (
                                     <tr className="border-t border-border">
-                                        <td colSpan={onAddTransaction ? 3 : 2} className="px-4 py-3 text-center text-text-secondary">Нет данных</td>
+                                        <td colSpan={onAddTransaction ? 3 : 2} className="px-4 py-3 text-center text-muted-foreground">Нет данных</td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
                 </div>
-                <div className="bg-surface rounded-2xl overflow-hidden border border-border shadow-lg">
-                    <h3 className="text-xl font-bold text-text-primary p-4">Кому должен я</h3>
+                <div className="bg-card rounded-2xl overflow-hidden border border-border shadow-lg">
+                    <h3 className="text-xl font-bold text-foreground p-4">Кому должен я</h3>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-full">
-                            <thead className="bg-surface-accent">
+                            <thead className="bg-card">
                                 <tr>
-                                    <th className="px-4 py-3 whitespace-nowrap text-text-secondary">Контрагент</th>
-                                    <th className="px-4 py-3 whitespace-nowrap text-right text-text-secondary">Сумма</th>
-                                    {onAddTransaction && <th className="px-4 py-3 whitespace-nowrap text-center text-text-secondary">Действия</th>}
+                                    <th className="px-4 py-3 whitespace-nowrap text-muted-foreground">Контрагент</th>
+                                    <th className="px-4 py-3 whitespace-nowrap text-right text-muted-foreground">Сумма</th>
+                                    {onAddTransaction && <th className="px-4 py-3 whitespace-nowrap text-center text-muted-foreground">Действия</th>}
                                 </tr>
                             </thead>
                             <tbody>
                                 {debtReport.payables.map((d) => (
-                                    <tr key={d.counterparty} className="border-t border-border transition-colors hover:bg-surface-accent/50">
-                                        <td className="px-4 py-3 whitespace-nowrap text-text-primary font-medium">{d.counterparty}</td>
-                                        <td className="px-4 py-3 text-right font-mono whitespace-nowrap text-destructive">{formatCurrency(-d.amount)}</td>
+                                    <tr key={d.counterparty} className="border-t border-border transition-colors hover:bg-card/50">
+                                        <td className="px-4 py-3 whitespace-nowrap text-foreground font-medium">{d.counterparty}</td>
+                                        <td className="px-4 py-3 text-right font-mono whitespace-nowrap text-destructive-foreground">{formatCurrency(-d.amount)}</td>
                                         {onAddTransaction && (
                                             <td className="px-4 py-3 text-center">
                                                 <button
                                                     onClick={() => handleRepayDebt(d.counterparty, d.amount, false)}
-                                                    className="px-3 py-1 bg-destructive text-white rounded hover:bg-destructive/90 transition-colors text-sm"
+                                                    className="px-3 py-1 bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors text-sm"
                                                     title="Погасить кредит"
                                                 >
                                                     Погасить
@@ -1350,7 +1452,7 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                                 ))}
                                 {debtReport.payables.length === 0 && (
                                     <tr className="border-t border-border">
-                                        <td colSpan={onAddTransaction ? 3 : 2} className="px-4 py-3 text-center text-text-secondary">Нет данных</td>
+                                        <td colSpan={onAddTransaction ? 3 : 2} className="px-4 py-3 text-center text-muted-foreground">Нет данных</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -1401,8 +1503,8 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
         if (forecastError) {
             return (
                 <div className="text-center p-10 bg-destructive/10 border border-destructive/20 rounded-xl">
-                    <h3 className="text-xl font-bold text-destructive">Ошибка</h3>
-                    <p className="text-destructive/80 mt-2">{forecastError}</p>
+              <h3 className="text-xl font-bold text-destructive-foreground">Ошибка</h3>
+              <p className="text-destructive-foreground/80 mt-2">{forecastError}</p>
                     <button onClick={handleGenerateForecast} className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">Попробовать снова</button>
                 </div>
             )
@@ -1410,13 +1512,13 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
 
         if (!forecastData || !forecastStats) {
             return (
-                <div className="text-center p-10 bg-surface border border-dashed border-border rounded-xl">
-                    <h3 className="text-2xl font-bold text-text-primary">Готовы заглянуть в будущее?</h3>
-                    <p className="text-text-secondary mt-2 max-w-xl mx-auto">Нажмите кнопку ниже, чтобы наш ИИ проанализировал ваши исторические данные и построил финансовый прогноз на следующие 6 месяцев.</p>
+                <div className="text-center p-10 bg-card border border-dashed border-border rounded-xl">
+                    <h3 className="text-2xl font-bold text-foreground">Готовы заглянуть в будущее?</h3>
+                    <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Нажмите кнопку ниже, чтобы наш ИИ проанализировал ваши исторические данные и построил финансовый прогноз на следующие 6 месяцев.</p>
                     <button
                         onClick={handleGenerateForecast}
                         disabled={isForecasting}
-                        className="mt-6 inline-flex items-center gap-2 mx-auto px-6 py-3 text-lg font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary-hover transition-colors disabled:bg-gray-600 shadow-lg"
+                        className="mt-6 inline-flex items-center gap-2 mx-auto px-6 py-3 text-lg font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary-hover transition-colors disabled:bg-muted shadow-lg"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m6.364-2.364l-.707.707M4.343 17.657l-.707.707M21 12h-1M4 12H3m16.364-4.364l-.707-.707M4.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                         <span>Сгенерировать прогноз</span>
@@ -1469,11 +1571,11 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
                         <FinancialStatementCard title="Анализ прогноза от ИИ">
                             <FinancialStatementCard.Section>
                                 {typeof forecastData.summary === 'string'
-                                    ? <p className="text-text-secondary text-sm leading-relaxed">{forecastData.summary}</p>
+                                    ? <p className="text-muted-foreground text-sm leading-relaxed">{forecastData.summary}</p>
                                     : Array.isArray(forecastData.summary)
                                         ? (forecastData.summary as any[]).map((item: any, i: number) => <p key={i}>{String(item)}</p>)
                                         : typeof forecastData.summary === 'object' && forecastData.summary !== null
-                                            ? <ul className="text-text-secondary text-sm leading-relaxed">
+                                            ? <ul className="text-muted-foreground text-sm leading-relaxed">
                                                 {Object.entries(forecastData.summary).map(([key, value]) => (
                                                     <li key={key}><b>{key}:</b> {String(value)}</li>
                                                 ))}
@@ -1506,44 +1608,72 @@ const ExecutiveSummary: React.FC<{ kpi: KPI }> = ({ kpi }) => (
     const showGranularitySwitcher = activeReport === 'pnl' || activeReport === 'cashflow';
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-background via-surface to-surface-elevated">
+        <div className="min-h-screen bg-page-dashboard">
             <div className="max-w-7xl mx-auto space-y-16 p-16">
                 {/* Header Section */}
-                <div className="p-6 bg-slate-900/60 backdrop-blur-sm border border-slate-800 rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-8 animate-fade-in">
+                <div className="p-6 bg-card backdrop-blur-sm border border-border rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-8 animate-fade-in shadow-lg">
                     <div className="flex items-center gap-6">
-                        <div className="p-4 bg-gradient-to-br from-primary/80 to-primary-light/80 rounded-xl shadow-lg border border-slate-700">
-                            <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <div className="p-4 bg-primary rounded-xl shadow-lg border border-primary/30">
+                            <svg className="w-16 h-16 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z" />
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-white">
+                            <h1 className="text-2xl font-bold text-foreground">
                                 Финансовый Дашборд
                             </h1>
-                            <p className="text-slate-400 text-sm">
+                            <p className="text-muted-foreground text-sm">
                                 Комплексный анализ финансовых показателей
                             </p>
                         </div>
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-1 p-1 bg-slate-900/80 border border-slate-700 rounded-full shadow-md">
+                        <div className="flex flex-wrap items-center gap-1 p-1 bg-card border border-border rounded-full shadow-md min-w-0">
                             {showGranularitySwitcher && (
-                                <GranularitySwitcher activeGranularity={granularity} setGranularity={setGranularity} />
+                                <div className="flex items-center gap-1 min-w-0">
+                                    <GranularitySwitcher activeGranularity={granularity} setGranularity={setGranularity} />
+                                </div>
                             )}
-                            <ReportTabs activeReport={activeReport} setActiveReport={setActiveReport} />
+                            <div className="flex items-center gap-1 min-w-0">
+                                <ReportTabs activeReport={activeReport} setActiveReport={setActiveReport} />
+                            </div>
                         </div>
                         
-                        <button
-                            onClick={handleDownloadAdvancedReport}
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            aria-label="Скачать передовой PDF-отчет"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            <span>Скачать отчет</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleDownloadAdvancedReport}
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary rounded-lg shadow-lg hover:bg-primary/90 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                                aria-label="Скачать передовой PDF-отчет"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span>PDF отчет</span>
+                            </button>
+                            
+                            <button
+                                onClick={handleExportToExcel}
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-success-foreground bg-success rounded-lg shadow-lg hover:bg-success/90 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-success"
+                                aria-label="Экспорт в Excel"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span>Excel</span>
+                            </button>
+                            
+                            <button
+                                onClick={handleExportToCSV}
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-foreground bg-secondary rounded-lg shadow-lg hover:bg-secondary/90 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary"
+                                aria-label="Экспорт в CSV"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span>CSV</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 

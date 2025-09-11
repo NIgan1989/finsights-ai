@@ -3,8 +3,8 @@ import { AdvancedFinancialReport } from '../types';
 import pdfMake from 'pdfmake/build/pdfmake';
 // @ts-ignore
 import vfsFonts from 'pdfmake/build/vfs_fonts';
-import { getCurrentLocalDate, parseLocalDate } from '../utils/dateUtils.ts';
-import { formatCurrency as formatCurrencyUtil, formatPercentage as formatPercentageUtil } from '../utils/formatUtils.ts';
+import { getCurrentLocalDate, parseLocalDate } from '../utils/dateUtils';
+import { formatCurrency as formatCurrencyUtil, formatPercentage as formatPercentageUtil } from '../utils/formatUtils';
 
 (pdfMake as any).vfs = (vfsFonts as any).vfs;
 
@@ -325,30 +325,30 @@ export const generateAdvancedPdfReport = (report: AdvancedFinancialReport, busin
       ...(report.alerts.critical.length > 0 ? [{
         text: 'КРИТИЧЕСКИЕ ПРЕДУПРЕЖДЕНИЯ',
         style: 'alertHeader',
-        color: '#dc2626',
+        color: 'hsl(var(--destructive))',
         margin: [0, 10, 0, 5]
       }, {
-        ul: report.alerts.critical.map(alert => ({ text: alert, color: '#dc2626' }))
+        ul: report.alerts.critical.map(alert => ({ text: alert, color: 'hsl(var(--destructive))' }))
       }] : []),
 
       // Warnings
       ...(report.alerts.warning.length > 0 ? [{
         text: 'ПРЕДУПРЕЖДЕНИЯ',
         style: 'alertHeader',
-        color: '#d97706',
+        color: 'hsl(var(--warning))',
         margin: [0, 10, 0, 5]
       }, {
-        ul: report.alerts.warning.map(alert => ({ text: alert, color: '#d97706' }))
+        ul: report.alerts.warning.map(alert => ({ text: alert, color: 'hsl(var(--warning))' }))
       }] : []),
 
       // Positive Info
       ...(report.alerts.info.length > 0 ? [{
         text: 'ПОЛОЖИТЕЛЬНЫЕ МОМЕНТЫ',
         style: 'alertHeader',
-        color: '#059669',
+        color: 'hsl(var(--success))',
         margin: [0, 10, 0, 5]
       }, {
-        ul: report.alerts.info.map(alert => ({ text: alert, color: '#059669' }))
+        ul: report.alerts.info.map(alert => ({ text: alert, color: 'hsl(var(--success))' }))
       }] : []),
 
       // Recommendations
@@ -358,11 +358,11 @@ export const generateAdvancedPdfReport = (report: AdvancedFinancialReport, busin
         margin: [0, 20, 0, 10]
       },
       ...(report.recommendations.length > 0 ? [{
-        ul: report.recommendations.map(rec => ({ text: rec, color: '#1e40af' }))
+        ul: report.recommendations.map(rec => ({ text: rec, color: 'hsl(var(--primary))' }))
       }] : [{
         text: 'Все показатели в норме. Продолжайте в том же духе!',
         style: 'bodyText',
-        color: '#059669'
+        color: 'hsl(var(--success))'
       }]),
 
       // Footer
@@ -378,38 +378,38 @@ export const generateAdvancedPdfReport = (report: AdvancedFinancialReport, busin
       header: {
         fontSize: 24,
         bold: true,
-        color: '#1e40af'
+        color: 'hsl(var(--primary))'
       },
       subheader: {
         fontSize: 18,
         bold: true,
-        color: '#374151'
+        color: 'hsl(var(--text-secondary))'
       },
       date: {
         fontSize: 12,
-        color: '#6b7280'
+        color: 'hsl(var(--text-muted))'
       },
       sectionHeader: {
         fontSize: 16,
         bold: true,
-        color: '#1e40af',
+        color: 'hsl(var(--primary))',
         margin: [0, 20, 0, 10]
       },
       subsectionHeader: {
         fontSize: 14,
         bold: true,
-        color: '#374151'
+        color: 'hsl(var(--text-secondary))'
       },
       bodyText: {
         fontSize: 12,
-        color: '#374151',
+        color: 'hsl(var(--text-secondary))',
         lineHeight: 1.4
       },
       tableHeader: {
         bold: true,
         fontSize: 12,
-        color: '#ffffff',
-        fillColor: '#1e40af'
+        color: 'hsl(var(--primary-foreground))',
+        fillColor: 'hsl(var(--primary))'
       },
       alertHeader: {
         fontSize: 14,
@@ -417,7 +417,7 @@ export const generateAdvancedPdfReport = (report: AdvancedFinancialReport, busin
       },
       footer: {
         fontSize: 10,
-        color: '#6b7280',
+        color: 'hsl(var(--text-muted))',
         italic: true
       }
     },

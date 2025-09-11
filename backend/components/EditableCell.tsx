@@ -109,6 +109,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
       canEdit: !disabled && !isHeader
     });
     if (!disabled && !isHeader) {
+      console.log('Starting edit for cell:', { rowIndex, colIndex });
       onStartEdit(rowIndex, colIndex);
     } else {
       console.log('Edit blocked because:', { disabled, isHeader });
@@ -139,89 +140,69 @@ const EditableCell: React.FC<EditableCellProps> = ({
   const validateAndFormatValue = (value: string): { isValid: boolean; formattedValue: string; errorMessage?: string } => {
     const trimmedValue = value.trim();
     
+    console.log('Validating value:', { 
+      originalValue: value, 
+      trimmedValue, 
+      rowIndex, 
+      colIndex, 
+      cellType: detectCellType() 
+    });
+    
     // Пустые значения разрешены
     if (!trimmedValue) {
+      console.log('Empty value - valid');
       return { isValid: true, formattedValue: '' };
     }
     
     // Формулы должны начинаться с =
     if (trimmedValue.startsWith('=')) {
+      console.log('Formula detected');
       // Базовая валидация формул
       const formula = trimmedValue.slice(1);
       if (!formula) {
+        console.log('Empty formula - invalid');
         return { isValid: false, formattedValue: trimmedValue, errorMessage: 'Пустая формула' };
       }
       
-      // Проверка на недопустимые символы в формулах
-      const dangerousPatterns = /[;{}\[\]"'`\\]|eval|function|script|alert|document|window/i;
+      // Упрощенная проверка на недопустимые символы в формулах
+      const dangerousPatterns = /eval|function|script|alert|document|window/i;
       if (dangerousPatterns.test(formula)) {
+        console.log('Dangerous pattern in formula - invalid');
         return { isValid: false, formattedValue: trimmedValue, errorMessage: 'Недопустимые символы в формуле' };
       }
       
+      console.log('Formula valid');
       return { isValid: true, formattedValue: trimmedValue };
     }
     
-    // Проверка числовых значений
-    const numericValue = parseFloat(trimmedValue.replace(/[^\d.-]/g, ''));
-    if (!isNaN(numericValue) && colIndex > 0) {
-      // Проверка разумных пределов для финансовых данных
-      const maxValue = 1e12; // 1 триллион
-      const minValue = -1e12;
-      
-      if (numericValue > maxValue || numericValue < minValue) {
-        return { 
-          isValid: false, 
-          formattedValue: trimmedValue, 
-          errorMessage: `Значение должно быть между ${minValue.toLocaleString()} и ${maxValue.toLocaleString()}` 
-        };
-      }
-      
-      // Проверка на специфические типы ячеек
-      const actualCellType = detectCellType();
-      if (actualCellType === 'revenue' && numericValue < 0) {
-        return { 
-          isValid: false, 
-          formattedValue: trimmedValue, 
-          errorMessage: 'Выручка не может быть отрицательной' 
-        };
-      }
-      
-      if (actualCellType === 'expense' && numericValue < 0) {
-        return { 
-          isValid: false, 
-          formattedValue: trimmedValue, 
-          errorMessage: 'Расходы должны быть положительными' 
-        };
-      }
-    }
-    
-    // Проверка текстовых значений
-    if (colIndex === 0 && trimmedValue.length > 100) {
+    // Упрощенная валидация - принимаем почти все значения
+    // Проверка только на экстремально длинные строки
+    if (trimmedValue.length > 1000) {
+      console.log('Value too long - invalid');
       return { 
         isValid: false, 
         formattedValue: trimmedValue, 
-        errorMessage: 'Название слишком длинное (максимум 100 символов)' 
+        errorMessage: 'Значение слишком длинное (максимум 1000 символов)' 
       };
     }
     
-    // Проверка на недопустимые символы в текстовых полях
-    const invalidChars = /[<>"'&]/;
-    if (invalidChars.test(trimmedValue)) {
-      return { 
-        isValid: false, 
-        formattedValue: trimmedValue, 
-        errorMessage: 'Недопустимые символы: < > " \' &' 
-      };
-    }
-    
+    console.log('Value valid');
     return { isValid: true, formattedValue: trimmedValue };
   };
 
   const handleSave = () => {
+    console.log('EditableCell handleSave called:', { 
+      rowIndex, 
+      colIndex, 
+      inputValue, 
+      originalValue: value 
+    });
+    
     const validation = validateAndFormatValue(inputValue);
     
     if (!validation.isValid) {
       // Показываем ошибку пользователю
+      console.error('Validation failed:', validation.errorMessage);
       alert(`Ошибка валидации: ${validation.errorMessage}`);
       // Возвращаем фокус на поле ввода
       if (inputRef.current) {
@@ -229,6 +210,12 @@ const EditableCell: React.FC<EditableCellProps> = ({
       }
       return;
     }
+    
+    console.log('Calling onSave with:', { 
+      rowIndex, 
+      colIndex, 
+      formattedValue: validation.formattedValue 
+    });
     
     onSave(rowIndex, colIndex, validation.formattedValue);
   };
@@ -295,39 +282,39 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
   const getCellStyle = () => {
     const actualCellType = detectCellType();
-    let baseStyle = "px-3 py-2 border-r border-b border-gray-200 dark:border-gray-600 text-sm min-w-[120px] h-[35px] relative transition-all duration-200 ";
+    let baseStyle = "px-3 py-2 border-r border-b border-border text-sm min-w-[120px] h-[35px] relative transition-all duration-200 ";
     
     // Базовые стили для заголовков
     if (isHeader) {
-      baseStyle += "bg-gray-100 dark:bg-gray-700 font-semibold text-gray-900 dark:text-white sticky ";
+      baseStyle += "bg-surface-accent font-semibold text-primary sticky ";
       if (rowIndex === 0) baseStyle += "top-0 z-20 ";
       if (colIndex === 0) baseStyle += "left-0 z-10 ";
     } else {
       // Цветовое кодирование по типу ячейки
       switch (actualCellType) {
         case 'revenue':
-          baseStyle += "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 ";
-          if (isHovered) baseStyle += "bg-green-100 dark:bg-green-900/30 ";
+          baseStyle += "bg-success/10 text-success-foreground ";
+          if (isHovered) baseStyle += "bg-success/20 ";
           break;
         case 'expense':
-          baseStyle += "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 ";
-          if (isHovered) baseStyle += "bg-red-100 dark:bg-red-900/30 ";
+          baseStyle += "bg-destructive/10 text-destructive-foreground ";
+          if (isHovered) baseStyle += "bg-destructive/20 ";
           break;
         case 'profit':
-          baseStyle += "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 ";
-          if (isHovered) baseStyle += "bg-blue-100 dark:bg-blue-900/30 ";
+          baseStyle += "bg-primary/10 text-primary ";
+          if (isHovered) baseStyle += "bg-primary/20 ";
           break;
         case 'loss':
-          baseStyle += "bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 ";
-          if (isHovered) baseStyle += "bg-orange-100 dark:bg-orange-900/30 ";
+          baseStyle += "bg-warning/20 text-warning-foreground ";
+          if (isHovered) baseStyle += "bg-warning/30 ";
           break;
         case 'formula':
-          baseStyle += "bg-purple-50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 font-mono ";
-          if (isHovered) baseStyle += "bg-purple-100 dark:bg-purple-900/30 ";
+          baseStyle += "bg-accent/10 text-accent font-mono ";
+          if (isHovered) baseStyle += "bg-accent/20 ";
           break;
         default:
-          baseStyle += "bg-white dark:bg-gray-800 text-gray-900 dark:text-white ";
-          if (isHovered && !disabled) baseStyle += "bg-gray-50 dark:bg-gray-700 ";
+          baseStyle += "bg-surface text-text-primary ";
+          if (isHovered && !disabled) baseStyle += "bg-surface-hover ";
       }
     }
     
@@ -429,13 +416,13 @@ const EditableCell: React.FC<EditableCellProps> = ({
         {/* Индикаторы */}
         <div className="flex items-center space-x-1 ml-2">
           {detectCellType() === 'formula' && !isEditing && (
-            <span className="text-purple-500 text-xs">fx</span>
+            <span className="text-accent text-xs">fx</span>
           )}
           {!isHeader && !disabled && isHovered && (
             <div className="flex space-x-1">
-              <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-              <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-              <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+              <span className="w-1 h-1 bg-text-muted rounded-full"></span>
+        <span className="w-1 h-1 bg-text-muted rounded-full"></span>
+        <span className="w-1 h-1 bg-text-muted rounded-full"></span>
             </div>
           )}
         </div>

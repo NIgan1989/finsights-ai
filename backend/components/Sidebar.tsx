@@ -19,7 +19,7 @@ interface MenuItem {
 const baseMenu: MenuItem[] = [
   { name: 'Профиль', icon: <FaUser />, view: 'profile', description: 'Управление профилями' },
   { name: 'Дашборд', icon: <FaChartBar />, view: 'dashboard', description: 'Аналитика и отчеты' },
-  { name: 'Транзакции', icon: <FaTable />, view: 'transactions', description: 'Список операций' },
+  { name: 'Операции', icon: <FaTable />, view: 'transactions', description: 'Список операций' },
   { name: 'ИИ Ассистент', icon: <FaRobot />, view: 'ai_assistant', description: 'Умный помощник' },
   { name: 'Финансовая модель', icon: <FaMagic />, view: 'financial_model', description: 'ИИ конструктор моделей', isPro: true },
 ];
@@ -33,7 +33,7 @@ interface SidebarProps {
 
 export default function Sidebar({ activeView, setActiveView, hasData, onResetData }: SidebarProps) {
   const { subscriptionInfo, email, role, displayName } = useUser();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themeName, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -104,44 +104,29 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
   };
 
   // Адаптивные классы для тем
-  const themeClasses = {
-    sidebar: theme === 'light' 
-      ? 'bg-gradient-to-b from-white to-slate-50 text-slate-800 border-r border-slate-200' 
-      : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100',
-    sidebarMobile: theme === 'light'
-      ? 'bg-white/95 backdrop-blur-lg text-slate-800 border-r border-slate-200'
-      : 'bg-slate-800/95 backdrop-blur-lg text-slate-100 border-r border-slate-700',
-    border: theme === 'light' ? 'border-slate-200' : 'border-white/10',
-    textPrimary: theme === 'light' ? 'text-slate-800' : 'text-white',
-    textSecondary: theme === 'light' ? 'text-slate-600' : 'text-white/60',
-    textMuted: theme === 'light' ? 'text-slate-500' : 'text-gray-400',
-    bgCard: theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-white/5 border-white/10',
-    bgCardHover: theme === 'light' ? 'bg-white hover:bg-slate-50' : 'bg-white/5 hover:bg-white/10',
-    bgButton: theme === 'light' ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 hover:border-slate-300' : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/20',
-    textButton: theme === 'light' ? 'text-slate-700 hover:text-slate-900' : 'text-gray-300 hover:text-white',
-  };
+  // Используем CSS переменные вместо старых themeClasses
 
   const SidebarContent = ({ isMobile = false }) => (
     <div className={`${isMobile ? 'h-full' : 'h-screen'} flex flex-col`}>
       {/* Декоративный элемент */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600"></div>
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-sidebar-header"></div>
       
       {/* Header с логотипом */}
-      <div className="p-4 border-b border-slate-200/50">
+      <div className="p-4 border-b border-border/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">F</span>
+            <div className="w-8 h-8 bg-gradient-sidebar-logo rounded-lg flex items-center justify-center">
+              <span className="text-primary font-bold text-sm">F</span>
             </div>
             <div>
-              <h1 className={`text-lg font-bold ${themeClasses.textPrimary}`}>FinSights AI</h1>
-              <p className={`text-xs ${themeClasses.textMuted}`}>Финансовый ассистент</p>
+              <h1 className={`text-lg font-bold text-foreground`}>FinSights AI</h1>
+              <p className={`text-xs ${themeName === 'light' ? 'text-muted-foreground' : 'text-muted-foreground'}`}>Финансовый ассистент</p>
             </div>
           </div>
           {isMobile && (
             <button
               onClick={toggleMobileMenu}
-              className={`p-2 rounded-lg ${themeClasses.bgButton} ${themeClasses.textButton} transition-colors`}
+              className="p-2 rounded-lg bg-card hover:bg-muted/50 text-foreground hover:text-foreground transition-colors"
             >
               <FaTimes size={20} />
             </button>
@@ -150,26 +135,34 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
       </div>
 
       {/* Профиль пользователя */}
-      <div className="profile-card-compact border-b border-slate-200/50">
-        <div className={`p-3 rounded-lg border ${themeClasses.bgCard} backdrop-blur-sm`}>
+      <div className="profile-card-compact border-b border-border/50">
+        <div className="p-3 rounded-lg border border-border bg-card backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-2">
-            <div className="profile-avatar-compact bg-gradient-to-br from-blue-500 to-indigo-600 rounded-md flex items-center justify-center">
-              <span className="text-white font-bold text-xs">
+            <div className="w-8 h-8 rounded-md flex items-center justify-center border" style={{
+              backgroundColor: 'var(--logo-profile-avatar-bg)',
+              borderColor: 'var(--logo-profile-avatar-border)'
+            }}>
+              <span className="font-bold text-xs" style={{ color: 'var(--logo-profile-avatar-text)' }}>
                 {displayName ? displayName[0] : (email ? email[0] : '?')}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`font-medium truncate text-sm ${themeClasses.textPrimary}`}>
+              <p className={`font-medium truncate text-sm text-foreground`}>
                 {displayName || 'Пользователь'}
               </p>
               <div className="flex items-center gap-1">
-                <span className={`px-1.5 py-0.5 text-xs rounded-md ${
-                  status === 'pro' || isLifetimeAdmin
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+                <span className="px-1.5 py-0.5 text-xs rounded-md" style={{
+                  backgroundColor: status === 'pro' || isLifetimeAdmin
+                    ? 'var(--logo-status-pro-bg)'
                     : isGuest
-                    ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
-                    : 'bg-gray-200 text-gray-700'
-                }`}>
+                    ? 'var(--logo-status-guest-bg)'
+                    : 'var(--logo-status-free-bg)',
+                  color: status === 'pro' || isLifetimeAdmin
+                    ? 'var(--logo-status-pro-text)'
+                    : isGuest
+                    ? 'var(--logo-status-guest-text)'
+                    : 'var(--logo-status-free-text)'
+                }}>
                   {isGuest ? 'ГОСТЬ' : status === 'pro' || isLifetimeAdmin ? 'PRO' : 'FREE'}
                 </span>
               </div>
@@ -186,6 +179,19 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
           const isDisabled = (isProItem && status !== 'pro' && !isLifetimeAdmin) || 
                             (item.view === 'ai_assistant' && isGuest);
           
+          // Определяем градиент для каждой страницы
+          const getPageGradient = (view: string): string => {
+    switch (view) {
+      case 'profile': return 'bg-gradient-sidebar-page-profile';
+      case 'dashboard': return 'bg-gradient-sidebar-page-dashboard';
+      case 'transactions': return 'bg-gradient-sidebar-page-transactions';
+      case 'ai_assistant': return 'bg-gradient-sidebar-page-ai-assistant';
+      case 'financial_model': return 'bg-gradient-sidebar-page-financial-model';
+      case 'admin': return 'bg-gradient-sidebar-active';
+      default: return 'bg-gradient-sidebar-active';
+    }
+  };
+          
           return (
             <button
               key={item.view}
@@ -193,26 +199,26 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
               disabled={isDisabled}
               className={`w-full text-left sidebar-item-compact rounded-lg transition-all duration-200 group relative ${
                 isActive
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                  ? `${getPageGradient(item.view)} shadow-md text-foreground`
                   : isDisabled
-                  ? `${themeClasses.textMuted} opacity-50 cursor-not-allowed`
-                  : `${themeClasses.textButton} ${themeClasses.bgCardHover} hover:scale-[1.01] hover:shadow-sm`
+                  ? "text-muted-foreground opacity-50 cursor-not-allowed"
+        : "text-foreground bg-card hover:bg-muted/50 hover:scale-[1.01] hover:shadow-sm hover:text-foreground"
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className={`sidebar-icon-compact ${isActive ? 'text-white' : isDisabled ? themeClasses.textMuted : themeClasses.textSecondary}`}>
+                <span className={`sidebar-icon-compact ${isActive ? 'text-primary-foreground' : isDisabled ? 'text-muted-foreground' : 'text-foreground'}`}>
                   {item.icon}
                 </span>
                 <div className="flex-1">
-                  <span className={`sidebar-text-compact font-medium ${isActive ? 'text-white' : themeClasses.textPrimary}`}>
+                  <span className={`sidebar-text-compact font-medium ${isActive ? 'text-foreground' : 'text-foreground group-hover:text-foreground'}`}>
                     {item.name}
-                  </span>
-                  <p className={`sidebar-description-compact ${isActive ? 'text-white/80' : themeClasses.textMuted}`}>
+                </span>
+                <p className={`sidebar-description-compact ${isActive ? 'text-foreground/90' : 'text-muted-foreground group-hover:text-foreground/80'}`}>
                     {item.description}
-                  </p>
+                </p>
                 </div>
                 {item.isPro && (
-                  <FaCrown className={`text-xs ${isActive ? 'text-yellow-300' : 'text-yellow-500'}`} />
+                  <FaCrown className={`text-xs ${isActive ? (themeName === 'light' ? 'text-warning' : 'text-warning/80') : 'text-warning'}`} />
                 )}
               </div>
             </button>
@@ -221,11 +227,11 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
       </nav>
 
       {/* Нижние действия */}
-      <div className="p-3 border-t border-slate-200/50 space-y-2">
+      <div className="p-3 border-t border-border/50 space-y-2">
         {hasData && (
           <button
             onClick={onResetData}
-            className={`w-full flex items-center gap-2 sidebar-item-compact rounded-lg border transition-all duration-200 hover:scale-[1.01] ${themeClasses.bgButton} ${themeClasses.textButton}`}
+            className="w-full flex items-center gap-2 sidebar-item-compact rounded-lg border transition-all duration-200 hover:scale-[1.01] bg-card hover:bg-muted text-foreground hover:text-foreground"
           >
             <FaUpload className="sidebar-icon-compact" />
             <span className="sidebar-text-compact font-medium">Загрузить новые данные</span>
@@ -234,10 +240,10 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
         
         <button
           onClick={toggleTheme}
-          className={`w-full flex items-center gap-2 sidebar-item-compact rounded-lg border transition-all duration-200 hover:scale-[1.01] ${themeClasses.bgButton} ${themeClasses.textButton}`}
+          className="w-full flex items-center gap-2 sidebar-item-compact rounded-lg border transition-all duration-200 hover:scale-[1.01] bg-card hover:bg-muted text-foreground hover:text-foreground"
         >
-          {theme === 'light' ? <FaMoon className="sidebar-icon-compact" /> : <FaSun className="sidebar-icon-compact" />}
-          <span className="sidebar-text-compact font-medium">{theme === 'light' ? 'Темная тема' : 'Светлая тема'}</span>
+          {themeName === 'light' ? <FaMoon className="sidebar-icon-compact" /> : <FaSun className="sidebar-icon-compact" />}
+          <span className="sidebar-text-compact font-medium">{themeName === 'light' ? 'Темная тема' : 'Светлая тема'}</span>
         </button>
       </div>
     </div>
@@ -246,35 +252,43 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className={`hidden lg:flex sidebar-compact ${themeClasses.sidebar} shadow-2xl fixed left-0 top-0 h-full z-30 overflow-hidden`}>
+      <aside className="hidden lg:flex sidebar-compact bg-sidebar-background border-r border-sidebar-border shadow-2xl fixed left-0 top-0 h-full z-30 overflow-y-auto">
         <SidebarContent />
       </aside>
 
       {/* Mobile Header */}
-      <div className={`lg:hidden ${themeClasses.sidebar} border-b ${themeClasses.border} relative z-50`}>
+      <div className="lg:hidden bg-card border-b border-border relative z-50">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">F</span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center border" style={{
+              backgroundColor: 'var(--logo-mobile-header-bg)',
+              borderColor: 'var(--logo-mobile-header-border)'
+            }}>
+              <span className="font-bold" style={{ color: 'var(--logo-mobile-header-text)' }}>F</span>
             </div>
-            <h1 className={`text-lg font-bold ${themeClasses.textPrimary}`}>FinSights AI</h1>
+            <h1 className={`text-lg font-bold text-foreground`}>FinSights AI</h1>
           </div>
           
           <div className="flex items-center gap-3">
             {/* Индикатор статуса */}
-            <span className={`px-2 py-1 text-xs rounded-full ${
-              status === 'pro' || isLifetimeAdmin
-                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+            <span className="px-2 py-1 text-xs rounded-full" style={{
+              backgroundColor: status === 'pro' || isLifetimeAdmin
+                ? 'var(--logo-status-pro-bg)'
                 : isGuest
-                ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
-                : 'bg-gray-200 text-gray-700'
-            }`}>
+                ? 'var(--logo-status-guest-bg)'
+                : 'var(--logo-status-free-bg)',
+              color: status === 'pro' || isLifetimeAdmin
+                ? 'var(--logo-status-pro-text)'
+                : isGuest
+                ? 'var(--logo-status-guest-text)'
+                : 'var(--logo-status-free-text)'
+            }}>
               {isGuest ? 'ГОСТЬ' : status === 'pro' || isLifetimeAdmin ? 'PRO' : 'FREE'}
             </span>
             
             <button
               onClick={toggleMobileMenu}
-              className={`p-2 rounded-lg ${themeClasses.bgButton} ${themeClasses.textButton} transition-colors`}
+              className="p-2 rounded-lg bg-card hover:bg-muted text-foreground hover:text-foreground transition-colors"
             >
               <FaBars size={20} />
             </button>
@@ -287,14 +301,14 @@ export default function Sidebar({ activeView, setActiveView, hasData, onResetDat
         <>
           {/* Backdrop */}
           <div 
-            className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            className="lg:hidden fixed inset-0 bg-background-80 backdrop-blur-sm z-40"
             onClick={toggleMobileMenu}
           />
           
           {/* Mobile Sidebar */}
-          <aside className={`lg:hidden fixed top-0 right-0 w-80 max-w-[85vw] ${themeClasses.sidebarMobile} shadow-2xl z-50 transform transition-transform duration-300 ${
-            isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}>
+          <aside className={`lg:hidden fixed top-0 right-0 w-80 max-w-[85vw] bg-sidebar-background border-l border-sidebar-border shadow-2xl z-50 transform transition-transform duration-300 overflow-y-auto ${
+        isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}>
             <SidebarContent isMobile={true} />
           </aside>
         </>

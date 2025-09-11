@@ -92,16 +92,16 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <h2 className="text-2xl font-bold text-foreground mb-2">
           🚀 Создайте финансовую модель с помощью ИИ
         </h2>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-muted-foreground">
           Опишите ваш бизнес, и мы создадим полную финансовую модель за минуты
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           Название бизнеса
         </label>
         <input
@@ -109,12 +109,12 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
           value={businessInfo.name}
           onChange={(e) => setBusinessInfo({...businessInfo, name: e.target.value})}
           placeholder="Например: Кофейня 'Уютный уголок'"
-          className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+          className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary bg-surface text-foreground"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+        <label className="block text-sm font-medium text-foreground mb-3">
           Выберите отрасль
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -124,12 +124,12 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
               onClick={() => setBusinessInfo({...businessInfo, industry: industry.id})}
               className={`p-4 text-left border-2 rounded-lg transition ${
                 businessInfo.industry === industry.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                  ? 'border-primary bg-primary-10'
+                  : 'border-border hover:border-border/80'
               }`}
             >
-              <div className="font-medium text-gray-900 dark:text-white">{industry.name}</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">{industry.description}</div>
+              <div className="font-medium text-foreground">{industry.name}</div>
+              <div className="text-sm text-muted-foreground">{industry.description}</div>
             </button>
           ))}
         </div>
@@ -138,14 +138,14 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
       <div className="flex justify-between">
         <button
           onClick={onClose}
-          className="px-6 py-2 text-gray-600 hover:text-gray-800 transition"
+          className="px-6 py-2 text-muted-foreground hover:text-foreground transition"
         >
           Отмена
         </button>
         <button
           onClick={() => setCurrentStep(2)}
           disabled={!businessInfo.name || !businessInfo.industry}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           Далее →
         </button>
@@ -156,16 +156,16 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <h2 className="text-2xl font-bold text-foreground mb-2">
           📝 Расскажите о вашем бизнесе
         </h2>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-muted-foreground">
           Чем больше деталей, тем точнее будет модель
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           Описание бизнеса
         </label>
         <textarea
@@ -173,22 +173,22 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
           onChange={(e) => setBusinessInfo({...businessInfo, description: e.target.value})}
           placeholder="Опишите ваш бизнес: что продаете, кому, как работаете, планы развития..."
           rows={6}
-          className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+          className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary bg-surface text-foreground resize-none"
         />
-        <div className="text-sm text-gray-500 mt-1">
+        <div className="text-sm text-muted-foreground mt-1">
           Например: "Кофейня в центре Алматы, 30 мест, работаем с 7:00 до 22:00, планируем добавить доставку..."
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Стадия бизнеса
           </label>
           <select
             value={businessInfo.stage}
             onChange={(e) => setBusinessInfo({...businessInfo, stage: e.target.value as any})}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary bg-surface text-foreground"
           >
             <option value="startup">🚀 Стартап (планирование)</option>
             <option value="existing">📈 Действующий бизнес</option>
@@ -197,13 +197,13 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Период планирования
           </label>
           <select
             value={businessInfo.timeframe}
             onChange={(e) => setBusinessInfo({...businessInfo, timeframe: parseInt(e.target.value)})}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary bg-surface text-foreground"
           >
             <option value={3}>3 года</option>
             <option value={5}>5 лет</option>
@@ -216,14 +216,14 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
       <div className="flex justify-between">
         <button
           onClick={() => setCurrentStep(1)}
-          className="px-6 py-2 text-gray-600 hover:text-gray-800 transition"
+          className="px-6 py-2 text-muted-foreground hover:text-foreground transition"
         >
           ← Назад
         </button>
         <button
           onClick={() => setCurrentStep(3)}
           disabled={!businessInfo.description.trim()}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           Создать модель →
         </button>
@@ -234,43 +234,43 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
   const renderStep3 = () => (
     <div className="space-y-6 text-center">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <h2 className="text-2xl font-bold text-foreground mb-2">
           ✨ Генерация вашей модели
         </h2>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-muted-foreground">
           ИИ анализирует ваш бизнес и создает персональную финансовую модель
         </p>
       </div>
 
-      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-        <div className="font-medium text-gray-900 dark:text-white mb-2">
+      <div className="bg-surface/50 rounded-lg p-6">
+        <div className="font-medium text-foreground mb-2">
           {businessInfo.name}
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+        <div className="text-sm text-muted-foreground mb-4">
           {industries.find(i => i.id === businessInfo.industry)?.name} • 
           {businessInfo.stage === 'startup' ? ' Стартап' : businessInfo.stage === 'existing' ? ' Действующий' : ' Расширение'} • 
           {businessInfo.timeframe} лет
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+        <div className="text-sm text-muted-foreground italic">
           "{businessInfo.description.substring(0, 100)}..."
         </div>
       </div>
 
       {!isGenerating ? (
         <div className="space-y-4">
-          <div className="text-sm text-gray-600 dark:text-gray-300">
+          <div className="text-sm text-muted-foreground">
             Все готово! Нажмите кнопку для создания модели.
           </div>
           <div className="flex justify-center space-x-4">
             <button
               onClick={() => setCurrentStep(2)}
-              className="px-6 py-2 text-gray-600 hover:text-gray-800 transition"
+              className="px-6 py-2 text-muted-foreground hover:text-foreground transition"
             >
               ← Изменить
             </button>
             <button
               onClick={generateModel}
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium"
+              className="px-8 py-3 bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-lg hover:from-primary/90 hover:to-secondary/90 transition font-medium"
             >
               🤖 Создать с помощью ИИ
             </button>
@@ -279,15 +279,15 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
       ) : (
         <div className="space-y-4">
           <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
-          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <div className="space-y-2 text-sm text-muted-foreground">
             <div>🧠 Анализируем ваш бизнес...</div>
             <div>📊 Создаем структуру модели...</div>
             <div>💰 Настраиваем доходы и расходы...</div>
             <div>📈 Строим прогнозы...</div>
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-muted-foreground/80">
             Обычно занимает 10-30 секунд
           </div>
         </div>
@@ -296,12 +296,12 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border">
         {/* Progress bar */}
-        <div className="bg-gray-200 dark:bg-gray-700 h-1">
+        <div className="bg-muted h-1">
           <div 
-            className="bg-blue-600 h-1 transition-all duration-300"
+            className="bg-primary h-1 transition-all duration-300"
             style={{ width: `${(currentStep / 3) * 100}%` }}
           />
         </div>
@@ -316,4 +316,4 @@ const ModelGenerator: React.FC<ModelGeneratorProps> = ({ onModelGenerated, onClo
   );
 };
 
-export default ModelGenerator; 
+export default ModelGenerator;

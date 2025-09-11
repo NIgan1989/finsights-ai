@@ -137,6 +137,77 @@ app.use('/api/openai', openaiRoutes);
 app.use('/api/financial-model', financialModelRoutes);
 app.use('/api/export', exportRoutes);
 
+// API для обновления ячеек модели
+app.post('/api/model/update-cell', (req, res) => {
+  try {
+    const { modelId, sheetName, rowIndex, colIndex, value, userId } = req.body;
+    
+    logger.info('Cell update request:', {
+      modelId,
+      sheetName,
+      rowIndex,
+      colIndex,
+      value,
+      userId
+    });
+    
+    // Здесь должна быть логика сохранения изменений в модели
+    // Пока возвращаем успешный ответ
+    res.json({
+      success: true,
+      message: 'Cell updated successfully',
+      data: {
+        modelId,
+        sheetName,
+        rowIndex,
+        colIndex,
+        value,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    logger.error('Error updating cell:', error);
+    res.status(500).json({ 
+      error: 'Failed to update cell',
+      message: error.message 
+    });
+  }
+});
+
+// API для применения изменений и пересчета модели
+app.post('/api/model/apply-changes', (req, res) => {
+  try {
+    const { modelId, changes, userId } = req.body;
+    
+    logger.info('Apply changes request:', {
+      modelId,
+      changesCount: changes?.length || 0,
+      userId
+    });
+    
+    // Здесь должна быть логика пересчета всех формул и зависимостей
+    // Пока возвращаем успешный ответ
+    res.json({
+      success: true,
+      message: 'Changes applied successfully',
+      data: {
+        modelId,
+        appliedChanges: changes?.length || 0,
+        timestamp: new Date().toISOString(),
+        recalculatedSheets: ['assumptions', 'revenue', 'expenses', 'cashflow']
+      }
+    });
+    
+  } catch (error) {
+    logger.error('Error applying changes:', error);
+    res.status(500).json({ 
+      error: 'Failed to apply changes',
+      message: error.message 
+    });
+  }
+});
+
 // Хранилище пользовательских данных
 const userProfiles = {}; // userId -> { profiles: [], activeProfileId: string }
 const userTransactions = {}; // userId -> transactions[]

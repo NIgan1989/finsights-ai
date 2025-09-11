@@ -1,12 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext } from 'react';
+import { useTheme as useThemeHook, UseThemeReturn } from '../../hooks/useTheme';
 
-type Theme = 'light' | 'dark';
-
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
-}
+type ThemeContextType = UseThemeReturn;
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -23,38 +18,10 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-      return savedTheme;
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle('dark', theme === 'dark');
-    root.setAttribute('data-theme', theme);
-    root.style.colorScheme = theme;
-  }, [theme]);
-
-  const value: ThemeContextType = {
-    theme,
-    toggleTheme,
-    setTheme,
-  };
+  const themeHook = useThemeHook();
 
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={themeHook}>
       {children}
     </ThemeContext.Provider>
   );

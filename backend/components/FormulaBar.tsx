@@ -39,10 +39,10 @@ const FormulaBar: React.FC<FormulaBarProps> = ({
   };
 
   return (
-    <div className="bg-gray-100 border-b border-gray-300 p-2 flex items-center space-x-2">
+    <div className="bg-surface-accent border-b border-border p-2 flex items-center space-x-2">
       <div className="flex items-center space-x-2">
-        <span className="text-sm font-medium text-gray-700">fx</span>
-        <span className="text-sm font-mono text-gray-600 bg-white px-2 py-1 rounded border">
+        <span className="text-sm font-medium text-foreground">fx</span>
+        <span className="text-sm font-mono text-muted-foreground bg-surface px-2 py-1 rounded border border-border">
           {getCellAddress()}
         </span>
       </div>
@@ -54,7 +54,7 @@ const FormulaBar: React.FC<FormulaBarProps> = ({
           onChange={(e) => setFormula(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={() => onFormulaChange(formula)}
-          className="w-full px-3 py-1 border border-gray-300 rounded text-sm font-mono focus:outline-none focus:border-blue-500"
+          className="w-full px-3 py-1 border border-border rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-surface text-foreground"
           placeholder="Введите формулу или значение..."
         />
       </div>
@@ -62,7 +62,7 @@ const FormulaBar: React.FC<FormulaBarProps> = ({
       <div className="flex items-center space-x-1">
         <button
           onClick={() => onFormulaChange(formula)}
-          className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition"
+          className="px-3 py-1 bg-success text-success-foreground text-sm rounded hover:bg-success/90 transition"
         >
           ✓
         </button>
@@ -71,7 +71,7 @@ const FormulaBar: React.FC<FormulaBarProps> = ({
             setFormula(currentCell.value);
             onCancel();
           }}
-          className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
+          className="px-3 py-1 bg-destructive text-destructive-foreground text-sm rounded hover:bg-destructive/90 transition"
         >
           ✕
         </button>
@@ -80,4 +80,4 @@ const FormulaBar: React.FC<FormulaBarProps> = ({
   );
 };
 
-export default FormulaBar; 
+export default FormulaBar;

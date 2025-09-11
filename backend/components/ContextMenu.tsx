@@ -214,18 +214,18 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="fixed bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50 min-w-[250px]"
+      className="fixed bg-surface rounded-lg shadow-2xl border border-border py-2 z-50 min-w-[250px]"
       style={{
         left: adjustedPosition.x,
         top: adjustedPosition.y
       }}
     >
       {/* Заголовок меню */}
-      <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+      <div className="px-3 py-2 border-b border-border">
+        <div className="text-xs text-muted-foreground">
           Ячейка: {String.fromCharCode(65 + colIndex)}{rowIndex + 1}
         </div>
-        <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+        <div className="text-sm font-medium text-foreground truncate">
           {String(cellValue) || 'Пустая ячейка'}
         </div>
       </div>
@@ -236,8 +236,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
           <button
             key={action.id}
             onClick={() => handleActionClick(action.id)}
-            className={`w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center justify-between group ${
-              action.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
+            className={`w-full px-3 py-2 text-left hover:bg-muted dark:hover:bg-surface-hover transition flex items-center justify-between group ${
+              action.danger ? 'text-destructive' : 'text-foreground'
             }`}
           >
             <div className="flex items-center space-x-3">
@@ -245,14 +245,14 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
               <div>
                 <div className="text-sm font-medium">{action.label}</div>
                 {action.description && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-muted-foreground">
                     {action.description}
                   </div>
                 )}
               </div>
             </div>
             {action.shortcut && (
-              <div className="text-xs text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition">
+              <div className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition">
                 {action.shortcut}
               </div>
             )}
@@ -261,8 +261,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
       </div>
 
       {/* Дополнительная информация */}
-      <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700">
-        <div className="text-xs text-gray-400 dark:text-gray-500">
+      <div className="px-3 py-2 border-t border-border">
+        <div className="text-xs text-muted-foreground">
           💡 Совет: Используйте Ctrl+D для заполнения вниз
         </div>
       </div>
@@ -270,4 +270,4 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
   );
 };
 
-export default ContextMenu; 
+export default ContextMenu;
