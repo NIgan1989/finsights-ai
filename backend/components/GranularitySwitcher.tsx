@@ -1,5 +1,5 @@
 import React from 'react';
-import { Granularity } from '../../types.ts';
+import { Granularity } from '../../types';
 
 interface GranularitySwitcherProps {
     activeGranularity: Granularity;
@@ -14,14 +14,14 @@ const tabs: { id: Granularity; label: string }[] = [
 
 const GranularitySwitcher: React.FC<GranularitySwitcherProps> = ({ activeGranularity, setGranularity }) => {
     return (
-        <div className="flex items-center bg-surface-accent rounded-lg p-1">
+        <div className="flex flex-wrap items-center gap-1 min-w-0">
             {tabs.map(tab => (
                 <button
                     key={tab.id}
                     onClick={() => setGranularity(tab.id)}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeGranularity === tab.id
-                            ? 'bg-primary/70 text-primary-foreground'
-                            : 'text-text-secondary hover:bg-surface hover:text-text-primary'
+                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap min-w-0 ${activeGranularity === tab.id
+                            ? 'bg-primary text-primary-foreground shadow-md'
+                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                         }`}
                 >
                     {tab.label}

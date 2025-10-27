@@ -1,792 +1,886 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const OpenAI = require('openai');
+const path = require('path');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-dotenv.config();
+// Импортируем модули
+const { router: authRoutes, users } = require('./routes/auth');
+const openaiRoutes = require('./routes/openai');
+const financialModelRoutes = require('./routes/financialModel');
+const exportRoutes = require('./routes/export');
+const FinancialModelService = require('./services/financialModelService');
+const { validate } = require('./utils/validation');
+const logger = require('./utils/logger');
+const FormulaValidator = require('./utils/formulaValidator');
+
+// Загружаем .env файл из папки backend
+const envPath = path.join(__dirname, '.env');
+console.log('[Server] Looking for .env file at:', envPath);
+console.log('[Server] File exists:', require('fs').existsSync(envPath));
+
+// Попробуем прочитать файл вручную
+const fs = require('fs');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  // Больше не логируем содержимое .env, чтобы не раскрывать секреты
+  
+  // Удаляем BOM если есть
+  const cleanContent = envContent.replace(/^\uFEFF/, '');
+  
+  // Парсим файл вручную
+  const lines = cleanContent.split('\n');
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const equalIndex = trimmed.indexOf('=');
+      if (equalIndex > 0) {
+        const key = trimmed.substring(0, equalIndex).trim();
+        const value = trimmed.substring(equalIndex + 1).trim();
+        if (key && value) {
+          process.env[key] = value;
+          // Безопасный лог: только имя переменной без значения
+          console.log(`[Server] Loaded env var: ${key}`);
+        }
+      }
+    }
+  });
+} else {
+  console.error('[Server] .env file not found at:', envPath);
+}
 
 const app = express();
+const PORT = process.env.PORT || 3001;
 
 // Настройка CORS с поддержкой cookies
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // Разрешенные источники
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
 
 app.use(express.json({ limit: '2mb' }));
 app.use(bodyParser.json());
 
-// Логирование всех запросов
-app.use((req, res, next) => {
-  console.log(`[Server] ${new Date().toISOString()} - ${req.method} ${req.url}`);
-  console.log('[Server] Request headers:', req.headers);
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log('[Server] Request body:', req.body);
+// Настройка сессий
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'fallback-session-secret-for-dev-only',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // для development
+    maxAge: 24 * 60 * 60 * 1000 // 24 часа
   }
+}));
+
+// Инициализируем валидатор формул
+const formulaValidator = new FormulaValidator();
+
+// Улучшенное логирование всех запросов с измерением времени
+app.use((req, res, next) => {
+  const startTime = Date.now();
+  
+  logger.debug(`Начало обработки запроса: ${req.method} ${req.url}`, {
+    headers: req.headers,
+    body: req.body && Object.keys(req.body).length > 0 ? req.body : undefined,
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  });
+  
+  const originalSend = res.send;
+  res.send = function(data) {
+    const duration = Date.now() - startTime;
+    logger.logRequest(req, res, duration);
+    return originalSend.call(this, data);
+  };
+  
   next();
 });
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Проверяем загрузку API ключа
+console.log('[Server] OPENAI_API_KEY loaded:', process.env.OPENAI_API_KEY ? 'YES' : 'NO');
+if (!process.env.OPENAI_API_KEY) {
+  console.error('[Server] ERROR: OPENAI_API_KEY not found in environment variables');
+}
 
-// Простое хранилище пользователей (в продакшене заменить на базу данных)
-const users = {
-  // Дефолтный админ
-  'admin': {
-    id: 'admin-user',
-    email: 'admin@finsights.ai',
-    displayName: 'Администратор',
-    password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', // password: admin123
-    role: 'admin',
-    photoUrl: null
-  },
-  // Дефолтный демо пользователь  
-  'demo': {
-    id: 'demo-user',
-    email: 'demo@finsights.ai',
-    displayName: 'Demo User',
-    password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', // password: demo123
-    role: 'user',
-    photoUrl: null
-  }
-};
+// Простое хранилище пользователей импортируется из routes/auth.js
 
-// В памяти: userId <-> статус подписки
 const userSubscriptionStatus = {};
 const userUsageData = {};
 
-// Хранилище пользовательских данных (в продакшене заменить на базу данных)
-const userDataStorage = {
-  profiles: {}, // userId -> profiles[]
-  transactions: {}, // userId -> transactions[]
-  activeProfileId: {} // userId -> activeProfileId
-};
+// Заявки на активацию PRO-подписки (изначально пустой список)
+const paymentRequests = [];
 
-// Инициализация данных пользователя
-const initUserData = (userId) => {
-  if (!userUsageData[userId]) {
-    userUsageData[userId] = {
-      profiles: 0,
-      transactions: 0,
-      aiRequests: 0,
-      lastReset: new Date().toDateString() // для сброса дневных лимитов
-    };
-  }
-  
-  // Сброс дневных лимитов ИИ
-  const today = new Date().toDateString();
-  if (userUsageData[userId].lastReset !== today) {
-    userUsageData[userId].aiRequests = 0;
-    userUsageData[userId].lastReset = today;
-  }
-};
-
-// Сессии
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback-secret-key-for-dev-only',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 } // 24 часа
-}));
-
-// JWT секрет
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-jwt-secret-for-dev-only';
-
-// Middleware для проверки авторизации
+// Middleware для аутентификации
 const authenticateToken = (req, res, next) => {
-  // Проверяем сессию
-  if (req.session && req.session.userId) {
-    const user = Object.values(users).find(u => u.id === req.session.userId);
-    if (user) {
-      req.user = user;
-      return next();
-    }
-  }
-
-  // Проверяем JWT токен в заголовках
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (token) {
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-      if (err) return res.sendStatus(403);
-      req.user = user;
-      next();
-    });
-  } else {
-    res.sendStatus(401);
-  }
-};
-
-// =================== АВТОРИЗАЦИЯ ===================
-
-// Регистрация
-app.post('/api/register', async (req, res) => {
-  console.log('[Server] Registration attempt:', req.body);
-  const { email, password, displayName } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email и пароль обязательны' });
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
   }
 
-  // Проверяем, существует ли пользователь
-  const existingUser = Object.values(users).find(u => u.email === email);
-  if (existingUser) {
-    return res.status(400).json({ error: 'Пользователь с таким email уже существует' });
-  }
-
-  try {
-    // Хешируем пароль
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Создаем нового пользователя
-    const userId = 'user_' + Date.now();
-    const newUser = {
-      id: userId,
-      email,
-      displayName: displayName || email.split('@')[0],
-      password: hashedPassword,
-      role: 'user',
-      photoUrl: null,
-      createdAt: new Date().toISOString()
-    };
-
-    users[userId] = newUser;
-    
-    // Создаем сессию
-    req.session.userId = userId;
-    
-    console.log('[Server] User registered successfully:', { id: userId, email });
-    
-    // Возвращаем данные без пароля
-    const { password: _, ...userWithoutPassword } = newUser;
-    res.json({ 
-      message: 'Регистрация успешна',
-      user: userWithoutPassword,
-      token: jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn: '7d' })
-    });
-  } catch (error) {
-    console.error('[Server] Registration error:', error);
-    res.status(500).json({ error: 'Ошибка при регистрации' });
-  }
-});
-
-// Логин
-app.post('/api/login', async (req, res) => {
-  console.log('[Server] Login attempt:', { email: req.body.email });
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    console.log('[Server] Missing email or password');
-    return res.status(400).json({ error: 'Email и пароль обязательны' });
-  }
-
-  try {
-    console.log('[Server] Searching for user with email:', email);
-    console.log('[Server] Available users:', Object.keys(users));
-    
-    // Ищем пользователя
-    const user = Object.values(users).find(u => u.email === email);
-    console.log('[Server] Found user:', user ? { id: user.id, email: user.email } : null);
-    
-    if (!user) {
-      console.log('[Server] User not found');
-      return res.status(401).json({ error: 'Неверный email или пароль' });
-    }
-
-    console.log('[Server] Checking password...');
-    
-    // Проверяем пароль
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    console.log('[Server] Password valid:', isValidPassword);
-    
-    if (!isValidPassword) {
-      console.log('[Server] Invalid password');
-      return res.status(401).json({ error: 'Неверный email или пароль' });
-    }
-
-    // Создаем сессию
-    req.session.userId = user.id;
-    
-    console.log('[Server] User logged in successfully:', { id: user.id, email: user.email });
-    
-    // Возвращаем данные без пароля
-    const { password: _, ...userWithoutPassword } = user;
-    console.log('[Server] Sending response with user data:', userWithoutPassword);
-    
-    res.json({
-      message: 'Вход выполнен успешно',
-      user: userWithoutPassword,
-      token: jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' })
-    });
-  } catch (error) {
-    console.error('[Server] Login error:', error);
-    res.status(500).json({ error: 'Ошибка при входе' });
-  }
-});
-
-// Получение данных текущего пользователя
-app.get('/api/me', (req, res) => {
-  console.log('[Server] /api/me request');
-  console.log('[Server] Session:', req.session);
-  
-  if (req.session && req.session.userId) {
-    const user = Object.values(users).find(u => u.id === req.session.userId);
-    if (user) {
-      const { password: _, ...userWithoutPassword } = user;
-      console.log('[Server] User found in session:', userWithoutPassword);
-      return res.json(userWithoutPassword);
-    }
-  }
-  
-  console.log('[Server] No valid session found');
-  res.status(401).json({ error: 'Not authenticated' });
-});
-
-// Выход
-app.post('/api/logout', (req, res) => {
-  console.log('[Server] Logout request');
-  req.session.destroy((err) => {
+  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
     if (err) {
-      console.error('[Server] Logout error:', err);
-      return res.status(500).json({ error: 'Ошибка при выходе' });
+      return res.status(403).json({ error: 'Invalid token' });
     }
-    res.json({ message: 'Выход выполнен успешно' });
+    req.user = user;
+    next();
   });
-});
-
-// Быстрый вход для демо (можно убрать в продакшене)
-app.get('/api/auth/demo', (req, res) => {
-  console.log('[Server] Demo auth request');
-  req.session.userId = 'demo-user';
-  res.redirect('http://localhost:5173/dashboard');
-});
-
-// Быстрый вход для админа (можно убрать в продакшене)
-app.get('/api/auth/admin', (req, res) => {
-  console.log('[Server] Admin auth request');
-  req.session.userId = 'admin-user';
-  res.redirect('http://localhost:5173/dashboard');
-});
-
-// =================== ОСТАЛЬНЫЕ ЭНДПОИНТЫ ===================
-
-// Диагностические эндпоинты
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-app.get('/auth/google/config', (req, res) => {
-  res.json({ 
-    clientId: null, // Google OAuth отключен
-    callbackURL: null
-  });
-});
-
-app.post('/api/openai/forecast', async (req, res) => {
-    try {
-        const { pnlMonthlyData } = req.body;
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-                {
-                    role: 'system',
-                    content: 'Ты — финансовый аналитик. Проанализируй данные о прибылях и убытках и создай прогноз на следующие 3 месяца. Верни только валидный JSON с полями: forecastedRevenue (массив из 3 чисел), forecastedExpenses (массив из 3 чисел), forecastedProfit (массив из 3 чисел), confidence, assumptions. forecastedRevenue, forecastedExpenses, forecastedProfit — всегда массивы длины 3, даже если значения одинаковые. Не возвращай одно число, только массив из 3 чисел! Без пояснений, markdown и текста.'
-                },
-                {
-                    role: 'user',
-                    content: `Создай финансовый прогноз на основе данных: ${JSON.stringify(pnlMonthlyData)}`
-                }
-            ],
-            response_format: { type: 'json_object' }
-        });
-        let text = response.choices[0]?.message?.content || '{}';
-        // Попытка извлечь JSON, если вдруг что-то не так
-        try {
-            text = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1);
-            const parsed = JSON.parse(text);
-            // Приводим forecastedRevenue, forecastedExpenses, forecastedProfit к массивам, если это объекты или числа
-            ['forecastedRevenue', 'forecastedExpenses', 'forecastedProfit'].forEach(key => {
-              if (parsed[key] && typeof parsed[key] === 'object' && !Array.isArray(parsed[key])) {
-                // Берём только числовые значения
-                let arr = Object.values(parsed[key]).map(Number).filter(v => !isNaN(v));
-                // Если длина не 3, дублируем последнее значение
-                while (arr.length < 3) arr.push(arr[arr.length - 1] ?? 0);
-                parsed[key] = arr.slice(0, 3);
-              }
-              if (parsed[key] && !Array.isArray(parsed[key])) {
-                parsed[key] = [parsed[key], parsed[key], parsed[key]];
-              }
-            });
-            res.json(parsed);
-        } catch (e) {
-            res.status(500).json({ error: 'AI ответ не является валидным JSON', raw: text });
-        }
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.post('/api/openai/chat', async (req, res) => {
-  try {
-    const { messages, transactions, report, dateRange, profile } = req.body;
-    // Проверка наличия данных
-    if (!report) console.log('ВНИМАНИЕ: report отсутствует или пустой');
-    if (!transactions || !Array.isArray(transactions) || transactions.length === 0) console.log('ВНИМАНИЕ: transactions отсутствуют или пусты');
-    if (!profile) console.log('ВНИМАНИЕ: profile отсутствует или пустой');
-
-    // Формируем максимально структурированный system prompt
-    let summary = '';
-    if (profile) {
-      summary += `Профиль бизнеса: ${profile.businessName || '-'} (${profile.businessType || '-'})\n`;
-    }
-    if (dateRange) {
-      summary += `Период: ${dateRange.start || '-'} - ${dateRange.end || '-'}\n`;
-    }
-    if (report) {
-      summary += `\nКлючевые показатели:\n`;
-      summary += `- Выручка: ${report.pnl?.totalRevenue ?? '-'}\n`;
-      summary += `- Операционные расходы: ${report.pnl?.totalOperatingExpenses ?? '-'}\n`;
-      summary += `- Чистая прибыль: ${report.pnl?.netProfit ?? '-'}\n`;
-      summary += `- Денежный поток: ${report.cashFlow?.netCashFlow ?? '-'}\n`;
-      summary += `- Контрагентов: ${report.counterpartyReport?.length ?? '-'}\n`;
-      // Топ категории расходов
-      if (report.pnl?.expenseByCategory) {
-        const topCategories = report.pnl.expenseByCategory
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 3)
-          .map((cat, i) => `${i + 1}. ${cat.name}: ${cat.value}`)
-          .join('\n');
-        summary += `\nТоп-3 категории расходов:\n${topCategories}\n`;
-      }
-      // Динамика по месяцам
-      if (report.pnl?.monthlyData) {
-        summary += '\nДинамика по месяцам:\n' +
-          report.pnl.monthlyData.map(m => `${m.month}: Доход ${m['Доход']}, Расход ${m['Расход']}, Прибыль ${m['Прибыль']}`).join('\n') + '\n';
-      }
-    }
-    if (transactions && Array.isArray(transactions) && transactions.length > 0) {
-      const lastTxs = transactions.slice(-10).reverse();
-      summary += '\nПоследние 10 транзакций:\n' + lastTxs.map(tx =>
-        `${tx.date}: ${tx.description} (${tx.category}) — ${tx.type === 'income' ? '+' : '-'}${tx.amount}`
-      ).join('\n') + '\n';
-    }
-    const systemPrompt = {
-      role: 'system',
-      content: `Ты — финансовый ассистент. Используй только эти данные для анализа и ответов на вопросы пользователя.\n${summary}`
-    };
-    // Логируем system prompt для отладки
-    console.log('System prompt для OpenAI:', systemPrompt.content);
-    const fullMessages = [systemPrompt, ...(messages || [])];
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: fullMessages,
-      max_tokens: 500,
-    });
-    const text = response.choices[0]?.message?.content || '';
-    res.json({ content: text });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Financial Model AI endpoints
-app.post('/api/financial-model/chat', async (req, res) => {
-  try {
-    const { message, currentStep, modelData, messages } = req.body;
-    
-    // Создаем контекст для AI
-    const context = `
-Ты - экспертный финансовый аналитик и моделист. Твоя задача - создать профессиональную финансовую модель.
-
-Текущий шаг: ${currentStep}/6
-Данные модели: ${JSON.stringify(modelData, null, 2)}
-История чата: ${messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n')}
-
-Пользователь написал: "${message}"
-
-ОБЯЗАТЕЛЬНО следуй этой структуре ответа:
-1. Проанализируй информацию пользователя
-2. Задай КОНКРЕТНЫЕ уточняющие вопросы для текущего этапа
-3. Предложи варианты или дай экспертные рекомендации
-4. Если этап завершен, скажи "ЭТАП_ЗАВЕРШЕН"
-
-Этапы создания модели:
-0. Информация о компании (название, отрасль, стадия, валюта)
-1. Модель доходов (источники, типы, драйверы роста)
-2. Структура затрат (COGS, OPEX, CAPEX)
-3. Финансовые предположения (WACC, налоги, терминальный рост)
-4. Создание модели (DCF, P&L, Balance Sheet)
-5. Анализ и сценарии
-
-Отвечай профессионально, структурированно, с эмодзи для наглядности.
-`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: context },
-        { role: "user", content: message }
-      ],
-      max_tokens: 1000,
-      temperature: 0.3
-    });
-
-    const aiResponse = response.choices[0].message.content;
-    
-    // Определяем, завершен ли этап
-    const stepCompleted = aiResponse.includes('ЭТАП_ЗАВЕРШЕН');
-    
-    // Извлекаем обновления данных модели из ответа AI
-    let modelUpdate = {};
-    
-    // Простая логика извлечения данных (можно улучшить)
-    if (currentStep === 0 && message.toLowerCase().includes('компания')) {
-      const companyMatch = message.match(/компания\s+([^,.\n]+)/i);
-      const industryMatch = message.match(/отрасль\s+([^,.\n]+)/i);
-      
-      if (companyMatch) modelUpdate.companyName = companyMatch[1].trim();
-      if (industryMatch) modelUpdate.industry = industryMatch[1].trim();
-    }
-
-    res.json({
-      response: aiResponse.replace('ЭТАП_ЗАВЕРШЕН', '').trim(),
-      stepCompleted,
-      modelUpdate,
-      type: stepCompleted ? 'model' : 'question'
-    });
-
-  } catch (error) {
-    console.error('Financial model chat error:', error);
-    res.status(500).json({ 
-      error: 'Ошибка AI-ассистента. Попробуйте переформулировать запрос.',
-      response: '❌ Произошла техническая ошибка. Пожалуйста, попробуйте еще раз.'
-    });
-  }
-});
-
-app.post('/api/financial-model/generate', async (req, res) => {
-  try {
-    const { modelData } = req.body;
-    
-    // Создаем полную финансовую модель
-    const prompt = `
-Создай детальную финансовую модель на основе данных:
-${JSON.stringify(modelData, null, 2)}
-
-Создай DCF модель с:
-1. P&L прогноз на 5 лет
-2. Cash Flow прогноз
-3. Balance Sheet ключевые позиции
-4. Расчет справедливой стоимости (DCF)
-5. Сценарный анализ (базовый, оптимистичный, пессимистичный)
-6. Анализ чувствительности
-
-Верни результат в JSON формате с полями:
-{
-  "companyName": "название",
-  "projectionYears": 5,
-  "projections": {
-    "revenue": [год1, год2, год3, год4, год5],
-    "cogs": [год1, год2, год3, год4, год5],
-    "grossProfit": [год1, год2, год3, год4, год5],
-    "opex": [год1, год2, год3, год4, год5],
-    "ebitda": [год1, год2, год3, год4, год5],
-    "freeCashFlow": [год1, год2, год3, год4, год5]
-  },
-  "valuation": {
-    "fairValue": "сумма в млн руб",
-    "npv": "сумма в млн руб", 
-    "irr": "процент"
-  },
-  "scenarios": [
-    {"name": "Базовый", "npv": "сумма", "probability": 0.6},
-    {"name": "Оптимистичный", "npv": "сумма", "probability": 0.2},
-    {"name": "Пессимистичный", "npv": "сумма", "probability": 0.2}
-  ],
-  "keyAssumptions": ["предположение1", "предположение2"],
-  "recommendations": ["рекомендация1", "рекомендация2"]
-}
-`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: "Ты экспертный финансовый моделист. Создавай детальные, профессиональные финансовые модели в формате JSON." },
-        { role: "user", content: prompt }
-      ],
-      max_tokens: 2000,
-      temperature: 0.1
-    });
-
-    let modelResult;
-    try {
-      modelResult = JSON.parse(response.choices[0].message.content);
-    } catch (parseError) {
-      // Если не удалось распарсить JSON, создаем базовую модель
-      modelResult = {
-        companyName: modelData.companyName || "Компания",
-        projectionYears: 5,
-        projections: {
-          revenue: [100, 120, 144, 173, 207],
-          cogs: [60, 72, 86, 104, 124],
-          grossProfit: [40, 48, 58, 69, 83],
-          opex: [25, 30, 36, 43, 52],
-          ebitda: [15, 18, 22, 26, 31],
-          freeCashFlow: [12, 14, 17, 20, 24]
-        },
-        valuation: {
-          fairValue: "450 млн руб",
-          npv: "280 млн руб",
-          irr: "25.3"
-        },
-        scenarios: [
-          {"name": "Базовый", "npv": "280 млн руб", "probability": 0.6},
-          {"name": "Оптимистичный", "npv": "420 млн руб", "probability": 0.2},
-          {"name": "Пессимистичный", "npv": "180 млн руб", "probability": 0.2}
-        ],
-        keyAssumptions: [
-          "Рост выручки 20% в год",
-          "Маржинальность EBITDA 15%",
-          "WACC 12%",
-          "Терминальный рост 3%"
-        ],
-        recommendations: [
-          "Фокус на увеличении маржинальности",
-          "Оптимизация структуры капитала",
-          "Инвестиции в цифровизацию процессов"
-        ]
-      };
-    }
-
-    res.json({ model: modelResult });
-
-  } catch (error) {
-    console.error('Generate model error:', error);
-    res.status(500).json({ 
-      error: 'Ошибка генерации модели. Попробуйте еще раз.',
-      model: null
-    });
-  }
-});
-
-// Сброс пароля (заглушка)
-app.post('/api/reset-password', (req, res) => {
-  const { email } = req.body;
-  // В реальном проекте: найти пользователя, сгенерировать токен, отправить email
-  const user = Object.values(users).find(u => u.email === email);
-  if (user) {
-    console.log(`Отправка письма для сброса пароля на ${email}`);
-  }
-  // Не раскрываем, есть ли пользователь
-  res.json({ success: true });
-});
-
-// Список администраторов с пожизненной подпиской
-const lifetimeAdmins = [
-  'Dulat280489@gmail.com'
-];
-
-const isLifetimeAdmin = (userId) => {
-  return lifetimeAdmins.includes(userId.toLowerCase());
 };
 
-// Endpoint для получения полной информации о подписке
-app.get('/api/subscription-info', (req, res) => {
-  const { userId } = req.query;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  // Проверяем, является ли пользователь администратором с пожизненной подпиской
-  if (isLifetimeAdmin(userId)) {
-    return res.json({
-      status: 'pro',
-      currentUsage: {
-        profiles: 0,
-        transactions: 0,
-        aiRequests: 0
+// Подключаем маршруты
+app.use('/api/auth', authRoutes);
+app.use('/api/openai', openaiRoutes);
+app.use('/api/financial-model', financialModelRoutes);
+app.use('/api/export', exportRoutes);
+
+// API для обновления ячеек модели
+app.post('/api/model/update-cell', (req, res) => {
+  try {
+    const { modelId, sheetName, rowIndex, colIndex, value, userId } = req.body;
+    
+    logger.info('Cell update request:', {
+      modelId,
+      sheetName,
+      rowIndex,
+      colIndex,
+      value,
+      userId
+    });
+    
+    // Здесь должна быть логика сохранения изменений в модели
+    // Пока возвращаем успешный ответ
+    res.json({
+      success: true,
+      message: 'Cell updated successfully',
+      data: {
+        modelId,
+        sheetName,
+        rowIndex,
+        colIndex,
+        value,
+        timestamp: new Date().toISOString()
       }
     });
+    
+  } catch (error) {
+    logger.error('Error updating cell:', error);
+    res.status(500).json({ 
+      error: 'Failed to update cell',
+      message: error.message 
+    });
   }
-  
-  initUserData(userId);
-  const status = userSubscriptionStatus[userId] || 'free';
-  const currentUsage = userUsageData[userId];
-  
+});
+
+// API для применения изменений и пересчета модели
+app.post('/api/model/apply-changes', (req, res) => {
+  try {
+    const { modelId, changes, userId } = req.body;
+    
+    logger.info('Apply changes request:', {
+      modelId,
+      changesCount: changes?.length || 0,
+      userId
+    });
+    
+    // Здесь должна быть логика пересчета всех формул и зависимостей
+    // Пока возвращаем успешный ответ
+    res.json({
+      success: true,
+      message: 'Changes applied successfully',
+      data: {
+        modelId,
+        appliedChanges: changes?.length || 0,
+        timestamp: new Date().toISOString(),
+        recalculatedSheets: ['assumptions', 'revenue', 'expenses', 'cashflow']
+      }
+    });
+    
+  } catch (error) {
+    logger.error('Error applying changes:', error);
+    res.status(500).json({ 
+      error: 'Failed to apply changes',
+      message: error.message 
+    });
+  }
+});
+
+// Хранилище пользовательских данных
+const userProfiles = {}; // userId -> { profiles: [], activeProfileId: string }
+const userTransactions = {}; // userId -> transactions[]
+
+// Основные API эндпоинты
+app.get('/api/health', (req, res) => {
   res.json({ 
-    status,
-    currentUsage: {
-      profiles: currentUsage.profiles,
-      transactions: currentUsage.transactions,
-      aiRequests: currentUsage.aiRequests
-    }
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    version: '2.0.0',
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Endpoint для увеличения счетчика ИИ запросов
-app.post('/api/increment-ai-usage', (req, res) => {
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  initUserData(userId);
-  userUsageData[userId].aiRequests++;
-  
-  res.json({ success: true, newCount: userUsageData[userId].aiRequests });
-});
-
-// Endpoint для обновления использования (профили, транзакции)
-app.post('/api/update-usage', (req, res) => {
-  const { userId, type, count } = req.body;
-  if (!userId || !type) return res.status(400).json({ error: 'userId and type required' });
-  
-  initUserData(userId);
-  if (type === 'profiles') userUsageData[userId].profiles = count;
-  if (type === 'transactions') userUsageData[userId].transactions = count;
-  
-  res.json({ success: true });
-});
-
-// Endpoint для заявки на оплату через Kaspi Gold
-app.post('/api/kaspi-payment-request', (req, res) => {
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  initUserData(userId);
-  userSubscriptionStatus[userId] = 'pending';
-  
-  res.json({ 
-    success: true, 
-    message: 'Заявка на оплату получена. Мы проверим перевод и активируем PRO в течение 24 часов.' 
-  });
-});
-
-// Admin endpoint для активации PRO (в реальном проекте: защищенный)
-app.post('/api/admin/activate-pro', (req, res) => {
-  const { userId, adminKey } = req.body;
-  
-  // Простая защита (в продакшене: JWT token, роли)
-  if (adminKey !== 'admin123') {
-    return res.status(403).json({ error: 'Unauthorized' });
+// Получение доступных шаблонов (оставляем для обратной совместимости)
+app.get('/api/templates', (req, res) => {
+  try {
+    const templates = FinancialModelService.getAvailableTemplates();
+    res.json({ success: true, templates });
+  } catch (error) {
+    logger.error('Error getting templates:', error);
+    res.status(500).json({ error: 'Failed to get templates' });
   }
-  
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  userSubscriptionStatus[userId] = 'pro';
-  res.json({ success: true, message: 'PRO activated successfully' });
-});
-
-// Legacy endpoint для совместимости
-app.get('/api/subscription-status', (req, res) => {
-  const { userId } = req.query;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  // Проверяем администратора
-  if (isLifetimeAdmin(userId)) {
-    return res.json({ status: 'pro' });
-  }
-  
-  const status = userSubscriptionStatus[userId] || 'free';
-  res.json({ status });
 });
 
 // API для работы с профилями пользователя
 app.get('/api/user/profiles', (req, res) => {
-  const { userId } = req.query;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  const profiles = userDataStorage.profiles[userId] || [];
-  const activeProfileId = userDataStorage.activeProfileId[userId] || null;
-  
-  res.json({ profiles, activeProfileId });
+  try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const userData = userProfiles[userId] || { profiles: [], activeProfileId: null };
+    res.json({
+      profiles: userData.profiles,
+      activeProfileId: userData.activeProfileId
+    });
+    
+  } catch (error) {
+    logger.error('Error getting user profiles:', error);
+    res.status(500).json({ error: 'Failed to get user profiles' });
+  }
 });
 
 app.post('/api/user/profiles', (req, res) => {
-  const { userId, profiles, activeProfileId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  if (profiles) userDataStorage.profiles[userId] = profiles;
-  if (activeProfileId) userDataStorage.activeProfileId[userId] = activeProfileId;
-  
-  res.json({ success: true });
+  try {
+    const { userId, profiles, activeProfileId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    if (!Array.isArray(profiles)) {
+      return res.status(400).json({ error: 'Profiles must be an array' });
+    }
+
+    userProfiles[userId] = {
+      profiles: profiles,
+      activeProfileId: activeProfileId || null
+    };
+    
+    logger.info(`Saved ${profiles.length} profiles for user ${userId}`);
+    res.json({ success: true });
+    
+  } catch (error) {
+    logger.error('Error saving user profiles:', error);
+    res.status(500).json({ error: 'Failed to save user profiles' });
+  }
 });
+
+
 
 // API для работы с транзакциями пользователя
 app.get('/api/user/transactions', (req, res) => {
-  const { userId } = req.query;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  const transactions = userDataStorage.transactions[userId] || [];
-  res.json({ transactions });
+  try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const transactions = userTransactions[userId] || [];
+    res.json({ transactions });
+    
+  } catch (error) {
+    logger.error('Error getting user transactions:', error);
+    res.status(500).json({ error: 'Failed to get user transactions' });
+  }
 });
 
 app.post('/api/user/transactions', (req, res) => {
-  const { userId, transactions } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  userDataStorage.transactions[userId] = transactions || [];
-  res.json({ success: true });
-});
-
-// API для очистки данных пользователя
-app.delete('/api/user/data', (req, res) => {
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-  
-  delete userDataStorage.profiles[userId];
-  delete userDataStorage.transactions[userId];
-  delete userDataStorage.activeProfileId[userId];
-  
-  res.json({ success: true });
-});
-
-app.get('/', (req, res) => {
-    res.send('FinSights AI backend is running');
-});
-
-// Глобальный обработчик ошибок (добавить в самом конце файла)
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// SPA fallback: отдаём index.html для всех не-API/не-auth/не-static GET-запросов
-const path = require('path');
-app.use((req, res, next) => {
-  if (
-    req.method === 'GET' &&
-    !req.path.startsWith('/api') &&
-    !req.path.startsWith('/auth') &&
-    !req.path.startsWith('/static') &&
-    !req.path.startsWith('/public')
-  ) {
-    res.sendFile(path.resolve(__dirname, '../index.html'));
-  } else {
-    next();
-  }
-});
-
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`Backend listening on port ${PORT}`);
-}); 
-
-// Прокси-роут для OpenAI
-app.post('/api/openai', async (req, res) => {
   try {
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      req.body,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    res.json(response.data);
+    const { userId, transactions } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    if (!Array.isArray(transactions)) {
+      return res.status(400).json({ error: 'Transactions must be an array' });
+    }
+
+    userTransactions[userId] = transactions;
+    
+    logger.info(`Saved ${transactions.length} transactions for user ${userId}`);
+    res.json({ success: true });
+    
   } catch (error) {
-    res.status(500).json({ error: error.message, details: error.response?.data });
+    logger.error('Error saving user transactions:', error);
+    res.status(500).json({ error: 'Failed to save user transactions' });
   }
-}); 
+});
+
+// Получение статистики использования
+app.get('/api/usage-stats', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const stats = userUsageData[userId] || {
+      modelsGenerated: 0,
+      chatMessages: 0,
+      lastActivity: null
+    };
+    
+    res.json({ success: true, stats });
+    
+  } catch (error) {
+    logger.error('Error getting usage stats:', error);
+    res.status(500).json({ error: 'Failed to get usage statistics' });
+  }
+});
+
+// НОВЫЕ ЭНДПОИНТЫ ДЛЯ ПОДПИСОК И ЗАЯВОК
+
+// Реальная аналитика для админки
+app.get('/api/admin/analytics', (req, res) => {
+  try {
+    // Список всех пользователей
+    const allUsers = Object.values(users || {});
+
+    // Заявки на PRO
+    const requests = paymentRequests || [];
+
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+
+    // Новые пользователи за месяц по полю createdAt (если есть)
+    const newUsersThisMonth = allUsers.filter(u => {
+      if (!u.createdAt) return false;
+      const d = new Date(u.createdAt);
+      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    }).length;
+
+    const approvedRequests = requests.filter(r => r.status === 'approved');
+
+    const totalRevenue = approvedRequests.reduce((sum, r) => sum + (r.amount || 0), 0);
+
+    // proUsers: админ всегда PRO + пользователи с одобренными заявками
+    const proUsers = 1 + new Set(approvedRequests.map(r => r.userId)).size;
+
+    // Конверсия из заявок
+    const conversionRate = requests.length > 0 ? (approvedRequests.length / requests.length) * 100 : 0;
+
+    // Предположим активных ~80% от всех пользователей
+    const activeUsers = Math.floor(Math.max(allUsers.length, 1) * 0.8);
+
+    const pendingRequests = requests.filter(r => r.status === 'pending').length;
+
+    // Подготовим помесячные данные (последние 6 месяцев) на основании заявок
+    const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+    const months = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      return { label: monthNames[d.getMonth()], year: d.getFullYear(), month: d.getMonth() };
+    });
+
+    const monthly = months.map(({ label, year, month }) => {
+      const monthRequests = requests.filter(r => {
+        const dt = new Date(r.createdAt);
+        return dt.getFullYear() === year && dt.getMonth() === month;
+      });
+
+      const usersCount = monthRequests.length;
+      const approvedCount = monthRequests.filter(r => r.status === 'approved').length;
+      const revenue = monthRequests.filter(r => r.status === 'approved').reduce((s, r) => s + (r.amount || 0), 0);
+
+      return { month: label, users: usersCount, approved: approvedCount, revenue };
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        totalUsers: Math.max(allUsers.length, 1),
+        newUsersThisMonth,
+        proUsers,
+        totalRevenue,
+        conversionRate,
+        activeUsers,
+        pendingRequests
+      },
+      monthly
+    });
+  } catch (error) {
+    logger.error('Error building admin analytics:', error);
+    res.status(500).json({ error: 'Failed to build analytics' });
+  }
+});
+
+// Настройки системы
+const systemSettings = {
+  notifications: true,
+  automaticBackups: true,
+  maintenanceMode: false,
+  twoFactorAuth: true,
+  logging: true,
+  ipRestriction: false,
+  apiRateLimit: 1000,
+  maxFileSize: 10, // MB
+  sessionTimeout: 24, // hours
+  debugMode: false
+};
+
+// Эндпоинт для получения настроек системы
+app.get('/api/admin/settings', (req, res) => {
+  try {
+    res.json({
+      settings: systemSettings,
+      lastModified: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Ошибка получения настроек:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Эндпоинт для обновления настроек системы
+app.post('/api/admin/settings', (req, res) => {
+  try {
+    const { setting, value } = req.body;
+    
+    if (setting in systemSettings) {
+      systemSettings[setting] = value;
+      logger.info(`Setting ${setting} changed to ${value}`);
+      
+      res.json({
+        success: true,
+        message: `Настройка ${setting} обновлена`,
+        settings: systemSettings
+      });
+    } else {
+      res.status(400).json({ error: 'Неизвестная настройка' });
+    }
+  } catch (error) {
+    console.error('Ошибка обновления настроек:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Эндпоинт для получения системной информации
+app.get('/api/admin/system-info', (req, res) => {
+  try {
+    const os = require('os');
+    const process = require('process');
+    
+    // Получаем информацию о системе
+    const systemInfo = {
+      server: {
+        platform: os.platform(),
+        architecture: os.arch(),
+        nodeVersion: process.version,
+        uptime: Math.floor(process.uptime()),
+        cpu: {
+          model: os.cpus()[0]?.model || 'Unknown',
+          cores: os.cpus().length,
+          usage: 'Недоступно' // Убираем случайную генерацию
+        },
+        memory: {
+          total: Math.round(os.totalmem() / 1024 / 1024 / 1024 * 100) / 100, // GB
+          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100, // MB
+          usage: Math.round((process.memoryUsage().heapUsed / os.totalmem()) * 100 * 100) / 100 // %
+        },
+        disk: {
+          usage: 'Недоступно', // Убираем случайную генерацию
+          available: 'Недоступно' // Убираем случайную генерацию
+        },
+        network: {
+          status: 'connected',
+          latency: 'Недоступно' // Убираем случайную генерацию
+        }
+      },
+      database: {
+        type: 'In-Memory Storage',
+        size: (JSON.stringify({ users, paymentRequests, systemSettings }).length / 1024).toFixed(2), // KB
+        connections: 1,
+        queriesPerSecond: 'Недоступно', // Убираем случайную генерацию
+        responseTime: 'Недоступно' // Убираем случайную генерацию
+      },
+      application: {
+        version: '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        apiKeys: {
+          openai: process.env.OPENAI_API_KEY ? 'configured' : 'missing'
+        },
+        activeConnections: 'Недоступно', // Убираем случайную генерацию
+        errorRate: 'Недоступно' // Убираем случайную генерацию
+      }
+    };
+
+    res.json({
+      systemInfo,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Ошибка получения системной информации:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Получение информации о подписке пользователя
+app.get('/api/subscription-info', (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    // Проверяем является ли пользователь администратором по роли
+    const user = Object.values(users).find(u => u.id === userId || u.email === userId);
+    if (user && user.role === 'admin') {
+      return res.json({
+        status: 'admin',
+        currentUsage: { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
+      });
+    }
+
+    // Для остальных пользователей возвращаем сохраненный статус или free по умолчанию
+    const subscription = userSubscriptionStatus[userId] || {
+      status: 'free',
+      currentUsage: { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
+    };
+    
+    res.json(subscription);
+    
+  } catch (error) {
+    logger.error('Error getting subscription info:', error);
+    res.status(500).json({ error: 'Failed to get subscription info' });
+  }
+});
+
+// Увеличение счетчика AI-запросов
+app.post('/api/increment-ai-usage', (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    // Инициализируем данные пользователя если их нет
+    if (!userUsageData[userId]) {
+      userUsageData[userId] = {
+        modelsGenerated: 0,
+        chatMessages: 0,
+        lastActivity: null
+      };
+    }
+
+    if (!userSubscriptionStatus[userId]) {
+      userSubscriptionStatus[userId] = {
+        status: 'free',
+        currentUsage: { profiles: 0, transactions: 0, aiRequests: 0 }
+      };
+    }
+
+    // Увеличиваем счетчик AI-запросов
+    userSubscriptionStatus[userId].currentUsage.aiRequests++;
+    userUsageData[userId].lastActivity = new Date().toISOString();
+    
+    res.json({ success: true, currentUsage: userSubscriptionStatus[userId].currentUsage });
+    
+  } catch (error) {
+    logger.error('Error incrementing AI usage:', error);
+    res.status(500).json({ error: 'Failed to increment AI usage' });
+  }
+});
+
+// Увеличение счетчика загрузки файлов
+app.post('/api/increment-file-uploads', (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Инициализируем данные пользователя если их нет
+    if (!userUsageData[userId]) {
+      userUsageData[userId] = {
+        profiles: 0,
+        transactions: 0,
+        aiRequests: 0,
+        fileUploads: 0,
+        reportDownloads: 0,
+        dashboardExports: 0,
+        lastActivity: new Date().toISOString()
+      };
+    }
+
+    if (!userSubscriptionStatus[userId]) {
+      userSubscriptionStatus[userId] = {
+        status: 'free',
+        currentUsage: { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
+      };
+    }
+
+    // Увеличиваем счетчик
+    userSubscriptionStatus[userId].currentUsage.fileUploads++;
+    userUsageData[userId].fileUploads++;
+    userUsageData[userId].lastActivity = new Date().toISOString();
+
+    res.json({ success: true, currentUsage: userSubscriptionStatus[userId].currentUsage });
+    
+  } catch (error) {
+    logger.error('Error incrementing file uploads:', error);
+    res.status(500).json({ error: 'Failed to increment file uploads' });
+  }
+});
+
+// Увеличение счетчика скачивания отчетов
+app.post('/api/increment-report-downloads', (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Инициализируем данные пользователя если их нет
+    if (!userUsageData[userId]) {
+      userUsageData[userId] = {
+        profiles: 0,
+        transactions: 0,
+        aiRequests: 0,
+        fileUploads: 0,
+        reportDownloads: 0,
+        dashboardExports: 0,
+        lastActivity: new Date().toISOString()
+      };
+    }
+
+    if (!userSubscriptionStatus[userId]) {
+      userSubscriptionStatus[userId] = {
+        status: 'free',
+        currentUsage: { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
+      };
+    }
+
+    // Увеличиваем счетчик
+    userSubscriptionStatus[userId].currentUsage.reportDownloads++;
+    userUsageData[userId].reportDownloads++;
+    userUsageData[userId].lastActivity = new Date().toISOString();
+
+    res.json({ success: true, currentUsage: userSubscriptionStatus[userId].currentUsage });
+    
+  } catch (error) {
+    logger.error('Error incrementing report downloads:', error);
+    res.status(500).json({ error: 'Failed to increment report downloads' });
+  }
+});
+
+// Увеличение счетчика экспорта дашборда
+app.post('/api/increment-dashboard-exports', (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Инициализируем данные пользователя если их нет
+    if (!userUsageData[userId]) {
+      userUsageData[userId] = {
+        profiles: 0,
+        transactions: 0,
+        aiRequests: 0,
+        fileUploads: 0,
+        reportDownloads: 0,
+        dashboardExports: 0,
+        lastActivity: new Date().toISOString()
+      };
+    }
+
+    if (!userSubscriptionStatus[userId]) {
+      userSubscriptionStatus[userId] = {
+        status: 'free',
+        currentUsage: { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
+      };
+    }
+
+    // Увеличиваем счетчик
+    userSubscriptionStatus[userId].currentUsage.dashboardExports++;
+    userUsageData[userId].dashboardExports++;
+    userUsageData[userId].lastActivity = new Date().toISOString();
+
+    res.json({ success: true, currentUsage: userSubscriptionStatus[userId].currentUsage });
+    
+  } catch (error) {
+    logger.error('Error incrementing dashboard exports:', error);
+    res.status(500).json({ error: 'Failed to increment dashboard exports' });
+  }
+});
+
+// Создание заявки на активацию PRO
+app.post('/api/payment-requests', (req, res) => {
+  try {
+    const { userId, email, displayName, amount, note } = req.body;
+    
+    if (!userId || !email || !displayName || !amount) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Проверяем, есть ли уже активная заявка от этого пользователя
+    const existingRequest = paymentRequests.find(
+      r => r.userId === userId && r.status === 'pending'
+    );
+
+    if (existingRequest) {
+      return res.status(409).json({ error: 'У вас уже есть активная заявка на рассмотрении' });
+    }
+
+    const newRequest = {
+      id: Date.now().toString(),
+      userId,
+      email,
+      displayName,
+      amount,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      note: note || ''
+    };
+
+    paymentRequests.push(newRequest);
+    
+    res.json({ success: true, request: newRequest });
+    
+  } catch (error) {
+    logger.error('Error creating payment request:', error);
+    res.status(500).json({ error: 'Failed to create payment request' });
+  }
+});
+
+// Получение списка заявок (только для админов)
+app.get('/api/payment-requests', (req, res) => {
+  try {
+    // В продакшене здесь должна быть проверка администратора
+    res.json({ success: true, requests: paymentRequests });
+    
+  } catch (error) {
+    logger.error('Error getting payment requests:', error);
+    res.status(500).json({ error: 'Failed to get payment requests' });
+  }
+});
+
+// Одобрение заявки на активацию PRO (только для админов)
+app.post('/api/payment-requests/:requestId/approve', (req, res) => {
+  try {
+    const { requestId } = req.params;
+    
+    const requestIndex = paymentRequests.findIndex(r => r.id === requestId);
+    if (requestIndex === -1) {
+      return res.status(404).json({ error: 'Payment request not found' });
+    }
+
+    const request = paymentRequests[requestIndex];
+    if (request.status !== 'pending') {
+      return res.status(400).json({ error: 'Request is not pending' });
+    }
+
+    // Обновляем статус заявки
+    paymentRequests[requestIndex].status = 'approved';
+    
+    // Активируем PRO подписку для пользователя
+    userSubscriptionStatus[request.userId] = {
+      status: 'pro',
+      currentUsage: userSubscriptionStatus[request.userId]?.currentUsage || { profiles: 0, transactions: 0, aiRequests: 0, fileUploads: 0, reportDownloads: 0, dashboardExports: 0 }
+    };
+    
+    logger.info(`PRO подписка активирована для пользователя ${request.userId} (${request.email})`);
+    
+    res.json({ success: true, message: 'Payment request approved and PRO subscription activated' });
+    
+  } catch (error) {
+    logger.error('Error approving payment request:', error);
+    res.status(500).json({ error: 'Failed to approve payment request' });
+  }
+});
+
+// Отклонение заявки (только для админов)
+app.post('/api/payment-requests/:requestId/reject', (req, res) => {
+  try {
+    const { requestId } = req.params;
+    
+    const requestIndex = paymentRequests.findIndex(r => r.id === requestId);
+    if (requestIndex === -1) {
+      return res.status(404).json({ error: 'Payment request not found' });
+    }
+
+    const request = paymentRequests[requestIndex];
+    if (request.status !== 'pending') {
+      return res.status(400).json({ error: 'Request is not pending' });
+    }
+
+    // Обновляем статус заявки
+    paymentRequests[requestIndex].status = 'rejected';
+    
+    logger.info(`Заявка отклонена для пользователя ${request.userId} (${request.email})`);
+    
+    res.json({ success: true, message: 'Payment request rejected' });
+    
+  } catch (error) {
+    logger.error('Error rejecting payment request:', error);
+    res.status(500).json({ error: 'Failed to reject payment request' });
+  }
+});
+
+// Получение статуса подписки (альтернативный эндпоинт)
+app.get('/api/subscription-status', (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    // Проверяем является ли пользователь администратором по роли
+    const user = Object.values(users).find(u => u.id === userId || u.email === userId);
+    if (user && user.role === 'admin') {
+      return res.json({
+        status: 'admin',
+        isLifetime: true
+      });
+    }
+
+    const subscription = userSubscriptionStatus[userId];
+    if (!subscription) {
+      return res.json({ status: 'free', isLifetime: false });
+    }
+    
+    res.json({
+      status: subscription.status,
+      isLifetime: false
+    });
+    
+  } catch (error) {
+    logger.error('Error getting subscription status:', error);
+    res.status(500).json({ error: 'Failed to get subscription status' });
+  }
+});
+
+// Обработка ошибок
+app.use((error, req, res, next) => {
+  logger.error('Unhandled error:', error);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// Запуск сервера
+app.listen(PORT, () => {
+  console.log(`[Server] FinSights AI Backend запущен на порту ${PORT}`);
+  console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`[Server] OpenAI API: ${process.env.OPENAI_API_KEY ? 'Configured' : 'Not configured'}`);
+});
+
+module.exports = app;

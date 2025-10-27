@@ -58,6 +58,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [role, setRole] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [initialized, setInitialized] = useState<boolean>(false);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
 
   const getUserId = useCallback(() => {
@@ -168,12 +169,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Проверка авторизации при загрузке
   useEffect(() => {
-    if (token && token !== null) {
-      console.log('[UserContext] Already authenticated, skipping auth check. Token:', token);
+    if (initialized) {
+      console.log('[UserContext] Already initialized, skipping auth check');
       return;
     }
     
     console.log('[UserContext] Starting auth check...');
+    setInitialized(true);
     const saved = localStorage.getItem('finsights_auth');
     const guestSaved = sessionStorage.getItem('finsights_guest');
     
@@ -205,12 +207,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (saved) {
       try {
         const authData = JSON.parse(saved);
-        if (authData.token === 'google-oauth' || authData.token?.startsWith('google-')) {
-          console.log('[UserContext] Detected old token format, clearing localStorage');
-          localStorage.removeItem('finsights_auth');
-          setLoading(false);
-          return;
-        }
+        // Удалена проверка устаревших токенов Google OAuth
+        // Ранее: if (authData.token === 'google-oauth' || authData.token?.startsWith('google-')) {
+        //   ...
+        // }
       } catch (error) {
         console.log('[UserContext] Invalid localStorage data, clearing...');
         localStorage.removeItem('finsights_auth');
@@ -228,7 +228,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
     
     Promise.race([
-      fetch('http://localhost:3001/api/me', { credentials: 'include' }),
+      fetch('http://localhost:3001/api/auth/me', { credentials: 'include' }),
       timeoutPromise
     ])
       .then((res: unknown) => {
@@ -240,7 +240,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         throw new Error('Invalid response type');
       })
-      .then(data => {
+      .then(async (data) => {
         console.log('[UserContext] /api/me success data:', data);
         
         // Сохраняем токен и данные пользователя
@@ -269,7 +269,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('[UserContext] Successfully authenticated via /api/me');
         
         // Загружаем информацию о подписке
-        refreshSubscription();
+        // Демо обход админ-входа удален. Используем только серверную аутентификацию.
+        await refreshSubscription();
       })
       .catch((err) => {
         console.log('[UserContext] /api/me failed:', err);
@@ -309,14 +310,16 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
         console.log('[UserContext] Auth check complete - not authenticated');
       });
-  }, [token]);
+  }, []);
 
   // Функция входа
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     console.log('[UserContext] Login attempt for:', email);
     
+    // Демо обход админ-входа удален. Используем только серверную аутентификацию.
+
     try {
-      const response = await fetch('http://localhost:3001/api/login', {
+      const response = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -348,10 +351,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setRole(data.user.role);
         setPhotoUrl(data.user.photoUrl);
         setLoading(false);
-        
-        // Загружаем информацию о подписке сразу после логина
+
+        // Загружаем информацию о подписке
         await refreshSubscription();
-        
+
         console.log('[UserContext] Login successful');
         return { success: true };
       } else {
@@ -369,7 +372,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     console.log('[UserContext] Registration attempt for:', email);
     
     try {
-      const response = await fetch('http://localhost:3001/api/register', {
+      const response = await fetch('http://localhost:3001/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -453,18 +456,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const refreshSubscription = useCallback(async () => {
-    if (userId || email) {
-      const currentUserId = userId || email || 'demo-user';
-      const info = await subscriptionService.fetchSubscriptionInfo(currentUserId);
-      setSubscriptionInfo(info);
-    }
+    const currentUserId = userId ?? email;
+    if (!currentUserId) return;
+    const info = await subscriptionService.fetchSubscriptionInfo(currentUserId);
+    setSubscriptionInfo(info);
   }, [userId, email]);
 
   const logout = useCallback(async () => {
     console.log('[UserContext] Logout attempt');
     
     try {
-      await fetch('http://localhost:3001/api/logout', {
+      await fetch('http://localhost:3001/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
@@ -525,4 +527,4 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       {children}
     </UserStateContext.Provider>
   );
-}; 
+};

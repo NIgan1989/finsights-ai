@@ -19,15 +19,15 @@ const tabs: { id: ReportView; label: string }[] = [
 
 const ReportTabs: React.FC<ReportTabsProps> = ({ activeReport, setActiveReport }) => {
     return (
-        <div className="flex items-center bg-surface-accent rounded-lg p-1">
+        <div className="flex flex-wrap items-center gap-1 min-w-0">
             {tabs.map(tab => (
                 <button
                     key={tab.id}
                     onClick={() => setActiveReport(tab.id)}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap min-w-0 ${
                         activeReport === tab.id
-                            ? 'bg-primary text-primary-foreground shadow'
-                            : 'text-text-secondary hover:bg-surface hover:text-text-primary'
+                            ? 'bg-primary text-primary-foreground shadow-md'
+                : 'text-muted-foreground hover:bg-surface-50 hover:text-foreground'
                     }`}
                 >
                     {tab.label}

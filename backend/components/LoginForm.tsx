@@ -69,7 +69,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onCancel }) => 
               <img src="/logo.svg" alt="FinSights AI" className="w-8 h-8" />
               <span className="text-2xl font-bold text-text-primary">FinSights AI</span>
             </div>
-            <p className="text-text-secondary">
+            <p className="text-foreground">
               {isLogin ? 'Войдите в свой аккаунт' : 'Создайте новый аккаунт'}
             </p>
           </div>
@@ -124,7 +124,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onCancel }) => 
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-2 rounded-lg text-sm">
+              <div className="bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -145,7 +145,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onCancel }) => 
                 setIsLogin(!isLogin);
                 setError('');
               }}
-              className="text-text-secondary hover:text-text-primary transition"
+              className="text-muted-foreground hover:text-foreground transition"
             >
               {isLogin ? 'Нет аккаунта? Зарегистрируйтесь' : 'Уже есть аккаунт? Войдите'}
             </button>
@@ -153,11 +153,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onCancel }) => 
 
           {/* Быстрый вход */}
           <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-sm text-text-secondary text-center mb-3">Или попробуйте сервис:</p>
+            <p className="text-sm text-foreground text-center mb-3">Или попробуйте сервис:</p>
             <button
               onClick={quickLogin}
               disabled={loading}
-              className="w-full bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-2 rounded-lg text-sm hover:bg-blue-500/20 transition disabled:opacity-50"
+              className="w-full bg-primary/10 text-primary border border-primary/20 px-3 py-2 rounded-lg text-sm hover:bg-primary/20 transition disabled:opacity-50"
             >
               🚀 Режим гостя - попробовать бесплатно
             </button>
@@ -168,7 +168,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onCancel }) => 
             <div className="mt-4">
               <button
                 onClick={onCancel}
-                className="w-full text-text-secondary hover:text-text-primary transition"
+                className="w-full text-muted-foreground hover:text-foreground transition"
               >
                 Отмена
               </button>
@@ -178,4 +178,4 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onCancel }) => 
       </div>
     </div>
   );
-}; 
+};

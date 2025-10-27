@@ -1,33 +1,34 @@
 
 import React, { useState, useMemo, useCallback, useEffect, Suspense, lazy } from 'react';
-import { Transaction, FinancialReport, BusinessProfile, Theme, View } from './types.ts';
-import Sidebar from './backend/components/Sidebar.tsx';
-import DataUpload from './backend/components/DataUpload.tsx';
-import TransactionsTable from './backend/components/TransactionsTable.tsx';
-import AiAssistant from './backend/components/AiAssistant.tsx';
-import Profile from './backend/components/Profile.tsx';
-import Loader from './backend/components/Loader.tsx';
-import DateRangeFilter from './backend/components/DateRangeFilter.tsx';
-import { processAndCategorizeTransactions, generateFinancialReport } from './services/financeService.ts';
+import { Transaction, FinancialReport, BusinessProfile, Theme, View } from './types';
+import Sidebar from './backend/components/Sidebar';
+import DataUpload from './backend/components/DataUpload';
+import TransactionsTable from './backend/components/TransactionsTable';
+import AiAssistant from './backend/components/AiAssistant';
+import Profile from './backend/components/Profile';
+import Loader from './backend/components/Loader';
+import DateRangeFilter from './backend/components/DateRangeFilter';
+import { processAndCategorizeTransactions, generateFinancialReport } from './services/financeService';
 import { UserProvider, useUser, useUserState, useUserActions } from './backend/components/UserContext';
+import { ThemeProvider } from './backend/components/ThemeProvider';
+
 import LandingPage from './backend/components/LandingPage';
+import { formatLocalDate, parseLocalDate, getCurrentLocalDate } from './utils/dateUtils';
 
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import PricingPage from './backend/components/PricingPage';
-import FinancialModelPage from './backend/components/FinancialModelPage';
+import FinancialPage from './backend/components/FinancialPage';
 import AdminPanel from './backend/components/AdminPanel';
 import { AuthDebug } from './backend/components/AuthDebug';
 
-// Компонент для логирования навигации
+// Компонент для логирования навигации (только в dev режиме)
 const NavigationLogger: React.FC = () => {
   const location = useLocation();
   
   useEffect(() => {
-    console.log('[Navigation] Page changed to:', location.pathname);
-    console.log('[Navigation] Search params:', location.search);
-    console.log('[Navigation] Hash:', location.hash);
-    console.log('[Navigation] State:', location.state);
-    console.log('[Navigation] Full URL:', window.location.href);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Navigation] Page changed to:', location.pathname);
+    }
   }, [location]);
   
   return null;
@@ -38,25 +39,14 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, loading } = useUser();
   const location = useLocation();
   
-  console.log('[RequireAuth] Checking access...');
-  console.log('[RequireAuth] token:', token);
-  console.log('[RequireAuth] loading:', loading);
-  console.log('[RequireAuth] location:', location.pathname);
-  console.log('[RequireAuth] search params:', location.search);
-  console.log('[RequireAuth] state:', location.state);
-  
   if (loading) {
-    console.log('[RequireAuth] Still loading, showing loader...');
     return <Loader message="Проверка авторизации..." />;
   }
   
   if (!token) {
-    console.log('[RequireAuth] No token found, redirecting to landing page');
-    console.log('[RequireAuth] Redirect from:', location.pathname);
     return <Navigate to="/" state={{ from: location }} replace />;
   }
   
-  console.log('[RequireAuth] Access granted, rendering protected content');
   return <>{children}</>;
 };
 
@@ -71,77 +61,49 @@ const AppContent: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
     const [loadingMessage, setLoadingMessage] = useState("Загрузка приложения...");
-    const [theme, setTheme] = useState<Theme>('light');
     const { token, email } = useUserState();
     const { loadUserData, saveUserData } = useUserActions();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-    const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
+    const [showUploadOptions, setShowUploadOptions] = useState(false);
 
     const activeProfile = useMemo(() => {
         return allProfiles.find(p => p.id === activeProfileId) || null;
     }, [allProfiles, activeProfileId]);
 
-    const toggleTheme = useCallback(() => {
-        setTheme(prevTheme => {
-            const newTheme = prevTheme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('theme', newTheme);
-            return newTheme;
-        });
-    }, []);
+    // Функция для добавления новой транзакции
+    const handleAddTransaction = useCallback((tx: Transaction) => {
+        const newTransactions = [...(allTransactions || []), tx];
+        setAllTransactions(newTransactions);
+        
+        // Обновляем отчет с новыми данными
+        const newReport = generateFinancialReport(newTransactions);
+        setCurrentReport(newReport);
+        
+        // Сохраняем данные пользователя
+        saveUserData('transactions', newTransactions);
+    }, [allTransactions, saveUserData]);
 
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') as Theme;
-        if (savedTheme) {
-            setTheme(savedTheme);
-        }
-    }, []);
-
-    // Применяем тему к корневому элементу
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        // Также добавляем класс для обратной совместимости
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }, [theme]);
-
-    type AppState = 'upload' | 'processing' | 'dashboard';
+    type AppState = 'processing' | 'dashboard';
 
     // Эффект для загрузки пользовательских данных при авторизации
     useEffect(() => {
-        console.log('[App] === AUTH STATE CHANGE EFFECT TRIGGERED ===');
-        console.log('[App] Current token:', token);
-        console.log('[App] Token type:', typeof token);
-        console.log('[App] Token length:', token?.length);
-        console.log('[App] Is token truthy:', !!token);
-        console.log('[App] UserContext email:', email);
-        
         // Загружаем данные только если пользователь авторизован
         if (!token || token === null || typeof token !== 'string' || token === 'null') {
-            console.log('[App] No valid token, skipping data load. Token:', token, 'Type:', typeof token);
+            // Если пользователь не авторизован, показываем дашборд с пустыми данными
+            setAppState('dashboard');
+            setAllTransactions([]);
+            setCurrentReport(null);
             return;
         }
-
-        console.log('[App] === STARTING USER DATA LOAD ===');
         
         const loadAppData = async () => {
             setAppState('processing');
             setLoadingMessage('Загрузка данных пользователя...');
             
             try {
-                console.log('[App] Loading user profiles...');
                 const profiles = await loadUserData('businessProfiles');
-                console.log('[App] Loaded profiles:', profiles);
-                
-                console.log('[App] Loading user transactions...');
                 const transactions = await loadUserData('transactions');
-                console.log('[App] Loaded transactions:', transactions);
-                
-                console.log('[App] Loading active profile ID...');
                 const savedActiveProfileId = await loadUserData('activeProfileId');
-                console.log('[App] Loaded active profile ID:', savedActiveProfileId);
                 
                 // Обновляем состояние
                 if (profiles && Array.isArray(profiles) && profiles.length > 0) {
@@ -155,91 +117,117 @@ const AppContent: React.FC = () => {
                 
                 if (transactions && Array.isArray(transactions) && transactions.length > 0) {
                     setAllTransactions(transactions);
+                    
+                    // Генерируем отчет для загруженных данных
+                    const report = generateFinancialReport(transactions);
+                    setCurrentReport(report);
                     setAppState('dashboard');
                 } else {
-                    setAppState('upload');
+                    setAllTransactions([]);
+                    setCurrentReport(null);
+                    setAppState('dashboard');
                 }
-                
-                console.log('[App] === USER DATA LOAD COMPLETE ===');
             } catch (error) {
                 console.error('[App] Error loading user data:', error);
-                setAppState('upload'); // Fallback to upload state
+                setAppState('dashboard');
+                setAllTransactions([]);
+                setCurrentReport(null);
             }
         };
         
         loadAppData();
     }, [token, email, loadUserData]);
 
+    // Автоматическое обновление отчета при изменении транзакций
+    useEffect(() => {
+        if (allTransactions && allTransactions.length > 0) {
+            const newReport = generateFinancialReport(allTransactions);
+            setCurrentReport(newReport);
+        } else {
+            setCurrentReport(null);
+        }
+    }, [allTransactions]);
+
     // Фильтрация транзакций по диапазону дат
     const filteredTransactions = useMemo(() => {
-        if (!allTransactions || !dateRange) return allTransactions;
+        if (!allTransactions || !dateRange) {
+            return allTransactions;
+        }
         
         return allTransactions.filter(transaction => {
-            const transactionDate = new Date(transaction.date);
-            const startDate = new Date(dateRange.start);
-            const endDate = new Date(dateRange.end);
+            const transactionDate = new Date(transaction.date + 'T00:00:00');
+            const startDate = new Date(dateRange.start + 'T00:00:00');
+            const endDate = new Date(dateRange.end + 'T23:59:59');
+            
             return transactionDate >= startDate && transactionDate <= endDate;
         });
     }, [allTransactions, dateRange]);
 
     // Ленивая загрузка компонентов
-    const Dashboard = lazy(() => import('./backend/components/Dashboard.tsx'));
-    const AdvancedFinancialDashboard = lazy(() => import('./backend/components/AdvancedFinancialDashboard.tsx'));
+    const Dashboard = lazy(() => import('./backend/components/Dashboard'));
+    const AdvancedFinancialDashboard = lazy(() => import('./backend/components/AdvancedFinancialDashboard'));
 
-    const handleFileProcess = useCallback(async (file: File) => {
+    const handleFileProcess = useCallback(async (file: File, mode: 'replace' | 'append' = 'replace') => {
         setIsUploadModalOpen(false);
-        
-        console.log('[App] === FILE PROCESSING START ===');
-        console.log('[App] File:', file.name, file.type, file.size);
-        
         setAppState('processing');
         setLoadingMessage('Обработка файла...');
         setError(null);
 
         try {
             const result = await processAndCategorizeTransactions(file, activeProfile, setLoadingMessage);
-            console.log('[App] Processing result:', result);
             
             if (result && result.length > 0) {
                 setLoadingMessage('Создание отчёта...');
                 
-                const report = generateFinancialReport(result);
-                console.log('[App] Generated report:', report);
+                let finalTransactions;
+                if (mode === 'append' && allTransactions && allTransactions.length > 0) {
+                    // Объединяем существующие и новые транзакции, удаляя дубликаты
+                    const existingIds = new Set(allTransactions.map(t => `${t.date}_${t.amount}_${t.description}`));
+                    const newTransactions = result.filter(t => !existingIds.has(`${t.date}_${t.amount}_${t.description}`));
+                    finalTransactions = [...allTransactions, ...newTransactions];
+                    setLoadingMessage(`Добавлено ${newTransactions.length} новых операций...`);
+                } else {
+                    finalTransactions = result;
+                }
                 
-                setAllTransactions(result);
+                const report = generateFinancialReport(finalTransactions);
+                
+                setAllTransactions(finalTransactions);
                 setCurrentReport(report);
                 setAppState('dashboard');
                 
                 // Сохраняем данные пользователя
-                saveUserData('transactions', result);
-                
-                console.log('[App] === FILE PROCESSING COMPLETE ===');
+                saveUserData('transactions', finalTransactions);
             } else {
                 throw new Error('Не удалось извлечь транзакции из файла');
             }
         } catch (error) {
             console.error('[App] Processing error:', error);
             setError(error instanceof Error ? error.message : 'Произошла ошибка при обработке файла');
-            setAppState('upload');
+            setAppState('dashboard'); // Остаемся в дашборде даже при ошибке
         }
-    }, [saveUserData]);
+    }, [saveUserData, allTransactions, activeProfile]);
 
     const openUploadModal = useCallback(() => {
         if (allTransactions && allTransactions.length > 0) {
-            setShowReplaceConfirm(true);
+            setShowUploadOptions(true);
         } else {
             setIsUploadModalOpen(true);
         }
     }, [allTransactions]);
 
-    const confirmReplace = useCallback(() => {
-        setShowReplaceConfirm(false);
+    const handleUploadModeSelect = useCallback((mode: 'replace' | 'append') => {
+        setShowUploadOptions(false);
         setIsUploadModalOpen(true);
+        // Сохраняем выбранный режим для использования в handleFileProcess
+        setUploadMode(mode);
     }, []);
 
-    const cancelReplace = useCallback(() => {
-        setShowReplaceConfirm(false);
+    const cancelUploadOptions = useCallback(() => {
+        setShowUploadOptions(false);
     }, []);
+
+    const [uploadMode, setUploadMode] = useState<'replace' | 'append'>('replace');
 
     const closeUploadModal = useCallback(() => {
         setIsUploadModalOpen(false);
@@ -250,9 +238,6 @@ const AppContent: React.FC = () => {
     }, []);
 
     const handleSaveProfile = useCallback((profile: BusinessProfile | Omit<BusinessProfile, 'id'>) => {
-        console.log('[App] === SAVING PROFILE ===');
-        console.log('[App] Profile to save:', profile);
-        
         // Если профиль без id, создаем новый id
         const profileWithId: BusinessProfile = 'id' in profile 
             ? profile 
@@ -265,13 +250,9 @@ const AppContent: React.FC = () => {
             if (existingIndex >= 0) {
                 newProfiles = [...prevProfiles];
                 newProfiles[existingIndex] = profileWithId;
-                console.log('[App] Updated existing profile at index:', existingIndex);
             } else {
                 newProfiles = [...prevProfiles, profileWithId];
-                console.log('[App] Added new profile');
             }
-            
-            console.log('[App] New profiles array:', newProfiles);
             
             // Сохраняем в пользовательские данные
             saveUserData('businessProfiles', newProfiles);
@@ -284,19 +265,13 @@ const AppContent: React.FC = () => {
     }, [saveUserData]);
 
     const handleSwitchProfile = useCallback((profileId: string) => {
-        console.log('[App] === SWITCHING PROFILE ===');
-        console.log('[App] New profile ID:', profileId);
         setActiveProfileId(profileId);
         saveUserData('activeProfileId', profileId);
     }, [saveUserData]);
 
     const handleDeleteProfile = useCallback((profileId: string) => {
-        console.log('[App] === DELETING PROFILE ===');
-        console.log('[App] Profile ID to delete:', profileId);
-        
         setAllProfiles(prevProfiles => {
             const newProfiles = prevProfiles.filter(p => p.id !== profileId);
-            console.log('[App] Remaining profiles:', newProfiles);
             
             // Сохраняем обновленный список
             saveUserData('businessProfiles', newProfiles);
@@ -322,29 +297,47 @@ const AppContent: React.FC = () => {
         setActiveProfileId(null);
     }, []);
 
-    // Модальное окно для подтверждения замены
-    const ReplaceConfirmModal = () => (
-        showReplaceConfirm ? (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    // Модальное окно выбора режима загрузки
+    const UploadOptionsModal = () => (
+        showUploadOptions ? (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
                 <div className="bg-surface p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
                     <h3 className="text-lg font-semibold text-text-primary mb-4">
-                        Заменить существующие данные?
+                        Загрузить новые данные
                     </h3>
                     <p className="text-text-secondary mb-6">
-                        У вас уже есть загруженные транзакции. Хотите заменить их новыми данными?
+                        У вас уже есть загруженные транзакции. Выберите способ загрузки новых данных:
                     </p>
-                    <div className="flex gap-3 justify-end">
+                    <div className="space-y-3 mb-6">
                         <button
-                            onClick={cancelReplace}
+                            onClick={() => handleUploadModeSelect('replace')}
+                            className="w-full p-4 text-left border border-border rounded-lg hover:bg-surface-hover transition group"
+                        >
+                            <div className="font-medium text-text-primary group-hover:text-primary mb-1">
+                                🔄 Загрузить новые операции
+                            </div>
+                            <div className="text-sm text-text-secondary">
+                                Полностью заменить текущие операции на новые
+                            </div>
+                        </button>
+                        <button
+                            onClick={() => handleUploadModeSelect('append')}
+                            className="w-full p-4 text-left border border-border rounded-lg hover:bg-surface-hover transition group"
+                        >
+                            <div className="font-medium text-text-primary group-hover:text-primary mb-1">
+                                ➕ Обновить текущие операции
+                            </div>
+                            <div className="text-sm text-text-secondary">
+                                Добавить новые данные поверх существующих операций
+                            </div>
+                        </button>
+                    </div>
+                    <div className="flex justify-end">
+                        <button
+                            onClick={cancelUploadOptions}
                             className="px-4 py-2 text-text-secondary hover:text-text-primary border border-border rounded transition"
                         >
                             Отмена
-                        </button>
-                        <button
-                            onClick={confirmReplace}
-                            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary-hover transition"
-                        >
-                            Заменить
                         </button>
                     </div>
                 </div>
@@ -355,137 +348,99 @@ const AppContent: React.FC = () => {
     // Модальное окно загрузки
     const UploadModal = () => (
         isUploadModalOpen ? (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-surface p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
+                <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold text-text-primary">
+                        <h3 className="text-lg font-semibold text-foreground">
                             Загрузить файл
                         </h3>
                         <button
                             onClick={closeUploadModal}
-                            className="text-text-secondary hover:text-text-primary"
+                            className="text-muted-foreground hover:text-foreground"
                         >
                             ✕
                         </button>
                     </div>
                     <DataUpload 
-                        onFileUploaded={handleFileProcess} 
+                        onFileUploaded={(file) => {
+                            handleFileProcess(file, uploadMode);
+                            closeUploadModal();
+                        }} 
                         isProcessing={appState === 'processing'} 
+                        isCompact={true}
                     />
                 </div>
             </div>
         ) : null
     );
 
-    console.log('[App] === COMPONENT RENDER ===');
-    console.log('[App] Current state snapshot:');
-    console.log('[App] - appState:', appState);
-    console.log('[App] - activeView:', activeView);
-    console.log('[App] - token:', token, '(type:', typeof token, 'truthy:', !!token, ')');
-    console.log('[App] - email:', email);
-    console.log('[App] - allProfiles length:', allProfiles.length);
-    console.log('[App] - allTransactions length:', allTransactions?.length || 0);
-    console.log('[App] - activeProfileId:', activeProfileId);
-    console.log('[App] - error:', error);
-    console.log('[App] - loadingMessage:', loadingMessage);
-
-
-
     // Функция рендера основного контента
     const renderContent = useCallback(() => {
-        console.log('[App] === RENDER CONTENT ===');
-        console.log('[App] Current appState:', appState);
-        console.log('[App] Current activeView:', activeView);
-        console.log('[App] allTransactions:', allTransactions);
-        console.log('[App] allProfiles:', allProfiles);
-        console.log('[App] activeProfile:', activeProfile);
-        console.log('[App] error:', error);
         
         switch (appState) {
             case 'processing':
-                console.log('[App] Rendering processing state with message:', loadingMessage);
                 return <Loader message={loadingMessage} />;
-            case 'upload':
-                console.log('[App] Rendering upload state');
-                return (
-                    <div className="min-h-screen bg-background text-text-primary">
-                        <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={false} onResetData={openUploadModal} onToggleTheme={toggleTheme} theme={theme} />
-                        <main className="lg:ml-72">
-                            {activeView === 'profile' ? (
-                                <Profile
-                                    allProfiles={allProfiles}
-                                    activeProfile={activeProfile}
-                                    onSave={handleSaveProfile}
-                                    onSwitch={handleSwitchProfile}
-                                    onDelete={handleDeleteProfile}
-                                    onNew={handleNewProfile}
-                                />
-                            ) : (
-                                <DataUpload onFileUploaded={(file) => handleFileProcess(file)} isProcessing={false} />
-                            )}
-                        </main>
-                    </div>
-                );
             case 'dashboard':
-                console.log('[App] Rendering dashboard state');
                 
-                if (!allTransactions || allTransactions.length === 0) {
-                    console.log('[App] No transactions available, redirecting to upload');
-                    setTimeout(() => setAppState('upload'), 100);
-                    return <Loader message="Перенаправление..." />;
-                }
+                // Всегда показываем дашборд, даже если нет транзакций
+                const hasTransactions = allTransactions && allTransactions.length > 0;
+
+                // Создаем dateRange если его нет
+                const effectiveDateRange = dateRange || (() => {
+                    if (!hasTransactions) {
+                        return {
+                            start: getCurrentLocalDate(),
+                            end: getCurrentLocalDate()
+                        };
+                    }
+                    const dates = allTransactions.map(t => (parseLocalDate(t.date) || new Date(t.date)).getTime());
+                    return {
+                        start: formatLocalDate(new Date(Math.min(...dates))),
+                        end: formatLocalDate(new Date(Math.max(...dates)))
+                    };
+                })();
+
+                // Создаем отчет если его нет
+                const effectiveReport = currentReport || generateFinancialReport(allTransactions || []);
 
                 return (
                     <div className="min-h-screen bg-background text-text-primary">
-                        <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={true} onResetData={openUploadModal} onToggleTheme={toggleTheme} theme={theme} />
-                        <main className="lg:ml-72">
+                        <Sidebar activeView={activeView} setActiveView={handleSetActiveView} hasData={hasTransactions || false} onResetData={openUploadModal} />
+                        <main className="lg:ml-[280px] min-h-screen">
                             {error && (
-                                <div className="m-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
+                                <div className="m-4 p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
                                     {error}
                                 </div>
                             )}
 
                             {activeView === 'dashboard' && (
-                                allTransactions && allTransactions.length > 0 ? (
-                                    <Suspense fallback={<Loader message="Загрузка дашборда..." />}>
-                                        <Dashboard
-                                            transactions={filteredTransactions || allTransactions}
-                                            report={currentReport || generateFinancialReport(allTransactions)}
-                                            dateRange={dateRange || (() => {
-                                                const dates = allTransactions.map(t => new Date(t.date).getTime());
-                                                return {
-                                                    start: new Date(Math.min(...dates)).toISOString().split('T')[0],
-                                                    end: new Date(Math.max(...dates)).toISOString().split('T')[0]
-                                                };
-                                            })()}
-                                            profile={activeProfile}
-                                            theme={theme}
-                                        />
-                                    </Suspense>
-                                ) : (
-                                    <div className="p-8 text-center">
-                                        <div className="max-w-md mx-auto">
-                                            <div className="mb-4 text-6xl">📊</div>
-                                            <h2 className="text-xl font-semibold text-text-primary mb-2">Дашборд пустой</h2>
-                                            <p className="text-text-secondary mb-6">
-                                                Загрузите файл с транзакциями, чтобы увидеть аналитику и отчеты.
-                                            </p>
+                                <Suspense fallback={<Loader message="Загрузка дашборда..." />}>
+                                    <Dashboard
+                                        transactions={hasTransactions ? (filteredTransactions || allTransactions) : []}
+                                        report={effectiveReport}
+                                        dateRange={effectiveDateRange}
+                                        profile={activeProfile}
+                                        onAddTransaction={handleAddTransaction}
+                                    />
+                                    {!hasTransactions && (
+                                        <div className="fixed bottom-6 right-6">
                                             <button 
-                                                onClick={() => setActiveView('profile')}
-                                                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition font-medium"
+                                                onClick={openUploadModal}
+                                                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition font-medium shadow-lg flex items-center gap-2"
                                             >
-                                                Перейти к загрузке файла
+                                                <span>📁</span>
+                                                Загрузить данные
                                             </button>
                                         </div>
-                                    </div>
-                                )
+                                    )}
+                                </Suspense>
                             )}
 
                             {activeView === 'advanced' && (
                                 <Suspense fallback={<Loader message="Загрузка расширенной аналитики..." />}>
                                     <AdvancedFinancialDashboard
                                         report={(() => {
-                                            const { generateAdvancedFinancialReport } = require('./services/advancedFinancialService.ts');
+                                            const { generateAdvancedFinancialReport } = require('./services/advancedFinancialService');
                                             return generateAdvancedFinancialReport(filteredTransactions || allTransactions);
                                         })()}
                                     />
@@ -496,36 +451,83 @@ const AppContent: React.FC = () => {
                                 <div className="p-6">
                                     <div className="mb-6">
                                         <DateRangeFilter 
-                                            startDate={dateRange?.start || ''}
-                                            endDate={dateRange?.end || ''}
-                                            minDate={allTransactions.length > 0 ? new Date(Math.min(...allTransactions.map(t => new Date(t.date).getTime()))).toISOString().split('T')[0] : ''}
-                                            maxDate={allTransactions.length > 0 ? new Date(Math.max(...allTransactions.map(t => new Date(t.date).getTime()))).toISOString().split('T')[0] : ''}
+                                            startDate={effectiveDateRange.start}
+                                            endDate={effectiveDateRange.end}
+                                            minDate={hasTransactions ? formatLocalDate(new Date(Math.min(...allTransactions.map(t => (parseLocalDate(t.date) || new Date(t.date)).getTime())))) : effectiveDateRange.start}
+                                            maxDate={hasTransactions ? formatLocalDate(new Date(Math.max(...allTransactions.map(t => (parseLocalDate(t.date) || new Date(t.date)).getTime())))) : effectiveDateRange.end}
                                             onDateChange={(start, end) => setDateRange({ start, end })}
-                                            theme={theme}
                                         />
                                     </div>
                                     <TransactionsTable 
-                                        transactions={filteredTransactions || allTransactions}
+                                        transactions={hasTransactions ? (filteredTransactions || allTransactions) : []}
                                         onUpdateTransaction={(originalTx, updates, applyToAll) => {
                                             // TODO: Implement transaction update logic
-                                            console.log('Update transaction:', originalTx, updates, applyToAll);
                                         }}
                                         onAddTransaction={(tx) => {
-                                            // TODO: Implement add transaction logic
-                                            console.log('Add transaction:', tx);
+                                            const newTransactions = [...(allTransactions || []), tx];
+                                            setAllTransactions(newTransactions);
+                                            
+                                            // Обновляем отчет с новыми данными
+                                            const newReport = generateFinancialReport(newTransactions);
+                                            setCurrentReport(newReport);
+                                            
+                                            // Сохраняем данные пользователя
+                                            saveUserData('transactions', newTransactions);
                                         }}
-                                        theme={theme}
+                                        onDeleteTransaction={(tx) => {
+                                            const newTransactions = (allTransactions || []).filter(t => 
+                                                t.date !== tx.date || 
+                                                t.amount !== tx.amount || 
+                                                t.description !== tx.description
+                                            );
+                                            setAllTransactions(newTransactions);
+                                            
+                                            // Обновляем отчет с новыми данными
+                                            const newReport = generateFinancialReport(newTransactions);
+                                            setCurrentReport(newReport);
+                                            
+                                            // Сохраняем данные пользователя
+                                            saveUserData('transactions', newTransactions);
+                                        }}
+                                        onClearAllData={() => {
+                                            setAllTransactions([]);
+                                            setCurrentReport(null);
+                                            
+                                            // Сохраняем пустые данные
+                                            saveUserData('transactions', []);
+                                        }}
                                     />
+                                    {!hasTransactions && (
+                                        <div className="mt-6 text-center">
+                                            <div className="mb-4 text-4xl">📋</div>
+                                            <h3 className="text-lg font-semibold text-text-primary mb-2">Таблица транзакций пуста</h3>
+                                            <p className="text-text-secondary mb-4">
+                                                Загрузите файл с транзакциями или добавьте их вручную
+                                            </p>
+                                            <button 
+                                                onClick={openUploadModal}
+                                                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition font-medium"
+                                            >
+                                                Загрузить файл
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            {activeView === 'ai_assistant' && currentReport && dateRange && (
+                            {activeView === 'ai_assistant' && (
                                 <AiAssistant 
-                                    transactions={filteredTransactions || allTransactions} 
-                                    report={currentReport}
-                                    dateRange={dateRange}
+                                    transactions={filteredTransactions || allTransactions || []} 
+                                    report={effectiveReport}
+                                    dateRange={effectiveDateRange}
                                     profile={activeProfile}
                                 />
+                            )}
+
+                            {activeView === 'financial_model' && (
+                                <Suspense fallback={<Loader message="Загрузка финансовой модели..." />}>
+                                    <FinancialPage />
+                                </Suspense>
                             )}
 
                             {activeView === 'profile' && (
@@ -538,17 +540,22 @@ const AppContent: React.FC = () => {
                                     onNew={handleNewProfile}
                                 />
                             )}
+
+                            {activeView === 'admin' && (
+                                <Suspense fallback={<Loader message="Загрузка админ панели..." />}>
+                                    <AdminPanel />
+                                </Suspense>
+                            )}
                         </main>
                     </div>
                 );
             default:
-                console.log('[App] Unknown appState:', appState);
                 return <Loader message="Инициализация..." />;
         }
     }, [
         appState, activeView, allTransactions, allProfiles, activeProfile, error, loadingMessage,
-        filteredTransactions, currentReport, dateRange, handleSetActiveView, openUploadModal, 
-        toggleTheme, handleSaveProfile, handleSwitchProfile, handleDeleteProfile, handleNewProfile, handleFileProcess
+        filteredTransactions, currentReport, dateRange, handleSetActiveView, openUploadModal,
+        handleSaveProfile, handleSwitchProfile, handleDeleteProfile, handleNewProfile, handleFileProcess
     ]);
 
     // Основной рендер с роутингом
@@ -561,18 +568,14 @@ const AppContent: React.FC = () => {
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/dashboard" element={
                         <RequireAuth>
-                            {/* Здесь основной функционал приложения: дашборд, профиль и т.д. */}
-                            {renderContent()}
-                            <ReplaceConfirmModal />
-                            <UploadModal />
+                            <div className="min-h-screen transition-colors duration-300">
+                                {renderContent()}
+                                <UploadOptionsModal />
+                                <UploadModal />
+                            </div>
                         </RequireAuth>
                     } />
-                    <Route path="/financial-model" element={
-                        <RequireAuth>
-                            <FinancialModelPage />
-                        </RequireAuth>
-                    } />
-                    <Route path="/admin" element={<AdminPanel />} />
+
                     <Route path="/auth-debug" element={<AuthDebug />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
@@ -581,11 +584,13 @@ const AppContent: React.FC = () => {
     );
 };
 
-// Основной компонент App с UserProvider
+// Основной компонент App с UserProvider и ThemeProvider
 const App: React.FC = () => {
   return (
     <UserProvider>
-      <AppContent />
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </UserProvider>
   );
 };

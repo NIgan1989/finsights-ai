@@ -1,0 +1,1021 @@
+ Removing unpermitted intrinsics
+ [vite] connecting...
+ [vite] connected.
+ Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+ [Index] Application starting...
+ [Index] Current URL: http://localhost:5173/dashboard
+ [Index] User agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0
+ [Index] Rendering React app...
+ [Index] React app rendered
+ [UserContext] Render: Object
+ [UserContext] Render: Object
+ [Navigation] Page changed to: /dashboard
+ [UserContext] Starting auth check...
+ [UserContext] Checking /api/me endpoint...
+ [Navigation] Page changed to: /dashboard
+ [UserContext] Starting auth check...
+ [UserContext] Checking /api/me endpoint...
+ [UserContext] Render: Object
+ [UserContext] Render: Object
+:3001/api/auth/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+ [UserContext] /api/me response status: 401
+ [UserContext] /api/me failed: 
+ [UserContext] 401 Unauthorized - clearing localStorage
+ [UserContext] Auth check complete - not authenticated
+ [UserContext] Render: Object
+ [UserContext] Render: Object
+ [History] replaceState called with: Array(3)
+ [History] replaceState called with: Array(3)
+ [Navigation] Page changed to: /
+:3001/api/auth/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+ [UserContext] /api/me response status: 401
+ [UserContext] /api/me failed: 
+ [UserContext] 401 Unauthorized - clearing localStorage
+ [UserContext] Auth check complete - not authenticated
+ [UserContext] Login attempt for: Dulat280489@gmail.com
+ [UserContext] Login successful
+ [LoginForm] Auth successful
+ [LandingPage] Login successful, redirecting to dashboard
+ [History] pushState called with: Array(3)
+ [UserContext] Render: Object
+ [UserContext] Render: Object
+ [UserContext] === LOAD USER DATA START ===
+ [UserContext] Loading key: businessProfiles
+ [UserContext] User ID: admin-user
+ [Navigation] Page changed to: /dashboard
+ [UserContext] === LOAD USER DATA START ===
+ [UserContext] Loading key: transactions
+ [UserContext] User ID: admin-user
+ [UserContext] === LOAD FROM LOCALSTORAGE SUCCESS ===
+ [UserContext] Data preview: Array(16)
+ [UserContext] === LOAD USER DATA START ===
+ [UserContext] Loading key: activeProfileId
+UserContext.tsx:101 [UserContext] User ID: admin-user
+UserContext.tsx:523 [UserContext] Render: Object
+UserContext.tsx:523 [UserContext] Render: Object
+Sidebar.tsx:45 [Sidebar] Render debug: Object
+Sidebar.tsx:45 [Sidebar] Render debug: Object
+Sidebar.tsx:45 [Sidebar] Render debug: Object
+Sidebar.tsx:45 [Sidebar] Render debug: Object
+Sidebar.tsx:60 [Sidebar] handleMenuClick: Object
+Sidebar.tsx:45 [Sidebar] Render debug: Object
+Sidebar.tsx:45 [Sidebar] Render debug: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:103 Double click on cell: Object
+EditableCell.tsx:112 Starting edit for cell: Object
+EditableCell.tsx:194 EditableCell handleSave called: Object
+EditableCell.tsx:143 Validating value: Object
+EditableCell.tsx:189 Value valid
+EditableCell.tsx:214 Calling onSave with: Object
+FinancialPage.tsx:369 Updating cell: Object
+FinancialPage.tsx:390 Updated sheet data: Object
+FinancialPage.tsx:407 Setting updated model: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:103 Double click on cell: Object
+EditableCell.tsx:112 Starting edit for cell: Object
+EditableCell.tsx:194 EditableCell handleSave called: Object
+EditableCell.tsx:143 Validating value: Object
+EditableCell.tsx:189 Value valid
+EditableCell.tsx:214 Calling onSave with: Object
+FinancialPage.tsx:369 Updating cell: Object
+FinancialPage.tsx:390 Updated sheet data: Object
+FinancialPage.tsx:407 Setting updated model: Object
+EditableCell.tsx:387 Cell clicked: Object
+FinancialPage.tsx:668 Применение изменений к модели: template-1757161514553
+FinancialPage.tsx:714 Изменения успешно применены
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:103 Double click on cell: Object
+EditableCell.tsx:112 Starting edit for cell: Object
+EditableCell.tsx:194 EditableCell handleSave called: Object
+EditableCell.tsx:143 Validating value: Object
+EditableCell.tsx:189 Value valid
+EditableCell.tsx:214 Calling onSave with: Object
+FinancialPage.tsx:369 Updating cell: Object
+FinancialPage.tsx:390 Updated sheet data: Object
+FinancialPage.tsx:407 Setting updated model: Object
+FinancialPage.tsx:668 Применение изменений к модели: template-1757161514553
+FinancialPage.tsx:714 Изменения успешно применены
+FinancialPage.tsx:668 Применение изменений к модели: template-1757161514553
+FinancialPage.tsx:714 Изменения успешно применены
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+react_jsx-dev-runtime.js?v=30e5900c:64 Warning: Each child in a list should have a unique "key" prop.
+
+Check the render method of `ResultsDashboard`. See https://reactjs.org/link/warning-keys for more information.
+    at th
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ react_jsx-dev-runtime.js?v=30e5900c:64
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `0-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `1-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+chunk-T7IE6CWR.js?v=30e5900c:521 Warning: Encountered two children with the same key, `2-undefined`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at tr
+    at tbody
+    at table
+    at div
+    at div
+    at div
+    at ResultsDashboard (http://localhost:5173/backend/components/ResultsDashboard.tsx:19:29)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at FinancialPage (http://localhost:5173/backend/components/FinancialPage.tsx:36:68)
+    at Suspense
+    at main
+    at div
+    at div
+    at RequireAuth (http://localhost:5173/App.tsx:50:24)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:5464:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6198:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:6141:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=30e5900c:9178:3)
+    at div
+    at AppContent (http://localhost:5173/App.tsx:80:49)
+    at ThemeProvider (http://localhost:5173/backend/components/ThemeProvider.tsx:30:33)
+    at UserProvider (http://localhost:5173/backend/components/UserContext.tsx:47:32)
+    at App
+printWarning @ chunk-T7IE6CWR.js?v=30e5900c:521
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+EditableCell.tsx:387 Cell clicked: Object
+FinancialPage.tsx:668 Применение изменений к модели: template-1757161514553
+FinancialPage.tsx:714 Изменения успешно применены
+FinancialPage.tsx:668 Применение изменений к модели: template-1757161514553
+FinancialPage.tsx:714 Изменения успешно применены
+FinancialPage.tsx:668 Применение изменений к модели: template-1757161514553
+FinancialPage.tsx:714 Изменения успешно применены
+FinancialPage.tsx:668 Применение изменений к модели: template-1757161514553
+FinancialPage.tsx:714 Изменения успешно применены
